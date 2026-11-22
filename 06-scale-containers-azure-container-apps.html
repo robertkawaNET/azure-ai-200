@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moduł 06: Skalowanie kontenerów w Azure Container Apps (reguły skalowania, KEDA, zasoby, tryby rewizji, podział ruchu)</title><style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#59636e;--bd:#d1d9e0;--code:#f6f8fa;--ac:#0969da;--qb:#f6f8fa}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--bd:#3d444d;--code:#151b23;--ac:#4493f8;--qb:#151b23}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+nav.top{font-size:14px;color:var(--mut);margin-bottom:16px}
+a{color:var(--ac)}
+h1,h2,h3,h4{line-height:1.25;margin:1.6em 0 .6em}
+h1{font-size:2em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h3{font-size:1.2em}
+pre{background:var(--code);border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;font-size:14px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--code);padding:.15em .35em;border-radius:4px}
+pre code{background:none;padding:0}
+.codehilite{background:var(--code)!important}
+.codehilite pre{margin:0;border:0;padding:0;background:none}
+.codehilite{border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;margin:1em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--bd);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+blockquote{margin:1em 0;padding:.2em 1em;border-left:4px solid var(--bd);color:var(--mut);background:var(--qb)}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--bd);margin:2em 0}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+@media (prefers-color-scheme:dark){pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */}
+
+@page{size:A4;margin:16mm 14mm}
+@media print{
+:root{--bg:#fff;--fg:#000;--mut:#333;--bd:#999;--code:#f3f3f3;--ac:#000;--qb:#f3f3f3}
+body{font-size:10.5pt;line-height:1.45}
+main{max-width:none;padding:0}
+nav.top{display:none}
+h1,h2,h3,h4{break-after:avoid}
+h2{break-before:auto}
+pre,.codehilite,table,blockquote,tr{break-inside:avoid}
+pre,.codehilite pre,code{white-space:pre-wrap;word-break:break-word;font-size:8.5pt}
+.codehilite{overflow:visible}
+table{display:table;font-size:9pt;width:100%}
+a{text-decoration:none}
+a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
+}
+</style></head>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-06-skalowanie-kontenerow-w-azure-container-apps-reguy-skalowania-keda-zasoby-tryby-rewizji-podzia-ruchu">Moduł 06: Skalowanie kontenerów w Azure Container Apps (reguły skalowania, KEDA, zasoby, tryby rewizji, podział ruchu)</h1>
+<p>Moduł Microsoft Learn: <strong>Scale containers in Azure Container Apps</strong> - https://learn.microsoft.com/en-us/training/modules/scale-containers-azure-container-apps/
+Cel: po tym module umiesz skonfigurować reguły skalowania HTTP, TCP, CPU i pamięci oraz oparte na KEDA reguły zdarzeniowe (Service Bus, Storage Queue, Event Hubs, Kafka, Redis, cron, Prometheus), uwierzytelnić je tożsamością zarządzaną, dobrać CPU i pamięć repliki oraz użyć trybów rewizji, podziału ruchu i etykiet.
+Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą eksperymenty i ćwiczenie z SDK). Wymagania: Azure CLI, Python 3.12; ćwiczenia I1-I2 tworzą płatne zasoby w chmurze (ACR, środowisko Container Apps, Log Analytics); koszty w polach <strong>Koszt</strong> przy ćwiczeniach.</p>
+<p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
+<hr />
+<h1 id="czesc-a-reguy-skalowania">CZĘŚĆ A - REGUŁY SKALOWANIA</h1>
+<h2 id="a1-definicja-skalowania-limity-reguy-zachowanie">A1. Definicja skalowania: limity, reguły, zachowanie</h2>
+<p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
+<p><strong>Skalowanie poziome</strong> (horizontal scaling) to dodawanie i usuwanie <strong>replik</strong> (kopii kontenera), a nie powiększanie jednej kopii. Definicja skalowania ma trzy części:</p>
+<table>
+<thead>
+<tr>
+<th>Część</th>
+<th>Co określa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Limity</strong> (limits)</td>
+<td>minimalna i maksymalna liczba replik</td>
+</tr>
+<tr>
+<td><strong>Reguły</strong> (rules)</td>
+<td>wyzwalacze (triggers), czyli kiedy skalować</td>
+</tr>
+<tr>
+<td><strong>Zachowanie</strong> (behavior)</td>
+<td>jak platforma podejmuje decyzje w czasie: odstępy, algorytm</td>
+</tr>
+</tbody>
+</table>
+<p>Pod spodem pracuje <strong>KEDA</strong> (Kubernetes Event-driven Autoscaling, czyli skalowanie sterowane zdarzeniami): platforma tłumaczy Twoje ustawienia na specyfikacje KEDA, które obserwują wyzwalacze i zmieniają liczbę replik. [unit 2]</p>
+<p><strong>Wartości domyślne</strong> (egzamin je lubi): gdy ingress jest włączony i nie ma własnych reguł, aplikacja skaluje się od <strong>0 do 10</strong> replik (domyślna reguła HTTP). Gdy ingress jest <strong>wyłączony</strong>, a nie ustawisz ani minimum, ani własnej reguły, aplikacja skaluje się do zera i <strong>nie ma jak się ponownie uruchomić</strong> (brak wyzwalacza). Aby tego uniknąć, ustaw minimum na 1 lub więcej albo dodaj regułę. [unit 2] [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</p>
+<p>Rozliczanie zależy od liczby replik: przy skalowaniu do zera nie płacisz za obliczenia, repliki działające bez przetwarzania żądań są liczone niższą stawką <strong>idle</strong>, a minimum &gt;= 1 zapewnia dostępność kosztem wyższego kosztu bazowego. [unit 2]</p>
+<h2 id="a2-regua-http">A2. Reguła HTTP</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Skalowanie HTTP zmienia liczbę replik według liczby <strong>równoległych żądań HTTP</strong> (concurrent requests). Platforma liczy żądania z ostatnich 15 sekund i dzieli przez 15; gdy wynik przekracza próg, tworzy kolejne repliki. Domyślny próg to <strong>10 żądań na replikę</strong>. Niższy próg skaluje wcześniej (więcej zapasu, ale może powstać zbędnych replik), wyższy lepiej wykorzystuje replikę, ale zwiększa opóźnienia, zanim pojawią się nowe repliki.</p>
+<p>Reguła HTTP pasuje do synchronicznych API i aplikacji webowych, <strong>obsługuje skalowanie do zera</strong>. Zadania (jobs) Container Apps nie mogą jej używać, bo nie wystawiają HTTP.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp create \
+  --name order-api \
+  --resource-group rg-ecommerce \
+  --environment my-environment \
+  --image myregistry.azurecr.io/order-api:v1 \
+  --min-replicas 1 \
+  --max-replicas 10 \
+  --scale-rule-name http-scaling \
+  --scale-rule-type http \
+  --scale-rule-http-concurrency 50
+</code></pre></div>
+
+<h2 id="a3-regua-tcp">A3. Reguła TCP</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Skalowanie TCP opiera się na liczbie <strong>równoległych połączeń TCP</strong>; jest przeznaczone dla aplikacji z trwałymi połączeniami (zamiast krótkich cykli żądanie-odpowiedź). Lepsze niż HTTP dla serwerów WebSocket, usług gRPC i aplikacji z pulami połączeń do baz danych. Okno uśredniania to te same 15 sekund. Parametr: <code>--scale-rule-tcp-concurrency</code>. Reguła TCP także obsługuje skalowanie do zera: gdy wszystkie połączenia się zamkną, po okresie cool-down aplikacja może zejść do zera, a nowe połączenia uruchamiają skalowanie w górę.</p>
+<h2 id="a4-reguy-cpu-i-pamieci">A4. Reguły CPU i pamięci</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Reguły CPU i pamięci zmieniają liczbę replik według <strong>średniego wykorzystania</strong> zasobów (próg w procentach). Są zaimplementowane jako niestandardowe scalery KEDA. <strong>Ograniczenie krytyczne (egzamin je lubi):</strong> reguły CPU i pamięci <strong>nie potrafią skalować do zera</strong>, bo potrzeba co najmniej jednej działającej repliki, żeby zmierzyć wykorzystanie. Gdy potrzebujesz skalowania do zera, połącz je z regułą HTTP lub zdarzeniową albo użyj HTTP jako głównego wyzwalacza.</p>
+<p>CPU pasuje do zadań obliczeniowych (obrazy, wideo, inferencja ML), pamięć do cache'owania i agregacji dużych zbiorów. Fragment YAML łączący HTTP i CPU (skalowanie, gdy współbieżność HTTP &gt; 100 <strong>lub</strong> CPU &gt; 70%):</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on scale rules configuration</span>
+<span class="nt">scale</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http-scaling</span>
+<span class="w">      </span><span class="nt">http</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">concurrentRequests</span><span class="p">:</span><span class="w"> </span><span class="s">"100"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpu-scaling</span>
+<span class="w">      </span><span class="nt">custom</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cpu</span>
+<span class="w">        </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Utilization</span>
+<span class="w">          </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">"70"</span>
+</code></pre></div>
+
+<h2 id="a5-zachowanie-skalowania-odstepy-okna-i-kroki">A5. Zachowanie skalowania: odstępy, okna i kroki</h2>
+<p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
+<table>
+<thead>
+<tr>
+<th>Parametr</th>
+<th>Wartość</th>
+<th>Znaczenie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Polling interval</td>
+<td><strong>30 s</strong></td>
+<td>jak często KEDA odpytuje źródła zdarzeń; dla scalerów niestandardowych (CPU, pamięć, zdarzenia); reguły HTTP i TCP używają okna 15 s</td>
+</tr>
+<tr>
+<td>Cool-down period</td>
+<td><strong>300 s</strong> (5 min)</td>
+<td>jak długo czekać po ostatnim zdarzeniu, zanim aplikacja zejdzie do zera</td>
+</tr>
+<tr>
+<td>Scale-up stabilization window</td>
+<td><strong>0 s</strong></td>
+<td>skalowanie w górę może ruszyć od razu</td>
+</tr>
+<tr>
+<td>Scale-down stabilization window</td>
+<td><strong>300 s</strong></td>
+<td>tyle czeka po wykryciu warunków zejścia, zanim usunie repliki</td>
+</tr>
+<tr>
+<td>Scale-up step</td>
+<td><strong>1, 4, 8, 16, 32, ...</strong></td>
+<td>do maksimum; podwajanie kroku</td>
+</tr>
+<tr>
+<td>Scale-down step</td>
+<td><strong>100%</strong> replik do wyłączenia</td>
+<td>wszystkie nadmiarowe repliki naraz</td>
+</tr>
+<tr>
+<td>Algorytm</td>
+<td><code>desiredReplicas = ceil(currentMetricValue / targetMetricValue)</code></td>
+<td>wzór z dokumentacji</td>
+</tr>
+</tbody>
+</table>
+<p>Dokumentacja precyzuje: cool-down działa tylko przy schodzeniu <strong>z ostatniej repliki do zera</strong>; przy usuwaniu pozostałych replik nie ma wpływu, a polling nie dotyczy reguł HTTP i TCP. [docs: https://learn.microsoft.com/azure/container-apps/scale-app] W YAML-u pola to <code>cooldownPeriod</code> i <code>pollingInterval</code> w sekcji <code>scale</code>. [unit 7]</p>
+<h2 id="a6-dobre-praktyki">A6. Dobre praktyki</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<ul>
+<li><strong>Ustaw sensowne minimum replik:</strong> na produkcji co najmniej 1 (brak zimnych startów); do zera tylko dev i obciążenia naprawdę sporadyczne.</li>
+<li><strong>HTTP dla API:</strong> najbardziej responsywne dla synchronicznych wzorców i obsługuje skalowanie do zera.</li>
+<li><strong>Łącz kilka reguł:</strong> platforma skaluje w górę, gdy <strong>którakolwiek</strong> reguła przekroczy próg.</li>
+<li><strong>Uwzględnij cool-down:</strong> 300 s przed zejściem do zera podnosi koszt przy krótkich impulsach.</li>
+</ul>
+<hr />
+<h1 id="czesc-b-skalowanie-zdarzeniowe-keda">CZĘŚĆ B - SKALOWANIE ZDARZENIOWE (KEDA)</h1>
+<h2 id="b1-integracja-z-keda-i-scalery-microsoftu">B1. Integracja z KEDA i scalery Microsoftu</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Skalowanie zdarzeniowe reaguje na sygnały spoza HTTP: kolejki wiadomości, strumienie zdarzeń. KEDA obserwuje źródło (głębokość kolejki, opóźnienie partycji, własne metryki), a Container Apps tłumaczy konfigurację scalera na regułę. <strong>Scalery niestandardowe</strong> (custom) wzorują się na specyfikacji KEDA <code>ScaledObject</code>: podajesz typ scalera, metadane (połączenie i progi) oraz uwierzytelnianie; platforma odpytuje źródło co 30 s.</p>
+<p>Microsoft utrzymuje scalery z pierwszoplanowym wsparciem: <strong>Azure Service Bus, Azure Event Hubs, Azure Storage Queue, Azure Blob Storage, Azure Log Analytics i Azure Monitor</strong>. Scalery społecznościowe obsługują źródła spoza Azure. Skalowanie zdarzeniowe <strong>obsługuje skalowanie do zera</strong>: bez wiadomości 0 replik, nowe wiadomości uruchamiają skalowanie.</p>
+<h2 id="b2-azure-service-bus">B2. Azure Service Bus</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Scaler Service Bus zmienia repliki według liczby wiadomości w kolejce lub w subskrypcji tematu: <strong>liczba aktywnych wiadomości / <code>messageCount</code></strong> daje żądaną liczbę replik (przy <code>messageCount</code> 5 i 50 wiadomościach: 10 replik). Metadane: <code>queueName</code> (albo <code>topicName</code> + <code>subscriptionName</code>), <code>namespace</code>, <code>messageCount</code>.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp create \
+  --name order-processor \
+  --resource-group rg-ecommerce \
+  --environment my-environment \
+  --image myregistry.azurecr.io/order-processor:v1 \
+  --min-replicas 0 \
+  --max-replicas 30 \
+  --secrets "sb-connection=&lt;SERVICE_BUS_CONNECTION_STRING&gt;" \
+  --scale-rule-name servicebus-scaling \
+  --scale-rule-type azure-servicebus \
+  --scale-rule-metadata "queueName=orders" \
+                        "namespace=sb-ecommerce" \
+                        "messageCount=5" \
+  --scale-rule-auth "connection=sb-connection"
+</code></pre></div>
+
+<p>Dla tematów zamień <code>queueName</code> na <code>topicName</code> i dodaj <code>subscriptionName</code>; każda subskrypcja ma własny licznik, więc konsumenci skalują się niezależnie. Parametr <code>--scale-rule-auth</code> mapuje nazwę sekretu na parametr uwierzytelniania scalera (<code>connection=sb-connection</code>).</p>
+<h2 id="b3-azure-storage-queue">B3. Azure Storage Queue</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Prostsza i tańsza alternatywa dla Service Bus (mniej funkcji, niższe limity przepustowości). Scaler liczy przybliżoną liczbę wiadomości. Metadane: <code>queueName</code>, <code>accountName</code>, <code>queueLength</code> (próg, podobnie do <code>messageCount</code>). Uwierzytelnianie: ciąg połączenia w sekrecie albo tożsamość zarządzana. Wybierz Storage Queue do prostego przetwarzania kolejki; gdy potrzebujesz sesji, dead-letter queue lub wiadomości zaplanowanych albo większej przepustowości, wybierz Service Bus.</p>
+<h2 id="b4-azure-event-hubs">B4. Azure Event Hubs</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Scaler Event Hubs jest dla strumieni o wysokiej przepustowości, przetwarzanych w <strong>partycjach</strong>. Monitoruje opóźnienie (lag) między najnowszym zdarzeniem w partycji a pozycją punktu kontrolnego (checkpoint) grupy konsumentów. Metadane: <code>consumerGroup</code>, <code>unprocessedEventThreshold</code> (liczba nieprzetworzonych zdarzeń na partycję), <code>checkpointStrategy</code> (zalecane <code>blobMetadata</code> przy punktach kontrolnych w Blob Storage).</p>
+<p><strong>Pułapka egzaminacyjna:</strong> w grupie konsumentów jedną partycję czyta jeden konsument naraz, więc replik ponad liczbę partycji nie ma sensu (32 partycje: <code>maxReplicas</code> powyżej 32 nic nie daje).</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on Event Hubs scaler configuration</span>
+<span class="nt">scale</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">32</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eventhubs-scaling</span>
+<span class="w">      </span><span class="nt">custom</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">azure-eventhub</span>
+<span class="w">        </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">consumerGroup</span><span class="p">:</span><span class="w"> </span><span class="s">"$Default"</span>
+<span class="w">          </span><span class="nt">unprocessedEventThreshold</span><span class="p">:</span><span class="w"> </span><span class="s">"64"</span>
+<span class="w">          </span><span class="nt">checkpointStrategy</span><span class="p">:</span><span class="w"> </span><span class="s">"blobMetadata"</span>
+<span class="w">        </span><span class="nt">auth</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">secretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eh-connection</span>
+<span class="w">            </span><span class="nt">triggerParameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">connection</span>
+</code></pre></div>
+
+<h2 id="b5-uwierzytelnianie-regu-skalowania">B5. Uwierzytelnianie reguł skalowania</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
+<p>Scalery niestandardowe muszą mieć dostęp do monitorowanych źródeł. Dwie metody:</p>
+<table>
+<thead>
+<tr>
+<th>Metoda</th>
+<th>Jak</th>
+<th>Uwagi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Sekrety</strong></td>
+<td>sekret z ciągiem połączenia lub kluczem; mapowanie w <code>--scale-rule-auth</code></td>
+<td>działa zawsze, ale rotujesz ręcznie</td>
+</tr>
+<tr>
+<td><strong>Tożsamość zarządzana</strong></td>
+<td>tożsamość przypisana użytkownikowi + rola na zasobie (np. Azure Service Bus Data Receiver), flaga <code>--scale-rule-identity</code></td>
+<td>bez sekretów; zalecane na produkcji, gdy scaler to wspiera</td>
+</tr>
+</tbody>
+</table>
+<div class="codehilite"><pre><span></span><code>az containerapp create \
+  --name queue-processor \
+  --resource-group rg-ecommerce \
+  --environment my-environment \
+  --image myregistry.azurecr.io/queue-processor:v1 \
+  --user-assigned &lt;MANAGED_IDENTITY_RESOURCE_ID&gt; \
+  --min-replicas 0 \
+  --max-replicas 20 \
+  --scale-rule-name storage-queue-scaling \
+  --scale-rule-type azure-queue \
+  --scale-rule-metadata "accountName=stecommerce" \
+                        "queueName=inventory-updates" \
+                        "queueLength=10" \
+  --scale-rule-identity &lt;MANAGED_IDENTITY_RESOURCE_ID&gt;
+</code></pre></div>
+
+<p>Dokumentacja dodaje: tożsamość zarządzana w regułach skalowania działa dla zasobów Azure (Queue Storage, Service Bus, Event Hubs) i <strong>nie jest wspierana w portalu Azure</strong> - użyj CLI lub ARM. [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</p>
+<h2 id="b6-dobre-praktyki">B6. Dobre praktyki</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<ul>
+<li><strong>Tożsamość zarządzana</strong> zamiast sekretów, z minimalnymi uprawnieniami RBAC.</li>
+<li><strong>Progi według mocy przerobowej:</strong> zmierz przepustowość repliki; <code>messageCount</code> to docelowa głębokość kolejki na replikę, a <strong>nie</strong> współbieżność przetwarzania.</li>
+<li><strong>Skalowanie do zera</strong> dla procesorów kolejek.</li>
+<li><strong>Obserwuj głębokość kolejki obok liczby replik</strong> (Azure Monitor): gdy kolejka rośnie szybciej niż repliki, obniż próg; gdy repliki stoją bezczynne, podnieś.</li>
+</ul>
+<hr />
+<h1 id="czesc-c-scalery-keda-dla-niestandardowych-obciazen">CZĘŚĆ C - SCALERY KEDA DLA NIESTANDARDOWYCH OBCIĄŻEŃ</h1>
+<h2 id="c1-dostepne-scalery">C1. Dostępne scalery</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Container Apps obsługuje <strong>dowolny scaler oparty na ScaledObject</strong>: m.in. Apache Kafka, Redis Lists i Streams, Prometheus, Cron, PostgreSQL, MySQL, MongoDB, zewnętrzne API metryk. Wybierając scaler, sprawdź obsługiwane metody uwierzytelniania, wystawiane metryki i sposób przeliczania na repliki (dokumentacja KEDA scalers). Scalery dzielą się na utrzymywane przez Microsoft (Azure), społecznościowe (różna jakość dokumentacji) i <strong>zewnętrzne</strong> (osobne komponenty, wymagają dodatkowego wdrożenia poza wbudowaną konfiguracją).</p>
+<h2 id="c2-apache-kafka">C2. Apache Kafka</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Scaler Kafka skaluje według <strong>opóźnienia grupy konsumentów</strong> (consumer lag): różnica między najnowszym offsetem w partycji a zatwierdzonym offsetem grupy. Metadane: <code>bootstrapServers</code>, <code>consumerGroup</code>, <code>topic</code>, <code>lagThreshold</code> (opóźnienie na partycję; przy 100 i 500 zaległych wiadomościach wychodzi 5 replik). Uwierzytelnianie zwykle SASL (PLAIN, SCRAM) lub TLS, z poświadczeniami w sekretach. Tak jak w Event Hubs, liczba partycji ogranicza sensowną liczbę replik.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on Kafka scaler configuration</span>
+<span class="nt">scale</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kafka-scaling</span>
+<span class="w">      </span><span class="nt">custom</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kafka</span>
+<span class="w">        </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">bootstrapServers</span><span class="p">:</span><span class="w"> </span><span class="s">"kafka-broker:9092"</span>
+<span class="w">          </span><span class="nt">consumerGroup</span><span class="p">:</span><span class="w"> </span><span class="s">"order-consumers"</span>
+<span class="w">          </span><span class="nt">topic</span><span class="p">:</span><span class="w"> </span><span class="s">"orders"</span>
+<span class="w">          </span><span class="nt">lagThreshold</span><span class="p">:</span><span class="w"> </span><span class="s">"100"</span>
+<span class="w">        </span><span class="nt">auth</span><span class="p">:</span>
+<span class="w">          </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">secretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">kafka-credentials</span>
+<span class="w">            </span><span class="nt">triggerParameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sasl</span>
+</code></pre></div>
+
+<h2 id="c3-redis">C3. Redis</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Dwa rodzaje scalerów: <strong>Redis Lists</strong> (długość listy przez <code>LLEN</code>; metadane <code>address</code>, <code>listName</code>, <code>listLength</code> jako próg; proste wzorce producent-konsument) i <strong>Redis Streams</strong> (liczba oczekujących wpisów (pending entries) dla grupy konsumentów, z uwzględnieniem wiadomości dostarczonych, ale niepotwierdzonych, więc lepiej radzi sobie z awariami). Obsługiwane są wdrożenia standardowe, Redis Cluster i Redis Sentinel; każdy wariant ma własny format połączenia.</p>
+<h2 id="c4-skalowanie-wedug-harmonogramu-cron">C4. Skalowanie według harmonogramu (cron)</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Scaler <strong>cron</strong> działa według czasu, nie metryk: w oknie czasowym żąda stałej liczby replik, poza oknem nie wpływa na skalowanie. Metadane: <code>timezone</code>, <code>start</code>, <code>end</code> (wyrażenia cron) i <code>desiredReplicas</code>. Najlepiej łączyć z innymi regułami: cron daje bazę przed znanym szczytem, a HTTP lub zdarzenia obsługują nieoczekiwane skoki. Gdy aktywnych jest wiele scalerów, używana jest <strong>najwyższa</strong> żądana liczba replik.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on cron scaler configuration</span>
+<span class="nt">scale</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">  </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">  </span><span class="nt">rules</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">business-hours</span>
+<span class="w">      </span><span class="nt">custom</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">cron</span>
+<span class="w">        </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">timezone</span><span class="p">:</span><span class="w"> </span><span class="s">"America/New_York"</span>
+<span class="w">          </span><span class="nt">start</span><span class="p">:</span><span class="w"> </span><span class="s">"0</span><span class="nv"> </span><span class="s">8</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">1-5"</span>
+<span class="w">          </span><span class="nt">end</span><span class="p">:</span><span class="w"> </span><span class="s">"0</span><span class="nv"> </span><span class="s">18</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">1-5"</span>
+<span class="w">          </span><span class="nt">desiredReplicas</span><span class="p">:</span><span class="w"> </span><span class="s">"5"</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">http-scaling</span>
+<span class="w">      </span><span class="nt">http</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">metadata</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">concurrentRequests</span><span class="p">:</span><span class="w"> </span><span class="s">"50"</span>
+</code></pre></div>
+
+<p>Poza godzinami pracy, gdy nie ma żądań, aplikacja może zejść do zera; w godzinach pracy działa co najmniej 5 replik niezależnie od ruchu.</p>
+<h2 id="c5-prometheus">C5. Prometheus</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Scaler Prometheus odpytuje serwer Prometheus i porównuje wynik z progiem. Metadane: <code>serverAddress</code>, <code>metricName</code>, <code>query</code> (wyrażenie PromQL zwracające liczbę) i <code>threshold</code>; wartość dzielona przez próg daje żądaną liczbę replik. Używaj, gdy metryki standardowe (współbieżność HTTP, głębokość kolejki) nie oddają obciążenia: np. aktywne sesje użytkowników lub oczekujące transakcje.</p>
+<h2 id="c6-konwersja-specyfikacji-keda-na-reguy-container-apps">C6. Konwersja specyfikacji KEDA na reguły Container Apps</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
+<ol>
+<li><strong>Typ</strong> z <code>triggers[].type</code> -&gt; <code>--scale-rule-type</code> albo <code>custom.type</code> w YAML.</li>
+<li><strong>Metadane</strong> z <code>triggers[].metadata</code> -&gt; <code>--scale-rule-metadata</code> albo obiekt <code>metadata</code>.</li>
+<li><strong>Uwierzytelnianie</strong> z <code>TriggerAuthentication</code> -&gt; sekrety Container Apps i <code>--scale-rule-auth</code> (albo tablica <code>auth</code>); alternatywnie <code>--scale-rule-identity</code>.</li>
+<li><strong>Limity</strong>: <code>--min-replicas</code> / <code>--max-replicas</code> odpowiadają <code>minReplicaCount</code> / <code>maxReplicaCount</code> w ScaledObject.</li>
+</ol>
+<p>Różnice względem czystego KEDA: Container Apps <strong>nie wspiera pełnego zasobu TriggerAuthentication</strong> (sekrety wskazujesz bezpośrednio w regule), a zaawansowane funkcje (scalery zewnętrzne, własne interwały) mogą być niedostępne lub skonfigurowane inaczej. [unit 4]</p>
+<h2 id="c7-dobre-praktyki">C7. Dobre praktyki</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<ul>
+<li><strong>Zacznij od scalerów Azure</strong> (Service Bus, Event Hubs, Storage Queue): wsparcie pierwszoplanowe.</li>
+<li><strong>Testuj w staging:</strong> scalery niestandardowe mogą mieć nieoczekiwane odpytywanie i progi.</li>
+<li><strong>Łącz harmonogram i reakcję:</strong> cron dla bazy, zdarzenia lub HTTP dla skoków.</li>
+<li><strong>Dokumentuj konfiguracje:</strong> metadane scalera nie są samoopisujące się.</li>
+</ul>
+<hr />
+<h1 id="czesc-d-zasoby-obliczeniowe-wydajnosc-i-koszt">CZĘŚĆ D - ZASOBY OBLICZENIOWE: WYDAJNOŚĆ I KOSZT</h1>
+<h2 id="d1-alokacja-cpu-i-pamieci">D1. Alokacja CPU i pamięci</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/containers]</em></p>
+<p>CPU podajesz w rdzeniach (także ułamkach), pamięć w GiB. Każda replika dostaje skonfigurowane zasoby, a platforma pilnuje limitów. Rozliczanie jest w <strong>vCPU-sekundach</strong> i <strong>GiB-sekundach</strong>. Przekroczenie limitu pamięci kończy się <strong>zabiciem i restartem</strong> repliki; przekroczenie CPU kończy się <strong>throttlingiem</strong> (spowolnieniem) bez zabijania. Czyli limit pamięci to twarda awaria, limit CPU to degradacja wydajności. [unit 5]</p>
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 5): moduł pisze, że "memory must be at least twice the CPU value in GiB" (pamięć co najmniej dwa razy większa niż CPU) -&gt; w planie Consumption dozwolone są tylko <strong>ustalone pary</strong> vCPU / pamięć, a pamięć to dokładnie 2 x vCPU (np. 0.25 / 0.5Gi, 0.5 / 1.0Gi, 1.0 / 2.0Gi, 4.0 / 8.0Gi), więc np. 0.5 rdzenia z 1.5Gi jest niedozwolone. Źródło: https://learn.microsoft.com/azure/container-apps/containers.</p>
+</blockquote>
+<h2 id="d2-konfiguracja-kontenera-i-limity">D2. Konfiguracja kontenera i limity</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/containers]</em></p>
+<p>Parametry <code>--cpu</code> i <code>--memory</code> podajesz przy tworzeniu lub aktualizacji. Domyślna alokacja to <strong>0.25 rdzenia i 0.5 GiB</strong> (dla lekkich aplikacji); w planie Consumption maksimum to <strong>4 rdzenie i 8 GiB</strong>. Łączna pojemność to zasoby repliki razy liczba replik (20 replik po 0.5 rdzenia = 10 rdzeni). [unit 5]</p>
+<div class="codehilite"><pre><span></span><code>az containerapp create \
+  --name order-api \
+  --resource-group rg-ecommerce \
+  --environment my-environment \
+  --image myregistry.azurecr.io/order-api:v1 \
+  --cpu 0.5 \
+  --memory 1.0Gi \
+  --min-replicas 2 \
+  --max-replicas 20
+</code></pre></div>
+
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 5): moduł mówi, że limity dotyczą "per container, not per replica" i że każdy kontener w aplikacji (np. główny i sidecar) ma własną alokację -&gt; dokumentacja mówi, że w planie Consumption <strong>suma</strong> CPU i pamięci wszystkich kontenerów aplikacji musi dawać jedną z dozwolonych kombinacji (czyli limit dotyczy łącznie całej repliki). Dodatkowo w środowisku <strong>Consumption only</strong> (legacy) maksimum to 2 rdzenie i 4Gi. Źródło: https://learn.microsoft.com/azure/container-apps/containers.</p>
+</blockquote>
+<h2 id="d3-profile-obciazen-workload-profiles">D3. Profile obciążeń (workload profiles)</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/workload-profiles-overview]</em></p>
+<table>
+<thead>
+<tr>
+<th>Typ środowiska</th>
+<th>Co daje</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Consumption-only</strong> (legacy)</td>
+<td>model serverless, płacisz za zużyte zasoby</td>
+</tr>
+<tr>
+<td><strong>Workload profiles</strong> (domyślny)</td>
+<td>profil <strong>Consumption</strong> (serverless, jak wyżej) plus profile <strong>Dedicated</strong> (zarezerwowane VM)</td>
+</tr>
+</tbody>
+</table>
+<p>Profile Dedicated dają stałą wydajność i większe alokacje; moduł twierdzi, że są <strong>wymagane</strong> do GPU i gdy potrzeba więcej niż 4 rdzenie lub 8 GiB na kontener (druga część jest zgodna z dokumentacją, pierwsza już nie - patrz uwaga niżej). Consumption jest zwykle opłacalny dla web API i przetwarzania w tle bez planowania pojemności; Dedicated wybierz dla stałych opóźnień, GPU, większych zasobów albo wymogów zgodności. &gt; <strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 5): "Dedicated profiles are required for GPU workloads" -&gt; GPU są dostępne także w modelu serverless: profile <strong>Consumption-GPU-NC24-A100</strong> i <strong>Consumption-GPU-NC8as-T4</strong> (rozliczane per replika), obok profili Dedicated z GPU (NC24-A100 i większe). Źródło: https://learn.microsoft.com/azure/container-apps/workload-profiles-overview.</p>
+<p>Dokumentacja: profil Consumption ma zakres 0.25-4 vCPU i 0.5-8 GiB (per replika), Dedicated (D4-D32, E4-E32) rozlicza się <strong>per węzeł</strong>. [docs: https://learn.microsoft.com/azure/container-apps/workload-profiles-overview]</p>
+<h2 id="d4-optymalizacja-kosztu">D4. Optymalizacja kosztu</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Płacisz za aktywne repliki według zaalokowanych zasobów; repliki bezczynne mają niższą stawkę idle; przy skalowaniu do zera nie ma kosztu obliczeń. <strong>Skalowanie do zera</strong> to najskuteczniejsza optymalizacja dla obciążeń sporadycznych, w połączeniu z wyzwalaczami, które niezawodnie budzą repliki. Dobieraj rozmiar do rzeczywistego użycia: zacznij od domyślnych 0.25 / 0.5 GiB i zwiększaj tylko przy throttlingu, błędach braku pamięci (OOM) lub degradacji wydajności. Consumption zwykle jest tańszy dla zmiennego ruchu; Dedicated ma sens, gdy stałe wykorzystanie uzasadnia rezerwację.</p>
+<h2 id="d5-optymalizacja-wydajnosci">D5. Optymalizacja wydajności</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Za mało zasobów to większe opóźnienia, timeouty i gorsze doświadczenie w szczycie. CPU dla pracy obliczeniowej (serializacja JSON, obrazy), pamięć dla cache'y, dużych ładunków i agregacji. <strong>Minimalna liczba replik</strong> eliminuje zimny start (opóźnienie pierwszego żądania po skalowaniu z zera). Profile Dedicated dają bardziej przewidywalną wydajność, bo zasoby nie są dzielone z innymi najemcami. Monitoruj użycie CPU i pamięci w Azure Monitor.</p>
+<h2 id="d6-balans-limitow-skalowania-i-zasobow">D6. Balans limitów skalowania i zasobów</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Pojemność = zasoby repliki x maksymalna liczba replik. Jeśli replika (0.5 rdzenia) obsługuje 100 żądań/s, a szczyt to 2000 żądań/s, potrzebujesz maksymalnie 20 replik (<code>--max-replicas 20</code>, <code>--cpu 0.5</code>). <strong>Kompromis:</strong> większe repliki to mniej skalowań, ale grubsza ziarnistość (możliwy nadmiar mocy między krokami); mniejsze repliki skalują precyzyjniej, ale generują więcej zdarzeń skalowania. Maksymalna liczba replik to <strong>1000 na rewizję</strong>. [unit 5]</p>
+<h2 id="d7-dobre-praktyki">D7. Dobre praktyki</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<ul>
+<li>Zacznij od domyślnych zasobów i skaluj na podstawie metryk.</li>
+<li>Consumption dla większości obciążeń; Dedicated tylko, gdy naprawdę potrzebne.</li>
+<li>Monitoruj rzeczywiste użycie: nadmiarowe kontenery marnują pieniądze, niedowymiarowane psują wydajność.</li>
+<li>Weź pod uwagę łączny koszt skalowania: małe kontenery skalują się częściej, co daje narzut i możliwy wpływ na żądania.</li>
+</ul>
+<hr />
+<h1 id="czesc-e-tryby-rewizji-i-podzia-ruchu">CZĘŚĆ E - TRYBY REWIZJI I PODZIAŁ RUCHU</h1>
+<h2 id="e1-rewizje-a-skalowanie">E1. Rewizje a skalowanie</h2>
+<p><em>Źródło: [unit 6] + [docs: https://learn.microsoft.com/azure/container-apps/revisions]</em></p>
+<p>Rewizja to niezmienna migawka wersji aplikacji (niemodyfikowalna; zmiana = nowa rewizja, co daje pewny cel wycofania). Zmiany <strong>revision-scope</strong> (sekcja <code>template</code>: obrazy, reguły skalowania, zmienne środowiskowe) tworzą rewizję; zmiany <strong>application-scope</strong> (sekretów, ingress, reguł podziału ruchu) nie. [unit 6] (szczegóły: <code>04-deploy-containers-azure-container-apps.md</code> §B4)</p>
+<p><strong>Każda aktywna rewizja skaluje się niezależnie</strong> według własnych reguł i swojego udziału w ruchu. Dwie rewizje z tymi samymi regułami i podziałem ruchu skalują się każda od swojej części ruchu, więc łączne zużycie może być większe niż jednej rewizji przy tym samym ruchu. Repliki są instancjami konkretnej rewizji. [unit 6]</p>
+<h2 id="e2-tryb-single-domyslny">E2. Tryb Single (domyślny)</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>W trybie <strong>Single</strong> (domyślnym dla nowych aplikacji) aktywna jest jedna rewizja. Po wdrożeniu zmian platforma tworzy nową rewizję i czeka, aż będzie gotowa, zanim przeniesie ruch: <strong>wdrożenie bez przestoju</strong> (zero-downtime). Stara rewizja działa, dopóki nowa nie przejdzie testów zdrowia i nie osiągnie liczby replik poprzedniej; potem stara się dezaktywuje. Zaleta: prostota, brak ręcznych dezaktywacji. Wada: brak podziału ruchu i stopniowych wdrożeń; do testów na części ruchu potrzebny jest tryb Multiple.</p>
+<h2 id="e3-tryb-multiple">E3. Tryb Multiple</h2>
+<p><em>Źródło: [unit 6] + [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest]</em></p>
+<p>W trybie <strong>Multiple</strong> wiele rewizji jest aktywnych naraz; każda może dostawać ruch i skalować się niezależnie, aż ją jawnie dezaktywujesz. Umożliwia wdrożenia canary, blue-green i testy A/B. Nowe wdrożenia nie dezaktywują poprzednich rewizji: Ty decydujesz, kiedy przenieść ruch i dezaktywować starą. Rewizje mają dwa stany: aktywna (przyjmuje ruch, skaluje się) i nieaktywna (nie zużywa zasobów, można ją reaktywować); platforma trzyma do 100 nieaktywnych, usuwając najstarsze.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp update \
+  --name order-api \
+  --resource-group rg-ecommerce \
+  --revisions-mode multiple
+</code></pre></div>
+
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 6): przykład używa parametru <code>--revision-mode multiple</code> -&gt; poprawna nazwa parametru w <code>az containerapp create</code>/<code>update</code> to <code>--revisions-mode</code> (wartości <code>labels</code>, <code>multiple</code>, <code>single</code>); alternatywa to <code>az containerapp revision set-mode --mode multiple</code>. Źródło: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest (lokalny test pomocy CLI 2026-11-22: w <code>az containerapp update -h</code> jest tylko <code>--revisions-mode</code>).</p>
+</blockquote>
+<h2 id="e4-podzia-ruchu-traffic-splitting">E4. Podział ruchu (traffic splitting)</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>Podział ruchu rozdziela żądania między aktywne rewizje według <strong>wag w procentach, sumujących się do 100</strong>. Rozkład jest losowy per żądanie, więc rzeczywiste proporcje mogą lekko odbiegać. Przykład: 80% na pierwszą wersję, 20% na drugą:</p>
+<div class="codehilite"><pre><span></span><code>az containerapp ingress traffic set \
+  --name order-api \
+  --resource-group rg-ecommerce \
+  --revision-weight order-api--v1=80 order-api--v2=20
+</code></pre></div>
+
+<p>Canary: zacznij od małego procentu (5-10%), obserwuj błędy i wydajność, potem zwiększaj; w razie problemów szybko cofnij ruch. Możesz też ustawić wagę dla <code>latest</code> zamiast konkretnej rewizji, wtedy nowe wdrożenia automatycznie dostają ten udział bez zmiany reguł (wygodne w potokach CD).</p>
+<h2 id="e5-etykiety-rewizji-labels">E5. Etykiety rewizji (labels)</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p><strong>Etykieta</strong> to nazwany punkt końcowy, który kieruje wprost na konkretną rewizję, <strong>niezależnie od podziału ruchu</strong>; każda etykieta ma własny adres URL. Zastosowania: canary (etykieta na nowej rewizji i adres dla testerów przed dodaniem jej do podziału) i blue-green (etykiety "blue" i "green", a produkcję przełączasz <strong>przesunięciem etykiety</strong>, nie zmianą wag). Zasady nazw: zaczyna się od litery, tylko małe litery, cyfry i <code>-</code>, bez <code>--</code>, maks. 64 znaki. Etykieta wskazuje jedną rewizję naraz, ale można ją przenosić (przeniesienie jest atomowe). Główny adres aplikacji podlega podziałowi ruchu, adres etykiety zawsze trafia do rewizji z etykietą; oba mechanizmy można łączyć. Polecenia CLI: <code>az containerapp revision label add | remove | swap</code> (lokalny test pomocy CLI [autor: test 2026-11-22]).</p>
+<h2 id="e6-skalowanie-przy-wielu-rewizjach">E6. Skalowanie przy wielu rewizjach</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>Dwie rewizje po 50% ruchu mogą razem zużywać więcej zasobów niż jedna z 100%, bo każda ma własne minimum replik i skaluje się od własnych metryk. Przykład: dwie rewizje z <code>minReplicas: 1</code> i podziałem 50/50 mają łącznie co najmniej dwie repliki; jeśli reguły dałyby trzecią replikę przy pełnym ruchu, każda rewizja widzi tylko połowę ruchu i może nie uruchomić skalowania. Planuj przejścia: wdróż, sprawdź na 10%, krótko 50%, potem 100% i <strong>szybko dezaktywuj</strong> starą rewizję. Monitoruj każdą rewizję osobno (liczba replik, użycie zasobów, błędy).</p>
+<h2 id="e7-dobre-praktyki">E7. Dobre praktyki</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<ul>
+<li><strong>Single dla prostych wdrożeń</strong> (zero-downtime bez konfiguracji).</li>
+<li><strong>Multiple dla canary</strong> z planem procentów i walidacji.</li>
+<li><strong>Dezaktywuj stare rewizje szybko:</strong> aktywne rewizje skalują się i zużywają zasoby; nieaktywne można reaktywować przy wycofaniu.</li>
+<li><strong>Najpierw etykiety, potem podział ruchu:</strong> walidacja nowej rewizji bez wpływu na ruch produkcyjny.</li>
+</ul>
+<hr />
+<h1 id="czesc-f-cwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
+<p>Przeczytaj części A-E. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze: robisz je w jednej grupie zasobów i wykonujesz <strong>Sprzątanie</strong> po I2 (I2 kontynuuje I1). Kod aplikacji i SDK jest w Pythonie; odpowiednik C# jest w ćwiczeniu z kodem (I3).</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, <code>az version</code>, testy lokalne): Python 3.12 (<code>python:3.12-slim</code>), Flask 3.1.3, gunicorn 27.0.1, requests 2.34.2, azure-mgmt-appcontainers 5.1.0, azure-identity 1.27.0; C#: .NET SDK 10.0, Azure.ResourceManager.AppContainers 1.6.0, Azure.Identity 1.21.0; Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6 (beta). Starter laboratorium Microsoftu pinuje starsze flask==3.0.0 i gunicorn==22.0.0. Przed użyciem sprawdź PyPI i NuGet.</p>
+</blockquote>
+<h2 id="i1-skalowanie-http-pod-obciazeniem-i-konfiguracja-w-yaml-lab-moduu">I1. Skalowanie HTTP pod obciążeniem i konfiguracja w YAML (lab modułu)</h2>
+<p>(rozwinięcie jednostki 7; scenariusz: [unit 7])</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash); pliki <code>api/main.py</code>, <code>api/requirements.txt</code>, <code>api/Dockerfile</code>, <code>load.py</code>.</p>
+<blockquote>
+<p>Uwaga o labie: lab Microsoftu używa skryptu <code>azdeploy.py</code>, startowej aplikacji z endpointem <code>/agent/process</code> oraz lokalnego dashboardu Flask w katalogu <code>client</code> do generowania obciążenia; tutaj zamiast dashboardu masz skrypt <code>load.py</code>. Lab wymaga planu Pay-As-You-Go lub innego płatnego (zadania ACR Tasks są tymczasowo wstrzymane dla darmowych kredytów) [unit 7].</p>
+</blockquote>
+<p><code>api/main.py</code> (symulacja pracy modelu: endpoint z opóźnieniem; sprawdzony lokalnie):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span><span class="p">,</span> <span class="n">request</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">DEFAULT_DELAY_MS</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"AGENT_DEFAULT_DELAY_MS"</span><span class="p">,</span> <span class="s2">"500"</span><span class="p">))</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/health"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">"healthy"</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">root</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">service</span><span class="o">=</span><span class="s2">"mock-agent-api"</span><span class="p">,</span> <span class="n">default_delay_ms</span><span class="o">=</span><span class="n">DEFAULT_DELAY_MS</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/agent/process"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">agent_process</span><span class="p">():</span>
+    <span class="n">payload</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_json</span><span class="p">(</span><span class="n">silent</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">delay_ms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"delayMs"</span><span class="p">,</span> <span class="n">DEFAULT_DELAY_MS</span><span class="p">))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="n">delay_ms</span> <span class="o">=</span> <span class="n">DEFAULT_DELAY_MS</span>
+    <span class="n">delay_ms</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">delay_ms</span><span class="p">,</span> <span class="mi">30_000</span><span class="p">))</span>   <span class="c1"># symulacja pracy modelu</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay_ms</span> <span class="o">/</span> <span class="mf">1000.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">"done"</span><span class="p">,</span> <span class="n">delay_ms</span><span class="o">=</span><span class="n">delay_ms</span><span class="p">)</span>
+</code></pre></div>
+
+<p><code>api/requirements.txt</code>:</p>
+<div class="codehilite"><pre><span></span><code>flask==3.1.3
+gunicorn==27.0.1
+</code></pre></div>
+
+<p><code>api/Dockerfile</code> (jeden worker z 32 wątkami, żeby jedna replika mogła trzymać wiele równoległych żądań):</p>
+<div class="codehilite"><pre><span></span><code><span class="k">FROM</span><span class="w"> </span><span class="s">python:3.12-slim</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>requirements.txt<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<span class="k">COPY</span><span class="w"> </span>main.py<span class="w"> </span>.
+<span class="k">ENV</span><span class="w"> </span><span class="nv">PORT</span><span class="o">=</span><span class="m">8000</span>
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">8000</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"sh"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-c"</span><span class="p">,</span><span class="w"> </span><span class="s2">"gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 1 --threads 32 --access-logfile - main:app"</span><span class="p">]</span>
+</code></pre></div>
+
+<p><code>load.py</code> (generator równoległych żądań, sprawdzony lokalnie: 8 wątków, 3 s, 80 odpowiedzi OK):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+
+<span class="n">base_url</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"APP_URL"</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>          <span class="c1"># np. https://&lt;fqdn&gt;</span>
+<span class="n">concurrency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">25</span>
+<span class="n">duration_s</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">60</span>
+<span class="n">delay_ms</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="mi">1000</span>
+
+<span class="n">stop_at</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="n">duration_s</span>
+<span class="n">sent</span> <span class="o">=</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">failed</span> <span class="o">=</span> <span class="mi">0</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">worker</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="n">done_ok</span> <span class="o">=</span> <span class="n">done_fail</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="n">requests</span><span class="o">.</span><span class="n">Session</span><span class="p">()</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>               <span class="c1"># (1) jedna sesja = jedno polaczenie na watek</span>
+        <span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">stop_at</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">base_url</span><span class="si">}</span><span class="s2">/agent/process"</span><span class="p">,</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">"delayMs"</span><span class="p">:</span> <span class="n">delay_ms</span><span class="p">},</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
+                    <span class="n">done_ok</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">done_fail</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span><span class="p">:</span>
+                <span class="n">done_fail</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">done_ok</span><span class="p">,</span> <span class="n">done_fail</span>
+
+
+<span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">concurrency</span><span class="p">)</span> <span class="k">as</span> <span class="n">pool</span><span class="p">:</span>   <span class="c1"># (2) tyle rownoleglych zadan, ile watkow</span>
+    <span class="k">for</span> <span class="n">o</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">pool</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">worker</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">concurrency</span><span class="p">)):</span>
+        <span class="n">ok</span> <span class="o">+=</span> <span class="n">o</span>
+        <span class="n">failed</span> <span class="o">+=</span> <span class="n">f</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"concurrency=</span><span class="si">{</span><span class="n">concurrency</span><span class="si">}</span><span class="s2"> duration=</span><span class="si">{</span><span class="n">duration_s</span><span class="si">}</span><span class="s2">s ok=</span><span class="si">{</span><span class="n">ok</span><span class="si">}</span><span class="s2"> failed=</span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Polecenia:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-scale-i1<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westeurope
+<span class="nv">ACR_NAME</span><span class="o">=</span>acrscale<span class="nv">$RANDOM$RANDOM</span><span class="p">;</span><span class="w"> </span><span class="nv">APP</span><span class="o">=</span>ai-agent
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">requests</span><span class="o">==</span><span class="m">2</span>.34.2
+az<span class="w"> </span>extension<span class="w"> </span>add<span class="w"> </span>--name<span class="w"> </span>containerapp<span class="w"> </span>--upgrade
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.App
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.OperationalInsights
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.ContainerRegistry
+
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>acr<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--sku<span class="w"> </span>Basic<span class="w"> </span>--admin-enabled<span class="w"> </span><span class="nb">false</span>
+az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>ai-agent:v1<span class="w"> </span>--file<span class="w"> </span>api/Dockerfile<span class="w"> </span>api
+az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>aca-env-scale<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--environment<span class="w"> </span>aca-env-scale<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--image<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io/ai-agent:v1<span class="w"> </span>--ingress<span class="w"> </span>external<span class="w"> </span>--target-port<span class="w"> </span><span class="m">8000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--registry-server<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io<span class="w"> </span>--registry-identity<span class="w"> </span>system<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--revision-suffix<span class="w"> </span>v1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--min-replicas<span class="w"> </span><span class="m">0</span><span class="w"> </span>--max-replicas<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scale-rule-name<span class="w"> </span>http-scaling<span class="w"> </span>--scale-rule-type<span class="w"> </span>http<span class="w"> </span>--scale-rule-http-concurrency<span class="w"> </span><span class="m">10</span><span class="w">   </span><span class="c1"># (1)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"properties.template.scale"</span><span class="w">                      </span><span class="c1"># (2)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_URL</span><span class="o">=</span>https://<span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>properties.configuration.ingress.fqdn<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+
+python<span class="w"> </span>load.py<span class="w"> </span><span class="m">40</span><span class="w"> </span><span class="m">90</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="p">&amp;</span><span class="w">                                                                  </span><span class="c1"># (3)</span>
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="m">3</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="m">5</span><span class="w"> </span><span class="m">6</span><span class="w"> </span><span class="m">7</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="m">9</span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w">                                                               </span><span class="c1"># (4)</span>
+<span class="w">  </span>date<span class="w"> </span>+%T<span class="p">;</span><span class="w"> </span>az<span class="w"> </span>containerapp<span class="w"> </span>replica<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"length(@)"</span><span class="p">;</span><span class="w"> </span>sleep<span class="w"> </span><span class="m">10</span>
+<span class="k">done</span>
+<span class="nb">wait</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) reguła HTTP z progiem 10 równoległych żądań na replikę, minimum 0, maksimum 10; (2) odczyt sekcji <code>scale</code> szablonu (lab: szukaj reguły <code>http-scaling</code>, <code>minReplicas</code> 0 i <code>maxReplicas</code> 10) [unit 7]; (3) 40 równoległych wątków przez 90 s, każde żądanie trwa ok. 1 s; (4) liczba replik co 10 s (<code>length(@)</code> to długość listy w JMESPath).</p>
+<p>Teraz konfiguracja w YAML (lab: eksport, edycja, zastosowanie) [unit 7]:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--output<span class="w"> </span>yaml<span class="w"> </span>&gt;<span class="w"> </span>app-config.yaml
+</code></pre></div>
+
+<p>W <code>app-config.yaml</code> w sekcji <code>properties.template.scale</code> ustaw:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">scale</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">cooldownPeriod</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">200</span>
+<span class="w">  </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">  </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">pollingInterval</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>containerapp<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yaml<span class="w"> </span>app-config.yaml
+az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"properties.template.scale"</span>
+</code></pre></div>
+
+<p>Typowe problemy z labu [unit 7]: brak skalowania - sprawdź regułę (<code>az containerapp show --query "properties.template.scale"</code>), upewnij się, że żądania są równoległe (opóźnienie <code>delayMs</code> 500-1500 ms sprawia, że się nakładają) i obejrzyj logi systemowe <code>az containerapp logs show --type system --tail 50</code>; aktualizacja YAML kończy się błędem - sprawdź wcięcia, a pola tylko do odczytu (<code>id</code>, <code>systemData</code>, <code>type</code>) usuń z pliku.</p>
+<p><strong>Koszt:</strong> ACR Basic naliczany dziennie (stawka: Niesprawdzone - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/); Container Apps w planie Consumption: pierwsze 180 000 vCPU-s, 360 000 GiB-s i 2 mln żądań HTTP miesięcznie są bezpłatne, replika skalowana do zera nie kosztuje, repliki bezczynne mają stawkę idle [docs: https://learn.microsoft.com/azure/container-apps/billing]. Test obciążeniowy uruchamia do 10 małych replik na kilka minut (domyślnie 0.25 vCPU i 0.5 GiB) - to ułamek darmowego progu. Log Analytics rozlicza ilość logów (pomijalna). Po ćwiczeniach wykonaj Sprzątanie w I2.</p>
+<p><strong>Zadania:</strong> (a) wdróż aplikację i obserwuj liczbę replik w czasie testu obciążeniowego; (b) po zakończeniu obciążenia obserwuj, jak długo repliki zostają przy minimum 0 (cool-down); (c) <strong>zepsuj to:</strong> ustaw wysoki próg <code>az containerapp update -n $APP -g $RG --scale-rule-name http-scaling --scale-rule-type http --scale-rule-http-concurrency 1000</code>, uruchom obciążenie ponownie i porównaj liczbę replik; (d) zastosuj YAML ze zmianą <code>cooldownPeriod</code>, <code>minReplicas</code>, <code>maxReplicas</code> i sprawdź, czy powstała nowa rewizja (<code>az containerapp revision list -n $APP -g $RG -o table</code>).</p>
+<p><strong>Sprawdź:</strong> (a) liczba replik rośnie ponad 1 w trakcie obciążenia (przy 40 równoległych żądaniach i progu 10 wzór <code>ceil(40/10)</code> daje rząd 4 replik; dokładna liczba zależy od uśredniania 15 s) [docs: https://learn.microsoft.com/azure/container-apps/scale-app] [autor: niezweryfikowane]; (b) po ustaniu obciążenia zejście do zera następuje po okresie cool-down (domyślnie 300 s) [unit 2]; (c) przy progu 1000 pojedyncza replika obsługuje cały ruch, więc nie ma skalowania w górę (uwaga: 40 żądań to mniej niż 1000) [autor: niezweryfikowane]; (d) zmiana sekcji <code>scale</code> jest zmianą w <code>template</code>, więc powstaje nowa rewizja [unit 7] [docs: https://learn.microsoft.com/azure/container-apps/revisions].</p>
+<p><strong>Sprzątanie:</strong> zasoby (grupa <code>rg-aca-scale-i1</code>) są potrzebne jeszcze w I2 i I3, więc usuń je dopiero po nich (Sprzątanie z I2). Jeśli kończysz na I1, wykonaj od razu: <code>az group delete --name $RG --yes --no-wait</code>, a potem <code>az group exists --name $RG</code> (po kilku minutach powinno wypisać <code>false</code>).</p>
+<h2 id="i2-tryb-multiple-podzia-ruchu-8020-i-etykiety">I2. Tryb Multiple, podział ruchu 80/20 i etykiety</h2>
+<p>(rozwinięcie sekcji E3-E5; kontynuacja I1: ta sama grupa <code>rg-aca-scale-i1</code>, aplikacja <code>ai-agent</code>, zmienne <code>RG</code>, <code>APP</code> i <code>APP_URL</code> z I1)</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) w tej samej sesji co I1.</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>set-mode<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--mode<span class="w"> </span>multiple<span class="w">                                   </span><span class="c1"># (1)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--revision-suffix<span class="w"> </span>v2<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--set-env-vars<span class="w"> </span><span class="nv">AGENT_DEFAULT_DELAY_MS</span><span class="o">=</span><span class="m">111</span><span class="w">                                                      </span><span class="c1"># (2)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>-o<span class="w"> </span>table
+
+az<span class="w"> </span>containerapp<span class="w"> </span>ingress<span class="w"> </span>traffic<span class="w"> </span><span class="nb">set</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--revision-weight<span class="w"> </span><span class="nv">$APP</span>--v1<span class="o">=</span><span class="m">80</span><span class="w"> </span><span class="nv">$APP</span>--v2<span class="o">=</span><span class="m">20</span><span class="w">                                                      </span><span class="c1"># (3)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>ingress<span class="w"> </span>traffic<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span>
+
+<span class="k">for</span><span class="w"> </span>i<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>seq<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="m">20</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span><span class="nv">$APP_URL</span>/<span class="w"> </span><span class="p">;</span><span class="w"> </span>echo<span class="p">;</span><span class="w"> </span><span class="k">done</span><span class="w">                                            </span><span class="c1"># (4)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>label<span class="w"> </span>add<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--label<span class="w"> </span>green<span class="w"> </span>--revision<span class="w"> </span><span class="nv">$APP</span>--v2<span class="w">               </span><span class="c1"># (5)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>ingress<span class="w"> </span>traffic<span class="w"> </span><span class="nb">set</span><span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--revision-weight<span class="w"> </span><span class="nv">$APP</span>--v1<span class="o">=</span><span class="m">60</span><span class="w"> </span><span class="nv">$APP</span>--v2<span class="o">=</span><span class="m">60</span><span class="w">       </span><span class="c1"># (6)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) przełączenie trybu na Multiple (równoważne <code>az containerapp update --revisions-mode multiple</code>); (2) nowa rewizja <code>v2</code> ze zmienioną zmienną: odpowiedź <code>/</code> ma wtedy <code>default_delay_ms</code> równe 111 zamiast 500; (3) podział 80/20; (4) 20 wywołań pokazuje, która rewizja odpowiedziała (po wartości <code>default_delay_ms</code>); (5) etykieta <code>green</code> na <code>v2</code> daje osobny adres URL; (6) <strong>zepsuj to:</strong> wagi nie sumują się do 100.</p>
+<p><strong>Koszt:</strong> jak w I1 (te same zasoby); w trybie Multiple obie rewizje mogą mieć działające repliki, więc krótko płacisz za obie.</p>
+<p><strong>Zadania:</strong> (a) przełącz tryb i wdróż <code>v2</code>; (b) ustaw podział 80/20 i wykonaj 20 wywołań <code>/</code>; (c) dodaj etykietę <code>green</code> i wywołaj jej adres URL (adres etykiety odczytasz z <code>az containerapp revision show -n $APP -g $RG --revision $APP--v2 --query properties.fqdn -o tsv</code> lub z <code>ingress traffic show</code>); (d) <strong>zepsuj to:</strong> ustaw wagi 60 i 60.</p>
+<p><strong>Sprawdź:</strong> (a) <code>revision list</code> pokazuje <code>ai-agent--v1</code> i <code>ai-agent--v2</code> jako aktywne [unit 6]; (b) około 16 z 20 odpowiedzi ma <code>default_delay_ms</code> 500, a około 4 ma 111 (rozkład losowy, więc liczby mogą odbiegać) [unit 6]; (c) adres z etykietą zawsze zwraca 111 niezależnie od wag [unit 6]; (d) polecenie kończy się błędem, bo wagi nie sumują się do 100 (dokładny komunikat zależy od wersji CLI) [autor: niezweryfikowane].</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w">      </span><span class="c1"># po kilku minutach powinno wypisać false</span>
+</code></pre></div>
+
+<p>Usuwa cały zestaw z I1 i I2 (ACR, środowisko, Log Analytics, aplikację). Wykonaj dopiero po I3.</p>
+<h2 id="i3-liczba-replik-przez-sdk-i-generator-obciazenia-python-i-odpowiednik-c-net">I3. Liczba replik przez SDK i generator obciążenia: Python i odpowiednik C# (.NET)</h2>
+<p>(rozwinięcie sekcji A5, E6; wymaga aplikacji z I1 przed jej Sprzątaniem w I2)</p>
+<p><strong>Gdzie / Plik:</strong> <code>watch.py</code> (Python; generator <code>load.py</code> jest w I1) oraz <code>Program.cs</code> (C#); <code>az login</code>.</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>azure-mgmt-appcontainers<span class="o">==</span><span class="m">5</span>.1.0<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_SUBSCRIPTION_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>account<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RESOURCE_GROUP</span><span class="o">=</span>rg-aca-scale-i1<span class="w"> </span><span class="nv">CONTAINER_APP_NAME</span><span class="o">=</span>ai-agent
+</code></pre></div>
+
+<p><code>watch.py</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.mgmt.appcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContainerAppsAPIClient</span>
+
+<span class="n">subscription_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AZURE_SUBSCRIPTION_ID"</span><span class="p">]</span>
+<span class="n">resource_group</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"RESOURCE_GROUP"</span><span class="p">]</span>
+<span class="n">app_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"CONTAINER_APP_NAME"</span><span class="p">]</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">ContainerAppsAPIClient</span><span class="p">(</span><span class="n">DefaultAzureCredential</span><span class="p">(),</span> <span class="n">subscription_id</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">):</span>                                    <span class="c1"># (1) 30 probek co 10 s = 5 minut</span>
+    <span class="n">stamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%H:%M:%S"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">rev</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">container_apps_revisions</span><span class="o">.</span><span class="n">list_revisions</span><span class="p">(</span><span class="n">resource_group</span><span class="p">,</span> <span class="n">app_name</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">rev</span><span class="o">.</span><span class="n">properties</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>                                   <span class="c1"># (2) tylko aktywne rewizje</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">stamp</span><span class="p">,</span> <span class="n">rev</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"replicas ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">replicas</span><span class="p">,</span> <span class="s2">"traffic ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">traffic_weight</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) pętla próbkuje liczbę replik każdej aktywnej rewizji (pole <code>replicas</code> w <code>RevisionProperties</code>); (2) po I2 zobaczysz osobne liczby dla <code>v1</code> i <code>v2</code>, co ilustruje niezależne skalowanie rewizji (E6). Uruchom <code>python watch.py</code> w jednym terminalu, a <code>python load.py 40 90 1000</code> (z <code>APP_URL</code>) w drugim. Skrypt skompilowano (<code>py_compile</code>), a pola <code>replicas</code>, <code>active</code>, <code>traffic_weight</code> sprawdzono w modelu <code>RevisionProperties</code>; nie uruchamiano go na prawdziwej subskrypcji [autor: test 2026-11-22] [docs: https://learn.microsoft.com/python/api/overview/azure/mgmt-appcontainers-readme?view=azure-python].</p>
+<p><strong>Odpowiednik C# (.NET)</strong></p>
+<p>Różnice: równoległość robisz zadaniami asynchronicznymi (<code>Task.WhenAll</code> zamiast <code>ThreadPoolExecutor</code>), licznikami bezpiecznymi wątkowo (<code>Interlocked.Increment</code>), a klient HTTP to <code>HttpClient</code> z <code>PostAsJsonAsync</code>. Liczba replik rewizji to <code>rev.Data.Replicas</code>, a aktywność <code>IsActive</code>. Jeden plik obsługuje oba tryby: <code>dotnet run -- load 40 90 1000</code> (z <code>APP_URL</code>) i <code>dotnet run -- watch</code>. Projekt: <code>dotnet new console -f net10.0</code>, <code>dotnet add package Azure.ResourceManager.AppContainers --version 1.6.0</code>, <code>dotnet add package Azure.Identity --version 1.21.0</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">using</span><span class="w"> </span><span class="nn">System.Net.Http.Json</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.Identity</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager.AppContainers</span><span class="p">;</span>
+
+<span class="c1">// Uzycie: dotnet run -- load  &lt;concurrency&gt; &lt;seconds&gt; &lt;delayMs&gt;   |   dotnet run -- watch</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">Length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="s">"watch"</span><span class="p">;</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s">"load"</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">baseUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"APP_URL"</span><span class="p">)</span><span class="o">!</span><span class="p">.</span><span class="n">TrimEnd</span><span class="p">(</span><span class="sc">'/'</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">concurrency</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">Length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="mi">25</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">seconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">Length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">delayMs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">Length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="kt">int</span><span class="p">.</span><span class="n">Parse</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="nn">var</span><span class="w"> </span><span class="n">http</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HttpClient</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="mi">40</span><span class="p">)</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">stopAt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DateTime</span><span class="p">.</span><span class="n">UtcNow</span><span class="p">.</span><span class="n">AddSeconds</span><span class="p">(</span><span class="n">seconds</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">failed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">tasks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">concurrency</span><span class="p">).</span><span class="n">Select</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">DateTime</span><span class="p">.</span><span class="n">UtcNow</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">stopAt</span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">try</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">var</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">http</span><span class="p">.</span><span class="n">PostAsJsonAsync</span><span class="p">(</span><span class="s">$"{baseUrl}/agent/process"</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">delayMs</span><span class="w"> </span><span class="p">});</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">r</span><span class="p">.</span><span class="n">IsSuccessStatusCode</span><span class="p">)</span><span class="w"> </span><span class="n">Interlocked</span><span class="p">.</span><span class="n">Increment</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">ok</span><span class="p">);</span>
+<span class="w">                </span><span class="k">else</span><span class="w"> </span><span class="n">Interlocked</span><span class="p">.</span><span class="n">Increment</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">failed</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">HttpRequestException</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Interlocked</span><span class="p">.</span><span class="n">Increment</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">failed</span><span class="p">);</span><span class="w"> </span><span class="p">}</span>
+<span class="w">            </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">TaskCanceledException</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Interlocked</span><span class="p">.</span><span class="n">Increment</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">failed</span><span class="p">);</span><span class="w"> </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="n">Task</span><span class="p">.</span><span class="n">WhenAll</span><span class="p">(</span><span class="n">tasks</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"concurrency={concurrency} duration={seconds}s ok={ok} failed={failed}"</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">else</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">sub</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"AZURE_SUBSCRIPTION_ID"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">rg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"RESOURCE_GROUP"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">appName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"CONTAINER_APP_NAME"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">arm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArmClient</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">DefaultAzureCredential</span><span class="p">());</span>
+<span class="w">    </span><span class="n">ContainerAppResource</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arm</span><span class="p">.</span><span class="n">GetContainerAppResource</span><span class="p">(</span>
+<span class="w">        </span><span class="n">ContainerAppResource</span><span class="p">.</span><span class="n">CreateResourceIdentifier</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span><span class="w"> </span><span class="n">rg</span><span class="p">,</span><span class="w"> </span><span class="n">appName</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">30</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="n">ContainerAppRevisionResource</span><span class="w"> </span><span class="n">rev</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">GetContainerAppRevisions</span><span class="p">().</span><span class="n">GetAllAsync</span><span class="p">())</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">rev</span><span class="p">.</span><span class="n">Data</span><span class="p">.</span><span class="n">IsActive</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">true</span><span class="p">)</span>
+<span class="w">                </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"{DateTime.Now:HH:mm:ss} {rev.Data.Name} replicas={rev.Data.Replicas} traffic={rev.Data.TrafficWeight}"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="n">Task</span><span class="p">.</span><span class="n">Delay</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="mi">10</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>[docs: https://learn.microsoft.com/dotnet/api/overview/azure/resourcemanager.appcontainers-readme?view=azure-dotnet] [autor: test 2026-11-22] (kod skompilowano na .NET SDK 10.0.401 z pakietami jak wyżej; nie uruchamiano go na prawdziwej subskrypcji ani wobec działającej aplikacji).</p>
+<p><strong>Koszt:</strong> brak kosztu własnego (odczyt metadanych); generator obciążenia generuje ruch do aplikacji z I1 (koszt jak tam).</p>
+<p><strong>Zadania:</strong> (a) uruchom <code>watch.py</code> podczas <code>load.py</code> i porównaj z pętlą CLI z I1; (b) <strong>zepsuj to:</strong> uruchom <code>load.py</code> z <code>APP_URL</code> wskazującym nieistniejący adres (np. <code>https://nie-ma.example.invalid</code>) i odczytaj wynik; (c) uruchom wersję C# (<code>load</code> i <code>watch</code>) i porównaj.</p>
+<p><strong>Sprawdź:</strong> (a) kolumna <code>replicas</code> rośnie w trakcie obciążenia i maleje po jego ustaniu (zejście do zera po cool-down); (b) wszystkie żądania kończą się niepowodzeniem: <code>failed</code> rośnie, <code>ok=0</code> (obsługa wyjątku w kodzie nie przerywa programu) [autor: niezweryfikowane]; (c) te same wartości co w Pythonie, z formatem <code>replicas=...</code>.</p>
+<p><strong>Sprzątanie:</strong> brak (skrypty tylko czytają metadane i generują ruch); po I3 wykonaj Sprzątanie z I2.</p>
+<hr />
+<h1 id="czesc-g-quiz-z-moduu-microsoftu-4-pytania-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (4 pytania) + wyjaśnienia</h1>
+<p>Learn nie pokazuje poprawnych odpowiedzi w ocenie modułu, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
+<h2 id="g1-przetwarzanie-wiadomosci-z-kolejki-service-bus-i-skalowanie-do-zera">G1. Przetwarzanie wiadomości z kolejki Service Bus i skalowanie do zera</h2>
+<p>-&gt; <em><code>--min-replicas 0</code> z regułą <code>azure-servicebus</code>.</em> Reguła HTTP nie widzi kolejki, a reguła CPU nie potrafi skalować do zera. <em>(odpowiedź wnioskowana: unit 3, sekcja "Configure Azure Service Bus scaling"; unit 2, sekcja "Configure CPU and memory scale rules")</em></p>
+<h2 id="g2-piec-replik-przed-szczytem-o-800-i-skalowanie-do-zera-noca">G2. Pięć replik przed szczytem o 8:00 i skalowanie do zera nocą</h2>
+<p>-&gt; <em>Reguła cron połączona z regułą HTTP.</em> Minimum pięciu replik wyklucza zero w nocy, a niski próg CPU nie gwarantuje pięciu replik o określonej godzinie i nie skaluje do zera. <em>(odpowiedź wnioskowana: unit 4, sekcja "Configure cron-based scaling")</em></p>
+<h2 id="g3-10-ruchu-na-nowa-wersje-przed-penym-wdrozeniem">G3. 10% ruchu na nową wersję przed pełnym wdrożeniem</h2>
+<p>-&gt; <em>Włączyć tryb Multiple i skonfigurować podział ruchu wagami rewizji.</em> Tryb Single zapewnia tylko wdrożenie bez przestoju, a reguła cron nie przesuwa ruchu między wersjami. <em>(odpowiedź wnioskowana: unit 6, sekcje "Configure multiple revision mode" i "Implement traffic splitting")</em></p>
+<h2 id="g4-zalecana-metoda-uwierzytelniania-regu-keda-na-produkcji">G4. Zalecana metoda uwierzytelniania reguł KEDA na produkcji</h2>
+<p>-&gt; <em>Tożsamość zarządzana (<code>--scale-rule-identity</code>).</em> Ciągi połączeń w sekretach działają, ale wymagają rotacji; dostęp anonimowy odpada. <em>(odpowiedź wnioskowana: unit 3, sekcja "Authenticate scale rules" i "Best practices")</em></p>
+<hr />
+<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-jakie-sa-domyslne-limity-skalowania-i-co-sie-stanie-bez-ingress-i-bez-regu">H1. Jakie są domyślne limity skalowania i co się stanie bez ingress i bez reguł?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Z włączonym ingress i bez własnych reguł: domyślna reguła HTTP, od 0 do 10 replik. Bez ingress, bez minimum i bez własnej reguły aplikacja skaluje się do zera i nie może się uruchomić ponownie.</p>
+</details>
+<h2 id="h2-ktory-typ-reguy-nie-potrafi-skalowac-do-zera-i-dlaczego">H2. Który typ reguły nie potrafi skalować do zera i dlaczego?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Reguły CPU i pamięci: potrzebują co najmniej jednej działającej repliki, żeby zmierzyć wykorzystanie. HTTP, TCP i zdarzeniowe skalują do zera.</p>
+</details>
+<h2 id="h3-podaj-wartosci-zachowania-skalowania">H3. Podaj wartości zachowania skalowania.</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Polling interval 30 s (nie dotyczy HTTP/TCP), cool-down 300 s (tylko przy schodzeniu z ostatniej repliki do zera), scale-up stabilization 0 s, scale-down stabilization 300 s, kroki w górę 1, 4, 8, 16, 32..., w dół 100% naraz.</p>
+</details>
+<h2 id="h4-ile-replik-zazada-scaler-service-bus-przy-50-wiadomosciach-i-messagecount-5-jaki-jest-ogolny-wzor">H4. Ile replik zażąda scaler Service Bus przy 50 wiadomościach i <code>messageCount</code> 5? Jaki jest ogólny wzór?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>10 replik. Wzór z dokumentacji: <code>desiredReplicas = ceil(currentMetricValue / targetMetricValue)</code>.</p>
+</details>
+<h2 id="h5-dlaczego-maxreplicas-powyzej-liczby-partycji-event-hubs-nic-nie-daje">H5. Dlaczego <code>maxReplicas</code> powyżej liczby partycji Event Hubs nic nie daje?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>W grupie konsumentów jedną partycję czyta jeden konsument naraz, więc replik ponad liczbę partycji nie da się wykorzystać (to samo dotyczy Kafka).</p>
+</details>
+<h2 id="h6-jak-uwierzytelnic-regue-skalowania-bez-sekretow">H6. Jak uwierzytelnić regułę skalowania bez sekretów?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Tożsamością zarządzaną: <code>--user-assigned &lt;id&gt;</code> na aplikacji, rola na zasobie (np. Azure Service Bus Data Receiver) i <code>--scale-rule-identity &lt;id&gt;</code>. Nie jest to wspierane w portalu, tylko CLI/ARM.</p>
+</details>
+<h2 id="h7-jakie-parametry-cli-i-pary-cpupamiec-sa-poprawne-w-planie-consumption">H7. Jakie parametry CLI i pary CPU/pamięć są poprawne w planie Consumption?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>--cpu</code> i <code>--memory</code>; dozwolone tylko ustalone kombinacje (pamięć = 2 x vCPU: 0.25/0.5Gi ... 4.0/8.0Gi), liczone dla sumy kontenerów repliki; domyślnie 0.25 / 0.5 GiB.</p>
+</details>
+<h2 id="h8-czym-roznia-sie-tryby-single-i-multiple-oraz-jaki-parametr-je-ustawia">H8. Czym różnią się tryby Single i Multiple oraz jaki parametr je ustawia?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Single (domyślny): jedna aktywna rewizja, wdrożenie bez przestoju, brak podziału ruchu. Multiple: wiele aktywnych rewizji, podział ruchu, canary i blue-green. Parametr: <code>--revisions-mode</code> (albo <code>az containerapp revision set-mode --mode</code>).</p>
+</details>
+<h2 id="h9-jak-dziaaja-etykiety-wzgledem-podziau-ruchu">H9. Jak działają etykiety względem podziału ruchu?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Etykieta daje osobny adres URL, który zawsze kieruje do swojej rewizji niezależnie od wag. Główny adres aplikacji podlega podziałowi ruchu. Etykieta wskazuje jedną rewizję naraz, a przeniesienie jest atomowe.</p>
+</details>
+<hr />
+<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<p><em>Źródło: [moduł kursu: dynamic-sessions-azure-container-apps]</em></p>
+<p>Dalej: moduł 07 (dynamic sessions: bezpieczne wykonywanie kodu generowanego przez AI). Wróć do części B i C, gdy uczysz się scalerów (Service Bus, Event Hubs, Kafka, cron), a do E przy zadaniach o canary i etykietach.</p>
+<p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30):</p>
+<table>
+<thead>
+<tr>
+<th>Umiejętność (study guide)</th>
+<th>Domena</th>
+<th>Status</th>
+<th>Gdzie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Implement event-driven scaling by using KEDA in Container Apps</td>
+<td>1</td>
+<td>uczone tutaj</td>
+<td><code>06-scale-containers-azure-container-apps.md</code> §A1-§C7</td>
+</tr>
+<tr>
+<td>Deploy applications to Azure Container Apps, including environment configuration and revision management</td>
+<td>1</td>
+<td>uczone w modułach 04 i 05 (tu: tryby rewizji, podział ruchu, §E1-§E7)</td>
+<td><code>04-deploy-containers-azure-container-apps.md</code>; <code>05-manage-containers-azure-container-apps.md</code></td>
+</tr>
+<tr>
+<td>Queue and process back-end operations by using Azure Service Bus, including dead-letter queue handling, messages, topics, and subscriptions</td>
+<td>3</td>
+<td>tu tylko wzmianka (scaler Service Bus, §B2); właściciel: moduł kursu Service Bus</td>
+<td>https://learn.microsoft.com/en-us/training/modules/queue-process-operations-service-bus/</td>
+</tr>
+</tbody>
+</table>
+<h2 id="j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</h2>
+<p><em>Źródło: [autor]</em></p>
+<p>Ten moduł pokrywa wszystkie typy reguł skalowania, scalery KEDA dla usług Azure i dla Kafka, Redis, cron i Prometheus, uwierzytelnianie reguł, dobór zasobów oraz tryby rewizji z podziałem ruchu. Nie uczy samych usług, z których czytają scalery (Service Bus, Event Hubs, Storage) ani metod ich użycia w kodzie. Quiz ma tylko 4 pytania, więc egzamin będzie głębszy: ćwicz wartości domyślne (0-10 replik, 10 żądań na replikę, 30 s, 300 s), brak skalowania do zera dla CPU i pamięci, limit partycji oraz poprawne nazwy parametrów (<code>--revisions-mode</code>, <code>--scale-rule-identity</code>).</p></main></body></html>

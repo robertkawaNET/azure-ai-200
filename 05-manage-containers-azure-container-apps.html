@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moduł 05: Zarządzanie kontenerami w Azure Container Apps (rewizje, cykl życia, logi, sondy zdrowia, zasoby)</title><style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#59636e;--bd:#d1d9e0;--code:#f6f8fa;--ac:#0969da;--qb:#f6f8fa}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--bd:#3d444d;--code:#151b23;--ac:#4493f8;--qb:#151b23}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+nav.top{font-size:14px;color:var(--mut);margin-bottom:16px}
+a{color:var(--ac)}
+h1,h2,h3,h4{line-height:1.25;margin:1.6em 0 .6em}
+h1{font-size:2em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h3{font-size:1.2em}
+pre{background:var(--code);border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;font-size:14px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--code);padding:.15em .35em;border-radius:4px}
+pre code{background:none;padding:0}
+.codehilite{background:var(--code)!important}
+.codehilite pre{margin:0;border:0;padding:0;background:none}
+.codehilite{border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;margin:1em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--bd);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+blockquote{margin:1em 0;padding:.2em 1em;border-left:4px solid var(--bd);color:var(--mut);background:var(--qb)}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--bd);margin:2em 0}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+@media (prefers-color-scheme:dark){pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */}
+
+@page{size:A4;margin:16mm 14mm}
+@media print{
+:root{--bg:#fff;--fg:#000;--mut:#333;--bd:#999;--code:#f3f3f3;--ac:#000;--qb:#f3f3f3}
+body{font-size:10.5pt;line-height:1.45}
+main{max-width:none;padding:0}
+nav.top{display:none}
+h1,h2,h3,h4{break-after:avoid}
+h2{break-before:auto}
+pre,.codehilite,table,blockquote,tr{break-inside:avoid}
+pre,.codehilite pre,code{white-space:pre-wrap;word-break:break-word;font-size:8.5pt}
+.codehilite{overflow:visible}
+table{display:table;font-size:9pt;width:100%}
+a{text-decoration:none}
+a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
+}
+</style></head>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-05-zarzadzanie-kontenerami-w-azure-container-apps-rewizje-cykl-zycia-logi-sondy-zdrowia-zasoby">Moduł 05: Zarządzanie kontenerami w Azure Container Apps (rewizje, cykl życia, logi, sondy zdrowia, zasoby)</h1>
+<p>Moduł Microsoft Learn: <strong>Manage containers in Azure Container Apps</strong> - https://learn.microsoft.com/en-us/training/modules/manage-containers-azure-container-apps/
+Cel: po tym module umiesz bezpiecznie aktualizować obraz i zarządzać rewizjami, uruchamiać, zatrzymywać i restartować aplikację, diagnozować nieudaną rewizję po logach, skonfigurować sondy zdrowia (liveness, readiness) oraz dobrać CPU i pamięć.
+Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 68 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą eksperymenty i ćwiczenie z SDK). Wymagania: Azure CLI, Python 3.12, ćwiczenie I1 korzysta z plików aplikacji z ćwiczenia I1 modułu 04 (<code>04-deploy-containers-azure-container-apps.md</code>). Koszt: ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze (ACR, środowisko Container Apps, Log Analytics) - szczegóły w polach <strong>Koszt</strong>.</p>
+<p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
+<hr />
+<h1 id="czesc-a-aktualizacja-obrazow-i-rewizje">CZĘŚĆ A - AKTUALIZACJA OBRAZÓW I REWIZJE</h1>
+<h2 id="a1-tagi-i-digesty-kiedy-ktore">A1. Tagi i digesty: kiedy które</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p><strong>Tag</strong> obrazu (np. <code>dev</code>, <code>v2</code>) to wygodna, ale <strong>zmienna</strong> etykieta: ten sam tag może z czasem wskazywać inny obraz. <strong>Digest</strong> (skrót <code>sha256:...</code>) to <strong>niezmienny</strong> identyfikator konkretnej zawartości obrazu. Dla AI ważna jest identyfikowalność: chcesz powiązać zachowanie usługi z konkretnym buildem modelu. Gdy odwołujesz się do digestu, możesz udowodnić, jaki artefakt obsługiwał żądania podczas incydentu. Tag traktuj jako wygodę, nie gwarancję niezmienności.</p>
+<p>(egzamin je lubi: produkcja = digest, np. <code>myregistry.azurecr.io/myapp@sha256:&lt;digest&gt;</code>; tag <code>latest</code> nie daje identyfikowalności)</p>
+<h2 id="a2-aktualizacja-obrazu-tworzy-nowa-rewizje">A2. Aktualizacja obrazu tworzy nową rewizję</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Zmiana obrazu tworzy nową rewizję z nowym szablonem. Zanim skierujesz na nią ruch, sprawdzasz jej zdrowie; dzięki temu ruch produkcyjny nie trafia do rewizji, która nie startuje, nie przechodzi sond albo pada pod obciążeniem.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp update \
+  --name &lt;app-name&gt; \
+  --resource-group &lt;resource-group&gt; \
+  --image &lt;registry&gt;/&lt;repo&gt;@sha256:&lt;digest&gt;      # (1)
+
+az containerapp show \
+  --name &lt;app-name&gt; \
+  --resource-group &lt;resource-group&gt; \
+  --query properties.template.containers          # (2)
+</code></pre></div>
+
+<p>Objaśnienie: (1) aktualizacja obrazu po digeście; (2) odczyt szablonu kontenerów, żeby potwierdzić, jaki obraz zapisała platforma.</p>
+<p>Przypomnienie z modułu 04 (szczegóły: <code>04-deploy-containers-azure-container-apps.md</code> §B4): nową rewizję tworzą tylko zmiany w sekcji <code>template</code> (revision-scope), a nie zmiany w <code>configuration</code> (np. ingress, wartości sekretów). [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
+<h2 id="a3-tryby-rewizji-i-znaczenie-sowa-active">A3. Tryby rewizji i znaczenie słowa "active"</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p><strong>Tryb rewizji</strong> (revision mode) określa, ile rewizji może być aktywnych naraz:</p>
+<table>
+<thead>
+<tr>
+<th>Tryb</th>
+<th>Co robi</th>
+<th>Kiedy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Single</strong></td>
+<td>tylko jedna aktywna rewizja</td>
+<td>prostsze operacje; brak zaawansowanych rolloutów</td>
+</tr>
+<tr>
+<td><strong>Multiple</strong></td>
+<td>wiele aktywnych rewizji naraz</td>
+<td>canary (wdrożenie na małej części ruchu) i podział ruchu (traffic splitting), np. test nowej wersji modelu</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Active</strong> to stan operacyjny: rewizja może przyjmować ruch. Rewizja może istnieć, ale nie być aktywna; nieaktywne warto trzymać do badania awarii i planowania wycofania (rollback). Podczas awarii często najpierw <strong>dezaktywujesz</strong> problematyczną rewizję, żeby nie dostawała ruchu.</p>
+<p>Wartości parametru CLI <code>--revisions-mode</code>: <code>labels</code>, <code>multiple</code>, <code>single</code>. Zmiana trybu rewizji to zmiana application-scope. Podział ruchu i etykiety omawia moduł 06. [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest] [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
+<h2 id="a4-lista-szczegoy-dezaktywacja-i-porzadki">A4. Lista, szczegóły, dezaktywacja i porządki</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Rewizje to jednostka, którą badasz podczas rolloutu. Lista pokazuje, która jest aktywna; <code>show</code> pozwala porównać konfigurację działającej rewizji z uszkodzoną.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp revision list --name &lt;app-name&gt; --resource-group &lt;resource-group&gt; -o table
+
+az containerapp revision show --name &lt;app-name&gt; --resource-group &lt;resource-group&gt; \
+  --revision &lt;revision-name&gt;
+
+az containerapp revision deactivate --name &lt;app-name&gt; --resource-group &lt;resource-group&gt; \
+  --revision &lt;revision-name&gt;
+</code></pre></div>
+
+<p><strong>Dezaktywacja jest bezpieczniejszym pierwszym krokiem niż usunięcie</strong>, bo zachowuje dowody i opcje wycofania. Gdy incydent minie i stare rewizje nie są już potrzebne, usuwasz je w ramach higieny (<code>az containerapp revision delete</code>). Wynika z tego odróżnienie dla egzaminu: <code>deactivate</code> zdejmuje rewizję z ruchu bez kasowania; <code>delete</code> kasuje; <code>az containerapp stop</code> zatrzymuje całą aplikację, a to zwykle zbyt szeroki ruch, gdy zły jest jeden release.</p>
+<p>Dodatkowo CLI ma <code>az containerapp revision activate</code> (ponowna aktywacja), <code>az containerapp revision restart --revision &lt;nazwa&gt;</code> (restart pojedynczej rewizji, np. by pobrała nową wartość sekretu) i <code>az containerapp revision set-mode</code>. [docs: https://learn.microsoft.com/azure/container-apps/revisions-manage] [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
+<h2 id="a5-dobre-praktyki-bezpiecznego-rolloutu-i-retencja">A5. Dobre praktyki bezpiecznego rolloutu i retencja</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<ul>
+<li><strong>Używaj digestów na produkcji:</strong> niezmienne odwołanie do audytu po incydencie.</li>
+<li><strong>Sprawdź zdrowie rewizji przed przesunięciem ruchu:</strong> status rewizji, sygnały sond i logi.</li>
+<li><strong>Dezaktywuj przed badaniem:</strong> zachowuje dowody i zmniejsza ryzyko.</li>
+<li><strong>Zdefiniuj retencję:</strong> Container Apps automatycznie czyści nieaktywne rewizje po przekroczeniu <strong>100</strong>; próg zmienisz parametrem <code>--max-inactive-revisions</code>. Dokumentacja potwierdza domyślne 100 nieaktywnych rewizji; w lokalnym teście (CLI 2.90.0, rozszerzenie 1.3.0b6) parametr jest oznaczony jako <strong>Preview</strong>. [docs: https://learn.microsoft.com/azure/container-apps/revisions] [autor: test 2026-11-22]</li>
+</ul>
+<hr />
+<h1 id="czesc-b-cykl-zycia-aplikacji">CZĘŚĆ B - CYKL ŻYCIA APLIKACJI</h1>
+<h2 id="b1-stop-restart-czy-skalowanie-do-zera">B1. Stop, restart czy skalowanie do zera</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Zarządzanie cyklem życia wspiera kontrolę kosztów i reakcję na incydenty. Czasem trzeba wstrzymać usługę podczas awarii dostawcy, zrestartować po zmianie konfiguracji albo zawęzić skutki, badając złą rewizję.</p>
+<table>
+<thead>
+<tr>
+<th>Akcja</th>
+<th>Charakter</th>
+<th>Kiedy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skalowanie do zera (scale to zero)</td>
+<td>wynika z konfiguracji skalowania</td>
+<td>usługi sterowane zdarzeniami, ruch sporadyczny</td>
+</tr>
+<tr>
+<td><strong>Stop</strong></td>
+<td>jawna decyzja operacyjna</td>
+<td>gwarancja, że aplikacja nie uruchomi replik na czas mitygacji</td>
+</tr>
+<tr>
+<td><strong>Restart</strong></td>
+<td>pomiędzy tymi dwoma</td>
+<td>zmiana konfiguracji ma zadziałać od razu lub proces się zawiesił (deadlock, chwilowy problem zależności)</td>
+</tr>
+</tbody>
+</table>
+<p>Dla usług AI, które ładują duży model przy starcie, zbyt częsty restart zwiększa liczbę zimnych startów, więc restartuj z namysłem.</p>
+<h2 id="b2-start-i-stop-aplikacji">B2. Start i stop aplikacji</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Start i stop działają na <strong>całą aplikację</strong>, więc bywają zbyt szerokie, gdy problem dotyczy jednej rewizji; wtedy bezpieczniejsza jest dezaktywacja rewizji.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp stop  --name &lt;app-name&gt; --resource-group &lt;resource-group&gt;
+az containerapp start --name &lt;app-name&gt; --resource-group &lt;resource-group&gt;
+</code></pre></div>
+
+<p>Przetestuj akcje cyklu życia w środowisku nieprodukcyjnym, zanim włączysz je do zautomatyzowanej reakcji na incydent.</p>
+<h2 id="b3-restart-aplikacji-po-zym-stanie-uruchomieniowym">B3. Restart aplikacji po złym stanie uruchomieniowym</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Restart wymusza restart replik i może wyczyścić chwilowe stany awarii. Nie zastępuje szukania przyczyny: połącz go z oglądaniem logów, żeby wiedzieć, czy naprawił problem, czy tylko odsunął następną awarię.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp restart --name &lt;app-name&gt; --resource-group &lt;resource-group&gt;
+</code></pre></div>
+
+<h2 id="b4-powtarzalna-lista-kontrolna-dla-nieudanej-rewizji">B4. Powtarzalna lista kontrolna dla nieudanej rewizji</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Najpierw potwierdź, <strong>która</strong> rewizja zawodzi i czy stan zdrowia raportowany przez platformę zgadza się z logami. Typowe wzorce awarii:</p>
+<table>
+<thead>
+<tr>
+<th>Wzorzec</th>
+<th>Objaw / przyczyna</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Image pull failures</strong> (błędy pobierania obrazu)</td>
+<td>brakujące lub błędne poświadczenia rejestru albo zła referencja obrazu</td>
+</tr>
+<tr>
+<td><strong>Port mismatches</strong> (niezgodne porty)</td>
+<td>kontener nasłuchuje na innym porcie, niż oczekuje ingress</td>
+</tr>
+<tr>
+<td><strong>Missing configuration</strong> (brak konfiguracji)</td>
+<td>brak lub błędna nazwa zmiennych środowiskowych albo sekretów</td>
+</tr>
+<tr>
+<td><strong>Probe failures</strong> (błędy sond)</td>
+<td>sonda liveness lub readiness wskazuje złą ścieżkę albo nie daje czasu na załadowanie modelu</td>
+</tr>
+<tr>
+<td><strong>Resource pressure</strong> (brak zasobów)</td>
+<td>kontener ginie przez limit pamięci lub zwalnia przez ograniczanie CPU (throttling)</td>
+</tr>
+</tbody>
+</table>
+<p>Zapytanie na początek, porównujące rewizje jednym rzutem oka:</p>
+<div class="codehilite"><pre><span></span><code>az containerapp revision list \
+  --name &lt;app-name&gt; \
+  --resource-group &lt;resource-group&gt; \
+  --query "[].{name:name,active:properties.active,health:properties.healthState}" \
+  -o table
+</code></pre></div>
+
+<hr />
+<h1 id="czesc-c-logi-i-rozwiazywanie-problemow">CZĘŚĆ C - LOGI I ROZWIĄZYWANIE PROBLEMÓW</h1>
+<h2 id="c1-strumieniowanie-logow">C1. Strumieniowanie logów</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Logi to główny sygnał diagnostyczny w zarządzanej platformie kontenerów: wiążą żądania z wersjami modelu, tłumaczą skoki opóźnień i pokazują błędy zależności bez dostępu do powłoki kontenera. Container Apps integruje się z Azure Monitor, a w trakcie incydentu możesz też oglądać logi na żywo (<strong>log streaming</strong>). Dostęp do logów zależy od konfiguracji środowiska: sprawdź, czy środowisko jest połączone z Log Analytics albo użyj strumieniowania.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp logs show \
+  --name &lt;app-name&gt; \
+  --resource-group &lt;resource-group&gt; \
+  --follow
+</code></pre></div>
+
+<p>Strumień jest przydatny, gdy da się szybko odtworzyć błąd (żądanie z wyjątkiem, pętla awarii nowej rewizji). Łącz go z logowaniem strukturalnym, żeby filtrować po identyfikatorach żądania i rewizji.</p>
+<h2 id="c2-logi-ktore-pomagaja-przy-ai">C2. Logi, które pomagają przy AI</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Usługi AI zachowują się różnie dla różnych danych wejściowych, więc logi muszą mieć kontekst, ale bez wrażliwych treści: loguj <strong>identyfikatory i metadane</strong>, a nie surowe dokumenty czy prompty. Zalecane pola:</p>
+<ul>
+<li><strong>Request identifier:</strong> identyfikator korelacji przekazywany między usługami.</li>
+<li><strong>Revision or build identifier:</strong> wartość zgodna z tagiem lub digestem obrazu albo wersją wbudowaną w obraz.</li>
+<li><strong>Model version:</strong> nazwa lub wersja wdrożenia modelu użytego w żądaniu.</li>
+<li><strong>Latency breakdown:</strong> czas całkowity i, jeśli się da, czasy kluczowych zależności.</li>
+</ul>
+<h2 id="c3-procedura-dla-awarii-zwiazanej-z-jedna-rewizja">C3. Procedura dla awarii związanej z jedną rewizją</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Awarie rewizji dzielą się na: błędy startu, błędy sond, błędy konfiguracji i wyjątki w czasie działania. Aplikacja może np. zakończyć się od razu przez brak zmiennej środowiskowej albo wystartować, ale nie przejść readiness przez złą ścieżkę. Procedura, która szybko zawęża zakres:</p>
+<ol>
+<li>Potwierdź, która rewizja jest aktywna, a która zawodzi.</li>
+<li>Strumieniuj logi podczas odtwarzania problemu lub startu uszkodzonej rewizji.</li>
+<li>Porównaj konfigurację działającej i uszkodzonej rewizji.</li>
+<li>Zastosuj celową poprawkę i sprawdź, czy kolejna rewizja staje się gotowa.</li>
+</ol>
+<h2 id="c4-historia-logow-log-analytics-i-kql">C4. Historia logów: Log Analytics i KQL</h2>
+<p><em>Źródło: [unit 7] + [docs: https://learn.microsoft.com/azure/container-apps/log-monitoring]</em></p>
+<p><code>az containerapp logs show</code> pokazuje tylko niedawne logi konsoli. Historię trzymasz w obszarze <strong>Log Analytics</strong> środowiska i odpytujesz językiem <strong>KQL</strong> (Kusto Query Language, język zapytań do logów). [unit 7]</p>
+<p>Dokumentacja podaje trzy typy logów: <strong>console</strong> (stdout/stderr kontenerów), <strong>system</strong> (generowane przez usługę) i <strong>HTTP</strong> (warstwa ingress, po włączeniu diagnostic settings). Tabele (kategoria Custom logs): <code>ContainerAppConsoleLogs_CL</code> i <code>ContainerAppSystemLogs_CL</code>. W tabeli konsoli ważne kolumny to <code>ContainerAppName_s</code> (nazwa aplikacji), <code>RevisionName_s</code> (rewizja), <code>ContainerGroupName_g</code> (replika) i <code>Log_s</code> (komunikat). Nowe wpisy pojawiają się z opóźnieniem kilku minut. [docs: https://learn.microsoft.com/azure/container-apps/log-monitoring]</p>
+<div class="codehilite"><pre><span></span><code>WORKSPACE_ID=$(az containerapp env show -n $ACA_ENVIRONMENT -g $RESOURCE_GROUP \
+    --query properties.appLogsConfiguration.logAnalyticsConfiguration.customerId -o tsv)   # (1)
+
+az monitor log-analytics query -w $WORKSPACE_ID \
+    --analytics-query "ContainerAppConsoleLogs_CL | where ContainerAppName_s == '$CONTAINER_APP_NAME' | project TimeGenerated, Log_s | order by TimeGenerated desc | take 20" \
+    -o table                                                                                  # (2)
+</code></pre></div>
+
+<p>Objaśnienie: (1) <code>customerId</code> obszaru Log Analytics wzięty ze środowiska; (2) 20 ostatnich komunikatów aplikacji. [unit 7] Wariant z błędami: dodaj <code>and Log_s contains 'error'</code>. Do zapytań potrzebne jest rozszerzenie <code>log-analytics</code> (<code>az extension add --name log-analytics</code>). [unit 7]</p>
+<hr />
+<h1 id="czesc-d-sondy-zdrowia-health-probes">CZĘŚĆ D - SONDY ZDROWIA (HEALTH PROBES)</h1>
+<h2 id="d1-readiness-kontra-liveness-i-startup">D1. Readiness kontra liveness (i startup)</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</em></p>
+<p><strong>Sonda</strong> (probe) to cykliczne sprawdzenie repliki. Sondy chronią użytkowników podczas rolloutów, bo nie wpuszczają ruchu do niezdrowych replik.</p>
+<table>
+<thead>
+<tr>
+<th>Sonda</th>
+<th>Pytanie</th>
+<th>Skutek porażki</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Readiness</strong> (gotowość)</td>
+<td>"Czy ta replika może teraz przyjąć ruch?"</td>
+<td>platforma przestaje kierować do niej żądania</td>
+</tr>
+<tr>
+<td><strong>Liveness</strong> (żywotność)</td>
+<td>"Czy proces jest dość zdrowy, by działać dalej?"</td>
+<td>platforma <strong>restartuje</strong> replikę</td>
+</tr>
+<tr>
+<td><strong>Startup</strong> (start, tylko dokumentacja)</td>
+<td>"Czy aplikacja już się uruchomiła?"</td>
+<td>zapobiega przedwczesnym restartom wolno startujących aplikacji</td>
+</tr>
+</tbody>
+</table>
+<p>Dla usługi AI readiness chroni ładowanie modelu i gotowość zależności; liveness to "zawór bezpieczeństwa" dla zakleszczeń i niekontrolowanego wzrostu pamięci. Zbyt agresywna liveness powoduje zbędne restarty i zimne starty. [unit 5] Typy sond w dokumentacji: <code>Liveness</code>, <code>Readiness</code>, <code>Startup</code>; protokół HTTP (<code>httpGet</code>) lub TCP (<code>tcpSocket</code>); <code>exec</code> nie jest wspierane. [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</p>
+<h2 id="d2-typowe-przyczyny-porazek-sond">D2. Typowe przyczyny porażek sond</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Porażki sond to najczęściej błędy konfiguracji, nie kodu. Sprawdź najpierw: zły <strong>port</strong>, zła <strong>ścieżka</strong>, zbyt krótkie <strong>limity czasu</strong> (timeouts) dla ładowania modelu lub rozgrzewki oraz zależność od wywołania zewnętrznego przy starcie, które zawodzi lub jest wolne.</p>
+<h2 id="d3-konfiguracja-sond-w-szablonie-aplikacji">D3. Konfiguracja sond w szablonie aplikacji</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Sondy leżą obok definicji kontenera. Endpoint ma zwracać sukces dopiero, gdy usługa naprawdę jest gotowa.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on readiness and liveness probes</span>
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">api</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;registry&gt;/&lt;repo&gt;@sha256:&lt;digest&gt;</span>
+<span class="w">      </span><span class="nt">probes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Readiness</span>
+<span class="w">        </span><span class="nt">httpGet</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/health/ready</span>
+<span class="w">          </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080</span>
+<span class="w">        </span><span class="nt">initialDelaySeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">        </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">        </span><span class="nt">timeoutSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">        </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Liveness</span>
+<span class="w">        </span><span class="nt">httpGet</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/health/live</span>
+<span class="w">          </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8080</span>
+<span class="w">        </span><span class="nt">initialDelaySeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">60</span>
+<span class="w">        </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">        </span><span class="nt">timeoutSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">        </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+</code></pre></div>
+
+<h2 id="d4-rozwiazywanie-problemow-z-sondami-podczas-rolloutu">D4. Rozwiązywanie problemów z sondami podczas rolloutu</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Łącz status rewizji i logi: status mówi, czy platforma uważa rewizję za zdrową, a logi, czy aplikacja wystartowała i jaki endpoint wystawiła. Endpointy sond nie powinny zależeć od zewnętrznych systemów, które mogą być niedostępne podczas incydentu. Jeśli usługa ładuje model przy starcie, dostrój <code>initialDelaySeconds</code> i <code>failureThreshold</code>. Gdy liveness zawodzi krótko po starcie, jest albo zbyt agresywna, albo proces szybko pada przez złą konfigurację.</p>
+<h2 id="d5-domyslne-sondy-i-limity-z-dokumentacji">D5. Domyślne sondy i limity (z dokumentacji)</h2>
+<p><em>Źródło: [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</em></p>
+<p>Gdy włączysz ingress i nie zdefiniujesz danego typu sondy, platforma dodaje <strong>domyślne sondy TCP</strong> na porcie docelowym ingress (poza profilami GPU). Przy sondach TCP porty muszą się zgadzać z <code>targetPort</code> ingress. [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</p>
+<table>
+<thead>
+<tr>
+<th>Sonda</th>
+<th>Domyślnie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Startup</td>
+<td>TCP, timeout 3 s, period 1 s, initial delay 1 s, success 1, failure <strong>240</strong></td>
+</tr>
+<tr>
+<td>Readiness</td>
+<td>TCP, timeout 5 s, period 5 s, initial delay 3 s, success 1, failure <strong>48</strong></td>
+</tr>
+<tr>
+<td>Liveness</td>
+<td>TCP na porcie ingress (bez dodatkowych parametrów w tabeli)</td>
+</tr>
+</tbody>
+</table>
+<p>Limity wartości: <code>initialDelaySeconds</code> 1-60; <code>periodSeconds</code> 1-240 (domyślnie 10); <code>timeoutSeconds</code> 1-240 (domyślnie 1); <code>failureThreshold</code> 1-10 (domyślnie 3); <code>successThreshold</code> 1-10 (domyślnie 1, <strong>musi być 1</strong> dla liveness i startup). W trybie Single ruch przechodzi na nową rewizję automatycznie po sukcesie readiness; w trybie Multiple poczekaj na sukces readiness przed przesunięciem ruchu. Rewizja jest oznaczona jako niezdrowa, jeśli <strong>którakolwiek</strong> replika oblewa readiness. [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: strony health-probes i szablonu <code>Microsoft.App/containerApps</code> w docs): wartości domyślne i limity jak wyżej; schemat sond zmienia się z wersjami API, więc moduł słusznie radzi sprawdzić aktualny schemat przed użyciem. Przed użyciem sprawdź https://learn.microsoft.com/azure/container-apps/health-probes.</p>
+</blockquote>
+<p>(egzamin je lubi: readiness = ruch, liveness = restart; limit <code>initialDelaySeconds</code> to 60; <code>successThreshold</code> musi być 1 dla liveness i startup)</p>
+<hr />
+<h1 id="czesc-e-optymalizacja-zasobow-i-skalowania">CZĘŚĆ E - OPTYMALIZACJA ZASOBÓW I SKALOWANIA</h1>
+<h2 id="e1-rozmiar-repliki-a-cakowity-koszt">E1. Rozmiar repliki a całkowity koszt</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>Zasoby i skalowanie decydują, czy usługa AI jest responsywna i mieści się w budżecie. Za mało CPU = ograniczanie (<strong>throttling</strong>) i skoki opóźnień; za mało pamięci = restarty i powtarzane zimne starty. Container Apps skaluje przez dodawanie i usuwanie replik. Koszt całkowity to rozmiar repliki (CPU i pamięć) razy liczba replik potrzebna w szczycie. Dla API mierz opóźnienie pod współbieżnością i obserwuj throttling; dla workerów mierz przepustowość i obserwuj presję pamięci.</p>
+<h2 id="e2-zmiana-cpu-i-pamieci">E2. Zmiana CPU i pamięci</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<div class="codehilite"><pre><span></span><code>az containerapp update \
+  --name &lt;app-name&gt; \
+  --resource-group &lt;resource-group&gt; \
+  --cpu &lt;cores&gt; \
+  --memory &lt;size&gt;
+</code></pre></div>
+
+<p>Po zmianie sprawdź, czy opóźnienie spadło i czy rewizja jest stabilna pod obciążeniem (zmiana CPU/pamięci to zmiana w <code>template</code>, więc powstaje nowa rewizja). W tekście pomocy CLI przy tych parametrach podano zakresy <strong>0.25-2.0</strong> rdzeni oraz <strong>0.5-4.0</strong> z końcówką <code>Gi</code> (np. <code>1.0Gi</code>). [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest]</p>
+<h2 id="e3-skalowanie-synchroniczne-api-a-worker-w-tle">E3. Skalowanie: synchroniczne API a worker w tle</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>API synchroniczne potrzebuje stabilnej gotowości i przewidywalnych opóźnień, więc często ustawia się <strong>minimalną liczbę replik</strong> (mniej zimnych startów). Worker w tle zwykle zniesie skalowanie do zera, jeśli jest sterowany zdarzeniami i potrafi bezpiecznie dokończyć pracę przy zmniejszaniu liczby replik. Rollout tworzy nowe repliki; przy wolnym starcie mogą dłużej nie być gotowe, więc <strong>dopasuj skalowanie do konfiguracji sond</strong>, żeby rollout nie wyglądał na nieudany tylko dlatego, że rozgrzewka trwa. Szczegóły reguł skalowania: moduł 06.</p>
+<h2 id="e4-dobre-praktyki-kosztu-i-wydajnosci">E4. Dobre praktyki kosztu i wydajności</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>Optymalizacja jest iteracyjna: zmieniaj jedną zmienną naraz, żeby wiedzieć, co poprawiło przepustowość lub opóźnienie.</p>
+<ul>
+<li><strong>Size for the bottleneck:</strong> zwiększ CPU przy throttlingu, pamięć przy restartach z braku pamięci (OOM).</li>
+<li><strong>Align concurrency with CPU:</strong> przy dużej współbieżności sprawdź, czy CPU repliki ją wytrzyma.</li>
+<li><strong>Use minimum replicas intentionally:</strong> minimum zmniejsza zimne starty, ale podnosi koszt bazowy. Dokumentacja: replika skalowana do zera nie generuje kosztu zasobów, a nieczynne repliki przy minimum &gt;0 są liczone stawką idle. [docs: https://learn.microsoft.com/azure/container-apps/billing]</li>
+<li><strong>Reassess after model changes:</strong> nowe wersje modeli zmieniają czas startu, zużycie pamięci i opóźnienia.</li>
+</ul>
+<hr />
+<h1 id="czesc-f-cwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
+<p>Przeczytaj części A-E. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze: rób je w osobnych grupach zasobów i zawsze wykonuj <strong>Sprzątanie</strong>. Kod aplikacji i SDK jest w Pythonie; odpowiednik C# jest w ćwiczeniu z kodem (I3).</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, <code>az version</code>, testy lokalne): Python 3.12; azure-mgmt-appcontainers 5.1.0; azure-identity 1.27.0; azure-monitor-query <strong>2.0.0</strong> (2025-07-30); C#: .NET SDK 10.0, Azure.ResourceManager.AppContainers 1.6.0, Azure.Identity 1.21.0, Azure.Monitor.Query.Logs <strong>1.0.0</strong> (nowy pakiet; starszy Azure.Monitor.Query ma 1.7.1); Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6 (beta). Przed użyciem sprawdź PyPI i NuGet.</p>
+</blockquote>
+<h2 id="i1-diagnoza-brakujacej-zmiennej-zego-portu-i-historii-logow-lab-moduu">I1. Diagnoza brakującej zmiennej, złego portu i historii logów (lab modułu)</h2>
+<p>(rozwinięcie jednostki 7; scenariusz: [unit 7])</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash), katalog z plikami <code>api/main.py</code>, <code>api/requirements.txt</code>, <code>api/Dockerfile</code> z ćwiczenia I1 w <code>04-deploy-containers-azure-container-apps.md</code> (pełny kod jest tam).</p>
+<blockquote>
+<p>Uwaga o labie: lab Microsoftu startuje od skryptu <code>azdeploy.py</code> z paczki <code>aca-manage-python.zip</code> (opcje menu 1: rejestr i obraz, 2: środowisko, 3: aplikacja z sekretami); tutaj te kroki robisz ręcznie. Lab wymaga planu Pay-As-You-Go lub innego płatnego (zadania ACR Tasks wstrzymane dla darmowych kredytów) [unit 7].</p>
+</blockquote>
+<p>Przygotowanie (zmienne ustaw raz, w jednej sesji):</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-manage-i1<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westeurope
+<span class="nv">ACR_NAME</span><span class="o">=</span>acrmanage<span class="nv">$RANDOM$RANDOM</span><span class="p">;</span><span class="w"> </span><span class="nv">ACA_ENVIRONMENT</span><span class="o">=</span>aca-env-i1<span class="p">;</span><span class="w"> </span><span class="nv">CONTAINER_APP_NAME</span><span class="o">=</span>ai-api<span class="p">;</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span>gpt-5.4-mini
+az<span class="w"> </span>extension<span class="w"> </span>add<span class="w"> </span>--name<span class="w"> </span>containerapp<span class="w"> </span>--upgrade<span class="p">;</span><span class="w"> </span>az<span class="w"> </span>extension<span class="w"> </span>add<span class="w"> </span>--name<span class="w"> </span>log-analytics
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.App
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.OperationalInsights
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.ContainerRegistry
+
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>acr<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--sku<span class="w"> </span>Basic<span class="w"> </span>--admin-enabled<span class="w"> </span><span class="nb">false</span>
+az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>ai-api:v1<span class="w"> </span>--file<span class="w"> </span>api/Dockerfile<span class="w"> </span>api
+az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACA_ENVIRONMENT</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--environment<span class="w"> </span><span class="nv">$ACA_ENVIRONMENT</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--image<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io/ai-api:v1<span class="w"> </span>--ingress<span class="w"> </span>external<span class="w"> </span>--target-port<span class="w"> </span><span class="m">8000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--env-vars<span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--registry-server<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io<span class="w"> </span>--registry-identity<span class="w"> </span>system
+<span class="nv">FQDN</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>properties.configuration.ingress.fqdn<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$FQDN</span>/<span class="w">            </span><span class="c1"># model powinien byc "gpt-5.4-mini"</span>
+</code></pre></div>
+
+<p>Awarie (po kolei):</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># --- Awaria 1: brak zmiennej MODEL_NAME ---</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--remove-env-vars<span class="w"> </span>MODEL_NAME<span class="w">          </span><span class="c1"># (1)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>-o<span class="w"> </span>table<span class="w">                       </span><span class="c1"># (2)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$FQDN</span>/<span class="w">                                                                     </span><span class="c1"># (3)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s2">"properties.template.containers[0].env"</span><span class="w"> </span>-o<span class="w"> </span>table<span class="w">                               </span><span class="c1"># (4)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--set-env-vars<span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w"> </span><span class="c1"># (5)</span>
+
+<span class="c1"># --- Awaria 2: zly port docelowy ingress ---</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>ingress<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--target-port<span class="w"> </span><span class="m">3000</span><span class="w">            </span><span class="c1"># (6)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$FQDN</span>/health<span class="w">                                                               </span><span class="c1"># (7)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s2">"properties.configuration.ingress"</span><span class="w"> </span>-o<span class="w"> </span>yaml<span class="w">                                     </span><span class="c1"># (8)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>logs<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w">                                    </span><span class="c1"># (9)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>ingress<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$CONTAINER_APP_NAME</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--target-port<span class="w"> </span><span class="m">8000</span><span class="w">            </span><span class="c1"># (10)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$FQDN</span>/health
+
+<span class="c1"># --- Historia logow (KQL) ---</span>
+<span class="nv">WORKSPACE_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$ACA_ENVIRONMENT</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span>properties.appLogsConfiguration.logAnalyticsConfiguration.customerId<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span><span class="w">   </span><span class="c1"># (11)</span>
+az<span class="w"> </span>monitor<span class="w"> </span>log-analytics<span class="w"> </span>query<span class="w"> </span>-w<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--analytics-query<span class="w"> </span><span class="s2">"ContainerAppConsoleLogs_CL | where ContainerAppName_s == '</span><span class="nv">$CONTAINER_APP_NAME</span><span class="s2">' | project TimeGenerated, Log_s | order by TimeGenerated desc | take 20"</span><span class="w"> </span>-o<span class="w"> </span>table
+az<span class="w"> </span>monitor<span class="w"> </span>log-analytics<span class="w"> </span>query<span class="w"> </span>-w<span class="w"> </span><span class="nv">$WORKSPACE_ID</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--analytics-query<span class="w"> </span><span class="s2">"ContainerAppConsoleLogs_CL | where ContainerAppName_s == '</span><span class="nv">$CONTAINER_APP_NAME</span><span class="s2">' and Log_s contains 'error' | order by TimeGenerated desc | take 20"</span><span class="w"> </span>-o<span class="w"> </span>table
+</code></pre></div>
+
+<p>Objaśnienie: (1) usunięcie zmiennej tworzy nową rewizję (zmiana w <code>template</code>); (2) nowa rewizja z wyższym sufiksem, np. <code>ai-api--0000002</code>, ma <code>TrafficWeight</code> 100 [unit 7]; (3) <code>model</code> zmienia się na wartość domyślną <code>not-configured</code> (to zachowanie aplikacji z <code>os.getenv(..., "not-configured")</code>); (4) potwierdzenie braku zmiennej w konfiguracji; (5) naprawa; (6) zmiana portu docelowego; (7) żądanie zawodzi; (8) w ingress widać <code>targetPort: 3000</code>; (9) logi pokazują <code>gunicorn</code> nasłuchujący na porcie 8000, co dowodzi niezgodności; (10) naprawa; (11) <code>customerId</code> obszaru Log Analytics. [unit 7] Opcjonalnie <code>| jq .model</code> (narzędzie <code>jq</code> filtruje JSON) przy wywołaniu <code>/</code>.</p>
+<p>Typowe problemy z labu [unit 7]: aplikacja nie odpowiada - sprawdź <code>az containerapp revision list</code> (czy rewizja jest aktywna) i <code>az containerapp show</code> (konfiguracja ingress); brak logów - logi konsoli z CLI są tylko niedawne, a dane w Log Analytics pojawiają się po 2-5 minutach; zmienne nie działają - zmiana zmiennych tworzy nową rewizję, więc sprawdź, czy jest aktywna, i pamiętaj, że <code>--replace-env-vars</code> zastępuje <strong>wszystkie</strong> zmienne, nie tylko wskazane.</p>
+<p><strong>Koszt:</strong> jak w <code>04-deploy-containers-azure-container-apps.md</code> I1: ACR Basic naliczany dziennie (stawka: Niesprawdzone - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/); Container Apps plan Consumption ma miesięczne darmowe progi 180 000 vCPU-s, 360 000 GiB-s i 2 mln żądań; Log Analytics rozlicza ilość logów [docs: https://learn.microsoft.com/azure/container-apps/billing]. Kilka godzin pracy to grosze-kilka złotych po Sprzątaniu.</p>
+<p><strong>Zadania:</strong> (a) wykonaj przygotowanie i obie awarie; (b) <strong>zepsuj to:</strong> w awarii 2 zmierz, czy zmiana <code>--target-port</code> utworzyła nową rewizję (porównaj <code>revision list</code> przed i po); (c) zapytaj KQL o logi konsoli; poczekaj kilka minut, jeśli tabela jest jeszcze pusta; (d) porównaj wynik KQL z wynikiem <code>az containerapp logs show</code>.</p>
+<p><strong>Sprawdź:</strong> (a) po awarii 1 <code>/</code> pokazuje <code>"model":"not-configured"</code>, a po naprawie <code>"gpt-5.4-mini"</code>; po awarii 2 <code>/health</code> nie zwraca <code>{"status":"healthy"}</code>, a po naprawie tak; (b) <code>revision list</code> nie pokazuje nowej rewizji po zmianie portu, bo ingress to zmiana application-scope [docs: https://learn.microsoft.com/azure/container-apps/revisions]; (c) tabela zwraca wiersze z <code>Log_s</code> (komunikaty <code>gunicorn</code> i żądań) [unit 7]; (d) <code>logs show</code> daje krótki, niedawny fragment, a KQL historię (limit <code>take 20</code> w obu).</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w">      </span><span class="c1"># po kilku minutach powinno wypisać false</span>
+</code></pre></div>
+
+<h2 id="i2-sondy-zdrowia-w-yaml-i-operacje-cyklu-zycia">I2. Sondy zdrowia w YAML i operacje cyklu życia</h2>
+<p>(rozwinięcie sekcji A3-A4, B1-B3, D3-D5)</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash); plik <code>probes.yml</code>; publiczny obraz quickstart (nie potrzeba ACR).</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-manage-i2<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westeurope
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>aca-env-i2<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+<span class="nv">ENV_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span>aca-env-i2<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$ENV_ID</span><span class="w">     </span><span class="c1"># wklej do probes.yml w miejsce &lt;ID srodowiska&gt;</span>
+</code></pre></div>
+
+<p><code>probes.yml</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">westeurope</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">probe-demo</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Microsoft.App/containerApps</span>
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">managedEnvironmentId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ID środowiska&gt;</span>
+<span class="w">  </span><span class="nt">configuration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">activeRevisionsMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Multiple</span>
+<span class="w">    </span><span class="nt">ingress</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">external</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">web</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mcr.microsoft.com/k8se/quickstart:latest</span>
+<span class="w">      </span><span class="nt">probes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Readiness</span>
+<span class="w">        </span><span class="nt">httpGet</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/</span>
+<span class="w">          </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">        </span><span class="nt">initialDelaySeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">        </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">        </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Liveness</span>
+<span class="w">        </span><span class="nt">httpGet</span><span class="p">:</span>
+<span class="w">          </span><span class="nt">path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/</span>
+<span class="w">          </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">        </span><span class="nt">initialDelaySeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">        </span><span class="nt">periodSeconds</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+<span class="w">        </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">scale</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>containerapp<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>probe-demo<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yaml<span class="w"> </span>./probes.yml<span class="w">                      </span><span class="c1"># (1)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span>probe-demo<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"[].{name:name,active:properties.active,health:properties.healthState}"</span><span class="w"> </span>-o<span class="w"> </span>table<span class="w">   </span><span class="c1"># (2)</span>
+
+<span class="c1"># zepsuj: zmien sciezke readiness w probes.yml z "/" na "/nie-ma-takiej" i zastosuj</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>update<span class="w"> </span>--name<span class="w"> </span>probe-demo<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yaml<span class="w"> </span>./probes.yml<span class="w">                      </span><span class="c1"># (3)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>deactivate<span class="w"> </span>-n<span class="w"> </span>probe-demo<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--revision<span class="w"> </span>&lt;zla-rewizja&gt;<span class="w">                      </span><span class="c1"># (4)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>activate<span class="w">   </span>-n<span class="w"> </span>probe-demo<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--revision<span class="w"> </span>&lt;zla-rewizja&gt;<span class="w">                      </span><span class="c1"># (5)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>restart<span class="w">    </span>-n<span class="w"> </span>probe-demo<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--revision<span class="w"> </span>&lt;dobra-rewizja&gt;<span class="w">                    </span><span class="c1"># (6)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>stop<span class="w">  </span>-n<span class="w"> </span>probe-demo<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w">                                                             </span><span class="c1"># (7)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>start<span class="w"> </span>-n<span class="w"> </span>probe-demo<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) tryb <code>Multiple</code>, żeby obie rewizje mogły współistnieć; sondy HTTP na porcie 80; (2) kolumny <code>active</code> i <code>health</code> z zapytania z jednostki 3; (3) nowa rewizja z błędną ścieżką readiness; (4)-(5) dezaktywacja i ponowna aktywacja; (6) restart jednej rewizji; (7) stop i start całej aplikacji.</p>
+<p><strong>Koszt:</strong> replika z <code>minReplicas: 1</code> działa ciągle w planie Consumption: 0,25 vCPU i 0,5 GiB to około 21 600 vCPU-s i 43 200 GiB-s na dobę (domyślny rozmiar repliki sprawdź w <code>az containerapp show</code>: Niesprawdzone), czyli kilka dni mieści się w darmowych progach miesięcznych (180 000 vCPU-s, 360 000 GiB-s) [docs: https://learn.microsoft.com/azure/container-apps/billing]; Log Analytics rozlicza ilość logów (pomijalna). Mimo to wykonaj Sprzątanie.</p>
+<p><strong>Zadania:</strong> (a) wdróż YAML i sprawdź, że rewizja jest zdrowa; (b) <strong>zepsuj to:</strong> zmień ścieżkę readiness na nieistniejącą i zastosuj YAML; obserwuj <code>healthState</code> nowej rewizji i ruch; (c) zdeaktywuj uszkodzoną rewizję i sprawdź kolumnę <code>active</code>; (d) aktywuj ją ponownie, a potem zrestartuj dobrą rewizję; (e) zatrzymaj i uruchom aplikację.</p>
+<p><strong>Sprawdź:</strong> (a) rewizja ma <code>active = True</code> i stan zdrowia dobry (nazwa wartości w kolumnie <code>health</code> zależy od API: obserwuj różnicę między rewizjami) [autor: niezweryfikowane]; (b) nowa rewizja nie staje się zdrowa, bo readiness oblewa sprawdzenie (rewizja jest oznaczona jako niezdrowa, gdy replika oblewa readiness) [docs: https://learn.microsoft.com/azure/container-apps/health-probes]; (c) <code>active</code> zmienia się na <code>False</code>; (d) <code>active</code> wraca na <code>True</code>, a restart nie tworzy nowej rewizji (to restart tej samej) [autor: niezweryfikowane]; (e) po <code>stop</code> brak działających replik, po <code>start</code> aplikacja wraca [unit 3].</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span>
+</code></pre></div>
+
+<h2 id="i3-rewizje-i-logi-kql-przez-sdk-python-i-odpowiednik-c-net">I3. Rewizje i logi KQL przez SDK: Python i odpowiednik C# (.NET)</h2>
+<p>(rozwinięcie sekcji A4, C4; wymaga aplikacji z I1 przed jej Sprzątaniem)</p>
+<p><strong>Gdzie / Plik:</strong> <code>manage.py</code> (Python) i <code>Program.cs</code> (C#); <code>az login</code>; obszar Log Analytics z I1.</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>azure-mgmt-appcontainers<span class="o">==</span><span class="m">5</span>.1.0<span class="w"> </span>azure-monitor-query<span class="o">==</span><span class="m">2</span>.0.0<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_SUBSCRIPTION_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>account<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RESOURCE_GROUP</span><span class="o">=</span>rg-aca-manage-i1<span class="w"> </span><span class="nv">CONTAINER_APP_NAME</span><span class="o">=</span>ai-api
+<span class="nb">export</span><span class="w"> </span><span class="nv">WORKSPACE_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span>aca-env-i1<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RESOURCE_GROUP</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span>properties.appLogsConfiguration.logAnalyticsConfiguration.customerId<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+</code></pre></div>
+
+<p><code>manage.py</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.mgmt.appcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContainerAppsAPIClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.monitor.query</span><span class="w"> </span><span class="kn">import</span> <span class="n">LogsQueryClient</span><span class="p">,</span> <span class="n">LogsQueryStatus</span>
+
+<span class="n">subscription_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AZURE_SUBSCRIPTION_ID"</span><span class="p">]</span>
+<span class="n">resource_group</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"RESOURCE_GROUP"</span><span class="p">]</span>
+<span class="n">app_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"CONTAINER_APP_NAME"</span><span class="p">]</span>
+<span class="n">workspace_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"WORKSPACE_ID"</span><span class="p">]</span>  <span class="c1"># customerId obszaru Log Analytics</span>
+
+<span class="n">credential</span> <span class="o">=</span> <span class="n">DefaultAzureCredential</span><span class="p">()</span>
+<span class="n">aca</span> <span class="o">=</span> <span class="n">ContainerAppsAPIClient</span><span class="p">(</span><span class="n">credential</span><span class="p">,</span> <span class="n">subscription_id</span><span class="p">)</span>  <span class="c1"># (1)</span>
+
+<span class="c1"># (2) Diagnoza: ktora rewizja jest zdrowa i ma ruch</span>
+<span class="k">for</span> <span class="n">rev</span> <span class="ow">in</span> <span class="n">aca</span><span class="o">.</span><span class="n">container_apps_revisions</span><span class="o">.</span><span class="n">list_revisions</span><span class="p">(</span><span class="n">resource_group</span><span class="p">,</span> <span class="n">app_name</span><span class="p">):</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">rev</span><span class="o">.</span><span class="n">properties</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">rev</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"active ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">active</span><span class="p">,</span> <span class="s2">"traffic ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">traffic_weight</span><span class="p">,</span> <span class="s2">"health ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">health_state</span><span class="p">)</span>
+
+<span class="c1"># (3) Opcjonalnie: restart wskazanej rewizji (np. po zmianie wartosci sekretu)</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">aca</span><span class="o">.</span><span class="n">container_apps_revisions</span><span class="o">.</span><span class="n">restart_revision</span><span class="p">(</span><span class="n">resource_group</span><span class="p">,</span> <span class="n">app_name</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"restart zlecony dla"</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<span class="c1"># (4) Historia logow z Log Analytics (KQL)</span>
+<span class="n">logs</span> <span class="o">=</span> <span class="n">LogsQueryClient</span><span class="p">(</span><span class="n">credential</span><span class="p">)</span>
+<span class="n">kql</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">f</span><span class="s2">"ContainerAppConsoleLogs_CL | where ContainerAppName_s == '</span><span class="si">{</span><span class="n">app_name</span><span class="si">}</span><span class="s2">' "</span>
+    <span class="s2">"| project TimeGenerated, RevisionName_s, Log_s | order by TimeGenerated desc | take 20"</span>
+<span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">logs</span><span class="o">.</span><span class="n">query_workspace</span><span class="p">(</span><span class="n">workspace_id</span><span class="p">,</span> <span class="n">kql</span><span class="p">,</span> <span class="n">timespan</span><span class="o">=</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>  <span class="c1"># (5)</span>
+<span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">LogsQueryStatus</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">tables</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>  <span class="c1"># (6)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"wynik czesciowy:"</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">partial_error</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) klient zarządzania, ten sam wzorzec co w module 04 (<code>04-deploy-containers-azure-container-apps.md</code> I3); (2) lista rewizji ze stanem; (3) <code>restart_revision</code> odpowiada poleceniu <code>az containerapp revision restart</code>; (4) KQL jak w C4; (5) <code>query_workspace</code> wymaga argumentu <code>timespan</code> (przedział czasu); (6) kolejność kolumn w wierszu wynika z <code>project</code>. Skrypt skompilowano (<code>py_compile</code>), a nazwy metod (<code>restart_revision</code>, <code>deactivate_revision</code>, <code>activate_revision</code>, sygnaturę <code>query_workspace</code>) sprawdzono w zainstalowanych pakietach; nie uruchamiano go na prawdziwej subskrypcji [autor: test 2026-11-22].</p>
+<p><strong>Odpowiednik C# (.NET)</strong></p>
+<p>Różnice: logi zapytasz klientem <code>LogsQueryClient</code> z pakietu <strong>Azure.Monitor.Query.Logs</strong> (1.0.0; dawniej pakiet Azure.Monitor.Query), a przedział czasu to <code>LogsQueryTimeRange</code>; wiersze czytasz po nazwie kolumny (<code>row["Log_s"]</code>), nie po indeksie. Restart rewizji to metoda <code>RestartRevisionAsync()</code> na zasobie rewizji. Projekt: <code>dotnet new console -f net10.0</code>, <code>dotnet add package Azure.ResourceManager.AppContainers --version 1.6.0</code>, <code>dotnet add package Azure.Monitor.Query.Logs --version 1.0.0</code>, <code>dotnet add package Azure.Identity --version 1.21.0</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">using</span><span class="w"> </span><span class="nn">Azure.Identity</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.Monitor.Query.Logs</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager.AppContainers</span><span class="p">;</span>
+
+<span class="kt">string</span><span class="w"> </span><span class="n">sub</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"AZURE_SUBSCRIPTION_ID"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">rg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"RESOURCE_GROUP"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">appName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"CONTAINER_APP_NAME"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">workspaceId</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"WORKSPACE_ID"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">credential</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DefaultAzureCredential</span><span class="p">();</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">arm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArmClient</span><span class="p">(</span><span class="n">credential</span><span class="p">);</span>
+<span class="n">ContainerAppResource</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arm</span><span class="p">.</span><span class="n">GetContainerAppResource</span><span class="p">(</span>
+<span class="w">    </span><span class="n">ContainerAppResource</span><span class="p">.</span><span class="n">CreateResourceIdentifier</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span><span class="w"> </span><span class="n">rg</span><span class="p">,</span><span class="w"> </span><span class="n">appName</span><span class="p">));</span>
+
+<span class="c1">// Diagnoza: ktora rewizja jest zdrowa i ma ruch</span>
+<span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="n">ContainerAppRevisionResource</span><span class="w"> </span><span class="n">rev</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">GetContainerAppRevisions</span><span class="p">().</span><span class="n">GetAllAsync</span><span class="p">())</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"{rev.Data.Name} active={rev.Data.IsActive} traffic={rev.Data.TrafficWeight} health={rev.Data.HealthState}"</span><span class="p">);</span>
+
+<span class="c1">// Opcjonalnie: restart wskazanej rewizji (nazwa jako pierwszy argument)</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">Length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">ContainerAppRevisionResource</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">GetContainerAppRevisionAsync</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="n">RestartRevisionAsync</span><span class="p">();</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"restart zlecony dla {args[0]}"</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// Historia logow z Log Analytics (KQL)</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">logs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">LogsQueryClient</span><span class="p">(</span><span class="n">credential</span><span class="p">);</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">kql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">$"ContainerAppConsoleLogs_CL | where ContainerAppName_s == '{appName}' "</span><span class="w"> </span><span class="o">+</span>
+<span class="w">             </span><span class="s">"| project TimeGenerated, RevisionName_s, Log_s | order by TimeGenerated desc | take 20"</span><span class="p">;</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">logs</span><span class="p">.</span><span class="n">QueryWorkspaceAsync</span><span class="p">(</span><span class="n">workspaceId</span><span class="p">,</span><span class="w"> </span><span class="n">kql</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">LogsQueryTimeRange</span><span class="p">(</span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromHours</span><span class="p">(</span><span class="mi">1</span><span class="p">)));</span>
+<span class="k">foreach</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">response</span><span class="p">.</span><span class="n">Value</span><span class="p">.</span><span class="n">Table</span><span class="p">.</span><span class="n">Rows</span><span class="p">)</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"{row["</span><span class="n">TimeGenerated</span><span class="s">"]}  {row["</span><span class="n">RevisionName_s</span><span class="s">"]}  {row["</span><span class="n">Log_s</span><span class="s">"]}"</span><span class="p">);</span>
+</code></pre></div>
+
+<p>[docs: https://learn.microsoft.com/dotnet/api/overview/azure/resourcemanager.appcontainers-readme?view=azure-dotnet] [autor: test 2026-11-22] (kod skompilowano na .NET SDK 10.0.401 z pakietami jak wyżej; nie uruchamiano go na prawdziwej subskrypcji).</p>
+<p><strong>Koszt:</strong> brak kosztu własnego (odczyt i restart); koszt aplikacji i Log Analytics jak w I1.</p>
+<p><strong>Zadania:</strong> (a) uruchom <code>python manage.py</code> i porównaj wynik z <code>az containerapp revision list</code>; (b) <strong>zepsuj to:</strong> uruchom <code>python manage.py nie-ma-takiej-rewizji</code> i przeczytaj błąd; (c) uruchom wersję C# (<code>dotnet run</code>) i porównaj kolumny z KQL z I1.</p>
+<p><strong>Sprawdź:</strong> (a) te same rewizje i stan aktywności co w CLI; (b) błąd "nie znaleziono" dla nazwy rewizji (dokładny komunikat zależy od wersji SDK) [autor: niezweryfikowane]; (c) te same komunikaty <code>Log_s</code>; tabela może być pusta kilka minut po wdrożeniu [docs: https://learn.microsoft.com/azure/container-apps/log-monitoring].</p>
+<p><strong>Sprzątanie:</strong> brak (skrypty tylko czytają i restartują); po I3 wykonaj Sprzątanie I1.</p>
+<hr />
+<h1 id="czesc-g-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<p>Learn nie pokazuje poprawnych odpowiedzi w ocenie modułu, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
+<h2 id="g1-najlepsza-identyfikowalnosc-nowego-obrazu-na-produkcji">G1. Najlepsza identyfikowalność nowego obrazu na produkcji</h2>
+<p>-&gt; <em>Odwołanie po digeście (<code>myregistry.azurecr.io/app@sha256:&lt;digest&gt;</code>).</em> Tag <code>latest</code> nie jest niezmienny, a przebudowa lokalnie w każdym środowisku nie gwarantuje tego samego artefaktu. <em>(odpowiedź wnioskowana: unit 2, sekcja "Use tags and digests intentionally")</em></p>
+<h2 id="g2-zdjecie-rewizji-z-ruchu-bez-kasowania">G2. Zdjęcie rewizji z ruchu bez kasowania</h2>
+<p>-&gt; <em><code>az containerapp revision deactivate</code>.</em> <code>revision delete</code> kasuje rewizję, a <code>az containerapp stop</code> zatrzymuje całą aplikację. <em>(odpowiedź wnioskowana: unit 2, sekcja "List, investigate, and manage revisions")</em></p>
+<h2 id="g3-rewizja-oblewa-readiness-zaraz-po-wdrozeniu-najczestsza-przyczyna">G3. Rewizja oblewa readiness zaraz po wdrożeniu - najczęstsza przyczyna</h2>
+<p>-&gt; <em>Sonda readiness wskazuje zły port lub ścieżkę serwera HTTP kontenera.</em> Zbyt "mały" obraz i brak routingu do internetu nie są typowymi przyczynami porażki readiness. <em>(odpowiedź wnioskowana: unit 5, sekcja "Recognize common probe failure causes")</em></p>
+<h2 id="g4-podejrzewasz-wyjatek-tylko-w-jednej-rewizji-pierwszy-krok">G4. Podejrzewasz wyjątek tylko w jednej rewizji - pierwszy krok</h2>
+<p>-&gt; <em>Strumieniować logi aplikacji i filtrować po rewizji, odtwarzając żądanie.</em> Kasowanie starszych rewizji i zwiększanie CPU/pamięci przed badaniem to nie jest potwierdzenie problemu. <em>(odpowiedź wnioskowana: unit 4, sekcje "Use log streaming" i "Troubleshoot revision-specific failures")</em></p>
+<h2 id="g5-wysokie-opoznienie-i-throttling-cpu-w-szczycie">G5. Wysokie opóźnienie i throttling CPU w szczycie</h2>
+<p>-&gt; <em>Zwiększyć CPU na replikę, a potem ponownie ocenić reguły skalowania względem przepustowości.</em> Dezaktywacja najnowszej rewizji nie rozwiązuje throttlingu, a zamiana digestu na tag nie ma związku z CPU. <em>(odpowiedź wnioskowana: unit 6, sekcja "Best practices for cost and performance: Size for the bottleneck")</em></p>
+<hr />
+<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-czym-rozni-sie-tag-od-digestu-i-ktorego-uzyc-na-produkcji">H1. Czym różni się tag od digestu i którego użyć na produkcji?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Tag jest zmienną etykietą (może wskazywać różne obrazy), digest (<code>sha256:...</code>) jest niezmiennym identyfikatorem zawartości. Na produkcji używaj digestu dla identyfikowalności.</p>
+</details>
+<h2 id="h2-czym-rozni-sie-revision-deactivate-od-revision-delete-i-containerapp-stop">H2. Czym różni się <code>revision deactivate</code> od <code>revision delete</code> i <code>containerapp stop</code>?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>deactivate</code> zdejmuje rewizję z ruchu bez kasowania (zachowuje dowody i rollback); <code>delete</code> usuwa rewizję; <code>stop</code> zatrzymuje całą aplikację, więc jest zbyt szerokie, gdy zła jest jedna rewizja.</p>
+</details>
+<h2 id="h3-ile-nieaktywnych-rewizji-zachowuje-sie-domyslnie-i-jak-zmienic-prog">H3. Ile nieaktywnych rewizji zachowuje się domyślnie i jak zmienić próg?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Domyślnie 100; zmiana przez <code>--max-inactive-revisions</code> (w teście lokalnym oznaczone jako Preview).</p>
+</details>
+<h2 id="h4-co-robi-platforma-gdy-oblewa-sonda-readiness-a-co-przy-liveness">H4. Co robi platforma, gdy oblewa sonda readiness, a co przy liveness?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Readiness: replika nie dostaje ruchu. Liveness: replika jest restartowana. Rewizja jest oznaczona jako niezdrowa, gdy jakakolwiek replika oblewa readiness.</p>
+</details>
+<h2 id="h5-wymien-piec-typowych-wzorcow-awarii-rewizji-z-moduu">H5. Wymień pięć typowych wzorców awarii rewizji z modułu.</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Błędy pobierania obrazu, niezgodność portów, brak konfiguracji (zmienne/sekrety), błędy sond, presja zasobów (limit pamięci, throttling CPU).</p>
+</details>
+<h2 id="h6-ktore-limity-sond-warto-znac">H6. Które limity sond warto znać?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>initialDelaySeconds</code> 1-60; <code>periodSeconds</code> 1-240 (domyślnie 10); <code>timeoutSeconds</code> 1-240 (domyślnie 1); <code>failureThreshold</code> 1-10 (domyślnie 3); <code>successThreshold</code> musi wynosić 1 dla liveness i startup.</p>
+</details>
+<h2 id="h7-jak-sprawdzic-historie-logow-konsoli-aplikacji-sprzed-tygodnia">H7. Jak sprawdzić historię logów konsoli aplikacji sprzed tygodnia?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>W obszarze Log Analytics środowiska: tabela <code>ContainerAppConsoleLogs_CL</code> (kolumny <code>ContainerAppName_s</code>, <code>RevisionName_s</code>, <code>Log_s</code>), np. przez <code>az monitor log-analytics query</code>. <code>az containerapp logs show</code> pokazuje tylko niedawne logi.</p>
+</details>
+<h2 id="h8-co-zwiekszysz-przy-throttlingu-cpu-a-co-przy-restartach-z-braku-pamieci">H8. Co zwiększysz przy throttlingu CPU, a co przy restartach z braku pamięci?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Throttling CPU: więcej CPU na replikę; restarty z braku pamięci: więcej pamięci. Zmieniaj jedną zmienną naraz i oceniaj ponownie reguły skalowania.</p>
+</details>
+<hr />
+<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<p><em>Źródło: [moduł kursu: scale-containers-azure-container-apps] + [moduł kursu: dynamic-sessions-azure-container-apps]</em></p>
+<p>Dalej: moduł 06 (reguły skalowania, KEDA, rewizje i podział ruchu), moduł 07 (dynamic sessions). Wróć do części D, gdy rozwiązujesz zadania o sondach, i do C4, gdy piszesz zapytania KQL o logi.</p>
+<p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30):</p>
+<table>
+<thead>
+<tr>
+<th>Umiejętność (study guide)</th>
+<th>Domena</th>
+<th>Status</th>
+<th>Gdzie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deploy applications to Azure Container Apps, including environment configuration and revision management</td>
+<td>1</td>
+<td>uczone tutaj (zarządzanie rewizjami, część A); wdrożenie i środowisko w module 04</td>
+<td><code>05-manage-containers-azure-container-apps.md</code> §A1-§A5; <code>04-deploy-containers-azure-container-apps.md</code></td>
+</tr>
+<tr>
+<td>Monitor and troubleshoot solutions on AKS and Container Apps by inspecting logs, events, and end-to-end connectivity</td>
+<td>1</td>
+<td>uczone tutaj (część Container Apps: §B4, §C1-§C4, §D4); część AKS w module monitor-apps-azure-kubernetes-service</td>
+<td><code>05-manage-containers-azure-container-apps.md</code> §C1-§C4; https://learn.microsoft.com/en-us/training/modules/monitor-apps-azure-kubernetes-service/</td>
+</tr>
+<tr>
+<td>Implement event-driven scaling by using KEDA in Container Apps</td>
+<td>1</td>
+<td>uczone w module 06 (tu tylko wzmianka o skalowaniu, §E3)</td>
+<td>https://learn.microsoft.com/en-us/training/modules/scale-containers-azure-container-apps/</td>
+</tr>
+<tr>
+<td>Write KQL queries to analyze logs and metrics</td>
+<td>4</td>
+<td>uczone w module analyze-telemetry-logs-metrics (tu tylko proste zapytania, §C4)</td>
+<td>https://learn.microsoft.com/en-us/training/modules/analyze-telemetry-logs-metrics/</td>
+</tr>
+</tbody>
+</table>
+<h2 id="j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</h2>
+<p><em>Źródło: [autor]</em></p>
+<p>Ten moduł pokrywa zarządzanie rewizjami, lifecycle, logi, sondy i zasoby w Container Apps. Nie uczy KEDA ani podziału ruchu (moduł 06) ani pełnego KQL (osobny moduł kursu). Ćwicz diagnozę: rozpoznawanie, czy awaria to obraz, port, konfiguracja, sonda czy zasoby, oraz różnicę revision-scope vs application-scope z modułu 04. Quiz jest krótki (5 pytań), więc egzamin będzie głębszy: szczególnie limity i domyślne wartości sond oraz polecenia <code>deactivate</code>, <code>restart</code>, <code>stop</code>.</p></main></body></html>

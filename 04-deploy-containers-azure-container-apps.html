@@ -1,0 +1,854 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moduł 04: Wdrażanie kontenerów w Azure Container Apps (środowisko, rewizje, sekrety, rejestr prywatny, logi)</title><style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#59636e;--bd:#d1d9e0;--code:#f6f8fa;--ac:#0969da;--qb:#f6f8fa}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--bd:#3d444d;--code:#151b23;--ac:#4493f8;--qb:#151b23}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+nav.top{font-size:14px;color:var(--mut);margin-bottom:16px}
+a{color:var(--ac)}
+h1,h2,h3,h4{line-height:1.25;margin:1.6em 0 .6em}
+h1{font-size:2em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h3{font-size:1.2em}
+pre{background:var(--code);border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;font-size:14px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--code);padding:.15em .35em;border-radius:4px}
+pre code{background:none;padding:0}
+.codehilite{background:var(--code)!important}
+.codehilite pre{margin:0;border:0;padding:0;background:none}
+.codehilite{border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;margin:1em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--bd);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+blockquote{margin:1em 0;padding:.2em 1em;border-left:4px solid var(--bd);color:var(--mut);background:var(--qb)}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--bd);margin:2em 0}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+@media (prefers-color-scheme:dark){pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */}
+
+@page{size:A4;margin:16mm 14mm}
+@media print{
+:root{--bg:#fff;--fg:#000;--mut:#333;--bd:#999;--code:#f3f3f3;--ac:#000;--qb:#f3f3f3}
+body{font-size:10.5pt;line-height:1.45}
+main{max-width:none;padding:0}
+nav.top{display:none}
+h1,h2,h3,h4{break-after:avoid}
+h2{break-before:auto}
+pre,.codehilite,table,blockquote,tr{break-inside:avoid}
+pre,.codehilite pre,code{white-space:pre-wrap;word-break:break-word;font-size:8.5pt}
+.codehilite{overflow:visible}
+table{display:table;font-size:9pt;width:100%}
+a{text-decoration:none}
+a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
+}
+</style></head>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-04-wdrazanie-kontenerow-w-azure-container-apps-srodowisko-rewizje-sekrety-rejestr-prywatny-logi">Moduł 04: Wdrażanie kontenerów w Azure Container Apps (środowisko, rewizje, sekrety, rejestr prywatny, logi)</h1>
+<p>Moduł Microsoft Learn: <strong>Deploy containers to Azure Container Apps</strong> - https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-container-apps/
+Cel: po tym module rozumiesz, czym jest środowisko Container Apps, umiesz wdrożyć kontener poleceniami <code>az containerapp</code> i plikiem YAML, ustawić zmienne środowiskowe i sekrety, skonfigurować pobieranie obrazu z prywatnego rejestru i sprawdzić wdrożenie w logach, rewizjach i replikach.
+Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 72 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą 3 ćwiczenia z eksperymentami). Ćwiczenia robisz w terminalu z Azure CLI (Cloud Shell albo własny terminal), Python 3.12 do ćwiczenia z SDK. Koszt: ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze (rejestr ACR, środowisko Container Apps, Log Analytics) - szczegóły w polach <strong>Koszt</strong> przy ćwiczeniach.</p>
+<p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
+<hr />
+<h1 id="czesc-a-co-to-jest-i-jak-to-dziaa">CZĘŚĆ A - CO TO JEST I JAK TO DZIAŁA</h1>
+<h2 id="a1-czym-jest-azure-container-apps-i-srodowisko-environment">A1. Czym jest Azure Container Apps i środowisko (environment)</h2>
+<p><em>Źródło: [unit 1] + [unit 2]</em></p>
+<p><strong>Azure Container Apps</strong> to usługa do uruchamiania kontenerów (paczek z aplikacją i jej zależnościami) bez zarządzania klastrem Kubernetes. Dostajesz "bezserwerowy" (serverless: nie obsługujesz serwerów sam) silnik kontenerów, wdrożenia oparte na rewizjach, wbudowany ruch przychodzący (ingress) i zarządzanie przez Azure.</p>
+<p>Aplikacje działają w <strong>środowisku Container Apps</strong> (Container Apps environment). Środowisko to granica: aplikacje z jednego środowiska współdzielą sieć i miejsce zapisu logów. To nie jest "folder na zasoby" - środowisko wpływa na to, jak ruch wewnętrzny przechodzi między aplikacjami, jak podłączasz logi i jak stosujesz zasady zarządzania. [unit 2]</p>
+<div class="codehilite"><pre><span></span><code>Grupa zasobów (resource group)
+ └── Środowisko Container Apps  (wspólna sieć + wspólne logi)
+      ├── aplikacja "ai-api"        (ingress external)
+      └── aplikacja "przetwarzanie" (ingress internal)
+</code></pre></div>
+
+<p>Co mówi dokumentacja produktu: środowisko to "secure boundary around one or more container apps and jobs"; apps w jednym środowisku "share the same virtual network and write logs to the same logging destination". Nowe środowiska są domyślnie typu <strong>Workload profiles (v2)</strong>; typ <strong>Consumption-only (v1)</strong> jest dziedziczny (legacy). [docs: https://learn.microsoft.com/azure/container-apps/environment] [docs: https://learn.microsoft.com/azure/container-apps/structure]</p>
+<p>(egzamin je lubi: środowisko = granica sieci i logów; jedna aplikacja nie "należy" do dwóch środowisk)</p>
+<h2 id="a2-tworzenie-i-sprawdzanie-srodowiska">A2. Tworzenie i sprawdzanie środowiska</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Rozszerzenie CLI <code>containerapp</code> bywa wymagane. Instalacja lub aktualizacja: <code>az extension add --name containerapp --upgrade</code>; funkcje w wersji zapoznawczej (preview) włączasz przez <code>--allow-preview true</code>.</p>
+<p>Środowisko możesz utworzyć jawnie albo pozwolić, by <code>az containerapp up</code> utworzyło je za Ciebie. Jawne utworzenie daje kontrolę nad nazwą i cyklem życia, co się przydaje, gdy kilka aplikacji dzieli jedno środowisko.</p>
+<div class="codehilite"><pre><span></span><code>az group create --name rg-aca-demo --location centralus            # (1)
+
+az containerapp env create \
+    --name aca-env-demo \
+    --resource-group rg-aca-demo \
+    --location centralus                                            # (2)
+
+az containerapp env show \
+    --name aca-env-demo \
+    --resource-group rg-aca-demo                                    # (3)
+</code></pre></div>
+
+<p>Objaśnienie: (1) grupa zasobów (resource group, logiczny kontener na zasoby, który usuwasz jednym poleceniem); (2) środowisko; (3) podgląd środowiska - pokazuje, którego środowiska używa aplikacja i pomaga przy problemach z regionem lub konfiguracją.</p>
+<h2 id="a3-siec-i-ingress-external-czy-internal">A3. Sieć i ingress: external czy internal</h2>
+<p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/ingress-overview]</em></p>
+<p><strong>Ingress</strong> to wbudowany sposób, w jaki ruch HTTP (lub TCP) trafia do aplikacji; nie tworzysz własnego load balancera ani publicznego IP. Dwa rodzaje:</p>
+<table>
+<thead>
+<tr>
+<th>Opcja CLI</th>
+<th>Znaczenie wg modułu</th>
+<th>Kiedy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--ingress external</code></td>
+<td>API wywoływane bezpośrednio przez klienta (np. przeglądarkę) [unit 2]</td>
+<td>publiczne API</td>
+</tr>
+<tr>
+<td><code>--ingress internal</code></td>
+<td>usługa wywoływana tylko przez inne usługi w środowisku [unit 2]</td>
+<td>backend, procesor w tle</td>
+</tr>
+</tbody>
+</table>
+<p>Dokumentacja dopowiada ważny szczegół: ustawienie ingress opisuje widoczność aplikacji <strong>względem środowiska</strong>, a nie internetu. Adres aplikacji z <code>internal</code> ma segment <code>.internal.</code>: <code>&lt;APP&gt;.internal.&lt;ENV_ID&gt;.&lt;REGION&gt;.azurecontainerapps.io</code>; żądania spoza środowiska dostają 404. Zmiana ustawień ingress dotyczy wszystkich rewizji naraz i <strong>nie tworzy nowej rewizji</strong>. Dla HTTP adres aplikacji jest zawsze wystawiony na porcie 443, a <code>targetPort</code> to port, na którym nasłuchuje Twój kontener. [docs: https://learn.microsoft.com/azure/container-apps/ingress-overview] [docs: https://learn.microsoft.com/azure/container-apps/ingress-how-to?pivots=azure-cli#use-additional-tcp-ports]</p>
+<h2 id="a4-logi-w-srodowisku-i-dobre-praktyki-projektowania-srodowisk">A4. Logi w środowisku i dobre praktyki projektowania środowisk</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Środowisko zwykle integruje się z Azure Monitor (usługa zbierania logów i metryk), dzięki czemu logi kontenerów i logi systemowe znajdziesz w jednym miejscu. Zaplanuj logowanie od początku: pierwsze dochodzenie awarii to zwykle moment, w którym orientujesz się, że logów brakuje. Domyślnie wszystkie aplikacje środowiska wysyłają logi do wspólnego obszaru Log Analytics (obszar roboczy do zapytań o logi); nowe rekordy pojawiają się z opóźnieniem kilku minut, a do podglądu na żywo służy log streaming. [docs: https://learn.microsoft.com/azure/container-apps/environment] </p>
+<p>Dobre praktyki z modułu [unit 2]:</p>
+<ul>
+<li><strong>Rozdzielaj środowiska według cyklu życia:</strong> osobne dla dev, test i prod, żeby ograniczyć skutki błędów przy sprawdzaniu nowych rewizji.</li>
+<li><strong>Dopasuj środowiska do granic sieciowych:</strong> usługi, które mają rozmawiać prywatnie, daj do jednego środowiska i używaj <code>internal</code> tam, gdzie trzeba.</li>
+<li><strong>Ujednolić nazewnictwo</strong> grup zasobów, środowisk i aplikacji (narzędzia operacyjne łatwiej je znajdą).</li>
+<li><strong>Zaplanuj obserwowalność</strong> (gdzie trafiają logi i jak je odpytasz) zanim puścisz ruch produkcyjny.</li>
+</ul>
+<hr />
+<h1 id="czesc-b-wdrazanie-aplikacji">CZĘŚĆ B - WDRAŻANIE APLIKACJI</h1>
+<h2 id="b1-przygotowanie-cli-i-dostawcow-zasobow">B1. Przygotowanie CLI i dostawców zasobów</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Przed wdrożeniem potrzebujesz zalogowanego, aktualnego CLI i zarejestrowanych <strong>dostawców zasobów</strong> (resource providers: komponenty Azure, które tworzą dany typ zasobów). Bez rejestracji <code>Microsoft.App</code> i <code>Microsoft.OperationalInsights</code> tworzenie zasobów się nie uda.</p>
+<div class="codehilite"><pre><span></span><code>az login
+az upgrade
+az extension add --name containerapp --upgrade
+
+az provider register --namespace Microsoft.App
+az provider register --namespace Microsoft.OperationalInsights
+</code></pre></div>
+
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: <code>az version</code> lokalnie, <code>az extension list-available</code>): Azure CLI 2.90.0; rozszerzenie <code>containerapp</code> w indeksie ma tylko wersję <strong>1.3.0b6</strong> (beta), więc <code>az extension add</code> zgłasza "No stable version" i instaluje wersję zapoznawczą. Moduł zakłada, że rozszerzenie działa; przed użyciem sprawdź <code>az extension list</code>. [docs: https://learn.microsoft.com/azure/container-apps/get-started]</p>
+</blockquote>
+<h2 id="b2-szybkie-wdrozenie-az-containerapp-up">B2. Szybkie wdrożenie: <code>az containerapp up</code></h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p><code>az containerapp up</code> to najszybszy sposób na pierwszą wersję: potrafi utworzyć środowisko i zasoby pomocnicze, więc zmniejsza liczbę decyzji. Dobre do prototypów.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp up \
+    --name my-container-app \
+    --resource-group rg-aca-demo \
+    --location centralus \
+    --environment aca-env-demo \
+    --image mcr.microsoft.com/k8se/quickstart:latest \
+    --target-port 80 \
+    --ingress external \
+    --query properties.configuration.ingress.fqdn
+</code></pre></div>
+
+<p>Polecenie zwraca <strong>FQDN</strong> (fully qualified domain name, pełna nazwa domenowa aplikacji). Ścieżka obrazu musi być zapisana <strong>małymi literami</strong> (np. <code>mcr.microsoft.com/k8se/quickstart</code>); wielkie litery dają błędy pobierania obrazu, które wyglądają jak błędy uwierzytelniania. [unit 3]</p>
+<p>Dokumentacja: <code>up</code> tworzy środowisko, obszar Log Analytics i aplikację, a jeśli któryś z zasobów już istnieje, <strong>użyje go</strong> zamiast tworzyć nowy. [docs: https://learn.microsoft.com/azure/container-apps/get-started]</p>
+<p>(egzamin je lubi: <code>up</code> = szybko i z domyślnymi decyzjami; <code>create</code> = jawnie)</p>
+<h2 id="b3-jawne-wdrozenie-az-containerapp-create">B3. Jawne wdrożenie: <code>az containerapp create</code></h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Gdy środowisko już istnieje, a aplikację trzeba dopasować do niego i do grupy zasobów, użyj <code>create</code>. Łatwiej wtedy wprowadzić spójne wartości domyślne w wielu środowiskach.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp create \
+    --name ai-api \
+    --resource-group rg-aca-demo \
+    --environment aca-env-demo \
+    --image mcr.microsoft.com/k8se/quickstart:latest \
+    --ingress external \
+    --target-port 80
+</code></pre></div>
+
+<p>Nazwa aplikacji: małe litery, cyfry lub <code>-</code>, zaczyna się od litery, kończy literą lub cyfrą, bez <code>--</code>, krócej niż 32 znaki. [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest]</p>
+<h2 id="b4-aktualizacja-nowa-rewizja-revision">B4. Aktualizacja = nowa rewizja (revision)</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/revisions]</em></p>
+<p><strong>Rewizja</strong> (revision) to niezmienna migawka wersji konfiguracji aplikacji. Gdy zmieniasz np. obraz lub zmienne środowiskowe, powstaje nowa rewizja i możesz ją sprawdzić, zanim przesuniesz na nią cały ruch. [unit 3]</p>
+<div class="codehilite"><pre><span></span><code>az containerapp update \
+    --name ai-api \
+    --resource-group rg-aca-demo \
+    --image myregistry.azurecr.io/ai-api:v2
+</code></pre></div>
+
+<p>Reguła, na którą pytają: nie każda zmiana tworzy rewizję.</p>
+<table>
+<thead>
+<tr>
+<th>Rodzaj zmiany</th>
+<th>Gdzie w szablonie</th>
+<th>Przykłady</th>
+<th>Nowa rewizja?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Revision-scope</strong></td>
+<td><code>properties.template</code></td>
+<td>obraz i konfiguracja kontenera, zmienne środowiskowe, reguły skalowania, sufiks rewizji</td>
+<td>tak</td>
+</tr>
+<tr>
+<td><strong>Application-scope</strong></td>
+<td><code>properties.configuration</code></td>
+<td>wartości sekretów, tryb rewizji, ingress (włączenie, podział ruchu, etykiety), poświadczenia rejestru, ustawienia Dapr</td>
+<td>nie</td>
+</tr>
+</tbody>
+</table>
+<p>[docs: https://learn.microsoft.com/azure/container-apps/revisions] Domyślnie dostępnych jest 100 nieaktywnych rewizji (próg można zmienić). Nazwa rewizji ma postać <code>&lt;APP&gt;-&lt;SUFIKS&gt;</code>; sufiks: małe litery, cyfry lub <code>-</code>, zaczyna się od litery, nie ma <code>--</code>, maks. 64 znaki. [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 7, lab): lab pisze, że "Container Apps creates a new revision whenever you change environment variables or secrets" -&gt; zmiana <strong>zmiennych środowiskowych</strong> tworzy rewizję, ale zmiana <strong>wartości sekretu</strong> jej nie tworzy (to zmiana application-scope; aby kontener zobaczył nową wartość, trzeba wdrożyć nową rewizję lub zrestartować istniejącą). Źródło: https://learn.microsoft.com/azure/container-apps/manage-secrets.</p>
+</blockquote>
+<h2 id="b5-yaml-powtarzalne-i-recenzowalne-wdrozenia">B5. YAML: powtarzalne i recenzowalne wdrożenia</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Plik YAML (format konfiguracji oparty na wcięciach) trzymasz w repozytorium i zmieniasz przez review, więc maleje "dryf konfiguracji" (różnice między środowiskami). Szczególnie pomaga, gdy usługa AI ma wiele ustawień: flagi funkcji, adresy zależności, skalowanie. Gdy podasz <code>--yaml</code>, <strong>pozostałe flagi są ignorowane</strong>, a YAML staje się źródłem prawdy. [unit 3]</p>
+<div class="codehilite"><pre><span></span><code>az containerapp create --name ai-api --resource-group rg-aca-demo \
+    --environment aca-env-demo --yaml ./containerapp.yml
+
+az containerapp update --name ai-api --resource-group rg-aca-demo \
+    --yaml ./containerapp.yml
+</code></pre></div>
+
+<p>Szkielet pliku (struktura potwierdzona w dokumentacji): [docs: https://learn.microsoft.com/azure/container-apps/ingress-how-to?pivots=azure-cli#use-additional-tcp-ports]</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">centralus</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ai-api</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Microsoft.App/containerApps</span>
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">managedEnvironmentId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ID środowiska&gt;</span>
+<span class="w">  </span><span class="nt">configuration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">activeRevisionsMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Single</span>
+<span class="w">    </span><span class="nt">ingress</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">external</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ai-api</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mcr.microsoft.com/k8se/quickstart:latest</span>
+<span class="w">    </span><span class="nt">scale</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">      </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+
+<h2 id="b6-inne-sposoby-wdrazania">B6. Inne sposoby wdrażania</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>W prawdziwych projektach przechodzisz od CLI do potoków: <strong>Bicep</strong> (język do infrastruktury jako kod), <strong>GitHub Actions</strong> (ciągłe wdrażanie) albo portal Azure do zmian niezaplanowanych. Wzorce CLI i YAML z tego modułu zostają przydatne: pokazują, które właściwości się zmieniają i gdzie szukać przy awarii.</p>
+<hr />
+<h1 id="czesc-c-ustawienia-uruchomieniowe-zmienne-i-sekrety">CZĘŚĆ C - USTAWIENIA URUCHOMIENIOWE: ZMIENNE I SEKRETY</h1>
+<h2 id="c1-zmienne-srodowiskowe-niewrazliwe-ustawienia">C1. Zmienne środowiskowe (niewrażliwe ustawienia)</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p><strong>Zmienne środowiskowe</strong> (environment variables) to dobre miejsce na poziomy logowania, flagi funkcji i adresy zależności. Dzięki nim ten sam obraz działa w wielu środowiskach z różnymi wartościami, a limity czasu czy rozmiary partii zmieniasz bez budowania obrazu od nowa.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp create -n ai-api -g rg-aca-demo \
+    --environment aca-env-demo \
+    --image myregistry.azurecr.io/ai-api:v1 \
+    --ingress external --target-port 8000 \
+    --env-vars LOG_LEVEL=info FEATURE_EMBEDDINGS=true
+
+az containerapp update -n ai-api -g rg-aca-demo \
+    --set-env-vars LOG_LEVEL=debug
+</code></pre></div>
+
+<p><code>--env-vars</code> używasz przy tworzeniu. <code>--set-env-vars</code> przy aktualizacji <strong>dodaje lub zmienia</strong> wskazane zmienne i nie rusza pozostałych; <code>--replace-env-vars</code> zastępuje wszystkie (reszta znika). Gdy nazwa się powtórzy, obowiązuje ostatnia na liście. Zmiana zmiennych po utworzeniu aplikacji zawsze oznacza nową rewizję. [docs: https://learn.microsoft.com/azure/container-apps/environment-variables] [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest]</p>
+<h2 id="c2-sekrety-i-odwoania-secretref">C2. Sekrety i odwołania <code>secretref:</code></h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/manage-secrets]</em></p>
+<p>Wartości wrażliwe (klucze API dostawców modeli, hasła do baz, klucze podpisu) trzymasz jako <strong>sekrety</strong> Container Apps. Dzięki temu nie trafiają do obrazu ani do repozytorium, a rotację robisz bez przebudowy obrazu. [unit 4]</p>
+<div class="codehilite"><pre><span></span><code>az containerapp secret set -n ai-api -g rg-aca-demo \
+    --secrets embeddings-api-key="REPLACE_WITH_REAL_VALUE"          # (1)
+
+az containerapp update -n ai-api -g rg-aca-demo \
+    --set-env-vars EMBEDDINGS_API_KEY=secretref:embeddings-api-key  # (2)
+</code></pre></div>
+
+<p>Objaśnienie: (1) sekrety to pary <code>klucz=wartość</code>; (2) zmienna środowiskowa o wartości <code>secretref:&lt;nazwa-sekretu&gt;</code> dostaje wartość sekretu w czasie działania, bez ujawniania jej w poleceniu. Sekret musi już istnieć.</p>
+<p>Moduł wspomina też, że CLI obsługuje odwołanie do <strong>Azure Key Vault</strong> (sejf na sekrety), gdy Key Vault ma być systemem źródłowym, a aplikacja pobiera sekret w czasie działania. [unit 4]</p>
+<p>Czego moduł nie mówi, a egzamin lubi [docs: https://learn.microsoft.com/azure/container-apps/manage-secrets]:</p>
+<ul>
+<li>Sekrety są przypisane do <strong>aplikacji</strong>, nie do rewizji; ich zmiana <strong>nie tworzy rewizji</strong>.</li>
+<li>Zaktualizowany lub usunięty sekret nie wpływa automatycznie na działające rewizje: wdróż nową rewizję albo <strong>zrestartuj</strong> istniejącą (<code>az containerapp revision restart --revision &lt;nazwa&gt;</code>).</li>
+<li>Przed usunięciem sekretu wdróż rewizję, która już go nie używa, i dezaktywuj rewizje, które się do niego odwołują.</li>
+<li>Brak wbudowanej automatycznej rotacji, wygasania i wersjonowania sekretów w samych sekretach Container Apps (stąd Key Vault). [docs: https://learn.microsoft.com/azure/container-apps/manage-secrets]</li>
+</ul>
+<h2 id="c3-yaml-dla-ustawien-runtime-i-dobre-praktyki">C3. YAML dla ustawień runtime i dobre praktyki</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Fragment YAML z jedną zmienną jawną i jednym odwołaniem do sekretu. W YAML przechowuj <strong>tylko nazwy</strong> sekretów, nigdy wartości.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on environment variables and secret references</span>
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ai-api</span>
+<span class="w">      </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LOG_LEVEL</span>
+<span class="w">        </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">EMBEDDINGS_API_KEY</span>
+<span class="w">        </span><span class="nt">secretRef</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">embeddings-api-key</span>
+</code></pre></div>
+
+<p>Po edycji stosujesz plik poleceniem <code>az containerapp update -n ai-api -g rg-aca-demo --yaml ./containerapp.yml</code>; to polecenie traktuje plik jako pełne źródło konfiguracji. Zwróć uwagę na pisownię: w CLI <code>secretref:</code> (małymi literami, w wartości zmiennej), w YAML <code>secretRef</code> (pole).</p>
+<p>Dobre praktyki [unit 4]: oddzielaj konfigurację od obrazów; preferuj odwołania <code>secretref:</code> (wartości nie trafiają do YAML ani historii powłoki); rotuj sekrety niezależnie od obrazów; trzymaj YAML w kontroli wersji.</p>
+<hr />
+<h1 id="czesc-d-uwierzytelnianie-do-prywatnego-rejestru">CZĘŚĆ D - UWIERZYTELNIANIE DO PRYWATNEGO REJESTRU</h1>
+<h2 id="d1-opcje-i-kompromis">D1. Opcje i kompromis</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Produkcyjne usługi AI zwykle biorą obrazy z <strong>prywatnego rejestru</strong> (np. Azure Container Registry, ACR), bo to ogranicza ryzyko łańcucha dostaw, pozwala skanować podatności i kontrolować, kto pobiera obrazy. Container Apps wspiera uwierzytelnianie nazwą użytkownika i hasłem oraz <strong>tożsamością zarządzaną</strong> (managed identity: tożsamość aplikacji w Entra ID, bez haseł w skryptach), gdy rejestr to ACR.</p>
+<table>
+<thead>
+<tr>
+<th>Opcja</th>
+<th>Zaleta</th>
+<th>Wada</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Użytkownik + hasło</td>
+<td>działa wszędzie, także w rejestrach bez tożsamości Azure; dobre do szybkiej weryfikacji</td>
+<td>długotrwałe poświadczenia do rotowania</td>
+</tr>
+<tr>
+<td>Tożsamość zarządzana (tylko ACR)</td>
+<td>brak haseł; mniej sekretów do rotacji</td>
+<td>wymaga przypisania roli (<code>AcrPull</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Uwaga z modułu: konfiguracja rejestru jest osobna od konfiguracji aplikacji. Jeśli aplikacja nie startuje po zmianie rejestru, logi kontenera często pokazują błędy pobierania obrazu wyglądające jak błędy uwierzytelniania lub uprawnień. [unit 5]</p>
+<h2 id="d2-rejestr-nazwa-uzytkownika-i-haso">D2. Rejestr: nazwa użytkownika i hasło</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<div class="codehilite"><pre><span></span><code>az containerapp registry set -n ai-api -g rg-aca-demo \
+    --server myregistry.azurecr.io \
+    --username MyRegistryUsername \
+    --password MyRegistryPassword
+</code></pre></div>
+
+<p>Polecenie wiąże rejestr z aplikacją, więc pobieranie obrazów działa dla kolejnych rewizji. Dla ACR CLI bywa w stanie samo wywnioskować poświadczenia, ale na produkcji wybierz jawny sposób uwierzytelniania, żeby zachowanie było przewidywalne. Poświadczenia rejestru to zmiana application-scope (bez nowej rewizji). [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
+<h2 id="d3-rejestr-tozsamosc-zarzadzana-i-rola-acrpull">D3. Rejestr: tożsamość zarządzana i rola <code>AcrPull</code></h2>
+<p><em>Źródło: [unit 5] + [unit 7] + [docs: https://learn.microsoft.com/azure/container-apps/managed-identity-image-pull]</em></p>
+<div class="codehilite"><pre><span></span><code>az containerapp registry set -n ai-api -g rg-aca-demo \
+    --server myregistry.azurecr.io \
+    --identity system
+</code></pre></div>
+
+<p><code>--identity system</code> oznacza tożsamość systemową aplikacji (tworzoną i usuwaną razem z aplikacją). Tożsamość potrzebuje roli <strong><code>AcrPull</code></strong> na rejestrze (najmniejszy potrzebny przywilej: tylko pobieranie). [unit 5]</p>
+<p>W laboratorium tworzysz aplikację od razu z uwierzytelnianiem, bo pierwsza rewizja musi móc pobrać obraz: flaga <code>--registry-identity system</code> razem z <code>--registry-server</code>; CLI <strong>automatycznie przypisuje</strong> rolę <code>AcrPull</code>, gdy używasz jej z ACR. [unit 7] Dokumentacja potwierdza automatyczne przypisanie roli w CLI (w PowerShell trzeba przypisać rolę ręcznie), a portal próbuje ją dodać sam. Gdy pobranie obrazu się nie udaje, sprawdź rolę <code>AcrPull</code>; role potrzebują minuty lub dwóch na propagację. [docs: https://learn.microsoft.com/azure/container-apps/managed-identity-image-pull] [unit 7]</p>
+<h2 id="d4-weryfikacja-konfiguracji-rejestru-i-dobre-praktyki">D4. Weryfikacja konfiguracji rejestru i dobre praktyki</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<div class="codehilite"><pre><span></span><code>az containerapp registry list -n ai-api -g rg-aca-demo
+
+az containerapp registry show -n ai-api -g rg-aca-demo \
+    --server myregistry.azurecr.io
+</code></pre></div>
+
+<p>Praktyki: preferuj tożsamość zarządzaną dla ACR (<code>--identity</code>); nadawaj najmniejsze uprawnienia (<code>AcrPull</code>); używaj w pełni kwalifikowanych nazw obrazów z nazwą hosta rejestru; po zmianie wdróż nową rewizję i sprawdź, czy startuje, zanim uznasz, że zmiana jest poprawna.</p>
+<hr />
+<h1 id="czesc-e-weryfikacja-wdrozenia">CZĘŚĆ E - WERYFIKACJA WDROŻENIA</h1>
+<h2 id="e1-konfiguracja-ingress-i-logi">E1. Konfiguracja, ingress i logi</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<p>Weryfikacja domyka pętlę między zamiarem a tym, co naprawdę działa. W usługach AI błędy startu łatwo wziąć za problem z modelem, brakujący sekret lub błąd rejestru. Dwa rodzaje logów odpowiadają na różne pytania: <strong>logi konsoli</strong> (stdout/stderr Twojego kontenera) i <strong>logi systemowe</strong> platformy.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp show -n ai-api -g rg-aca-demo                       # (1)
+az containerapp logs show -n ai-api -g rg-aca-demo                  # (2)
+az containerapp logs show -n ai-api -g rg-aca-demo --follow --tail 30   # (3)
+az containerapp logs show -n ai-api -g rg-aca-demo --type system   # (4)
+</code></pre></div>
+
+<p>Objaśnienie: (1) konfiguracja i FQDN, widać np. <code>internal</code> zamiast <code>external</code>; (2) ostatnie linie logów konsoli; (3) strumień na żywo (<code>--follow</code>) z większą liczbą linii; (4) logi systemowe.</p>
+<p>Sprawdzone w dokumentacji: <code>--tail</code> przyjmuje 0-300 i domyślnie wynosi <strong>20</strong>; <code>--type</code> to <code>console</code> (domyślnie) lub <code>system</code>; logi pochodzą tylko z <strong>jednej</strong> rewizji, repliki i kontenera (domyślnie z najnowszej rewizji). [docs: https://learn.microsoft.com/en-us/cli/azure/containerapp/logs]</p>
+<h2 id="e2-rewizje-i-repliki">E2. Rewizje i repliki</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<div class="codehilite"><pre><span></span><code>az containerapp revision list -n ai-api -g rg-aca-demo
+az containerapp revision list -n ai-api -g rg-aca-demo --all
+az containerapp replica list -n ai-api -g rg-aca-demo
+az containerapp replica list -n ai-api -g rg-aca-demo --revision MyRevision
+</code></pre></div>
+
+<p><code>revision list</code> pokazuje, która rewizja jest aktywna, a które nieaktywne; <code>--all</code> dodaje nieaktywne do głębszego debugowania. <strong>Replika</strong> to działająca instancja rewizji; liczba i stan replik mówią, czy aplikacja działa i czy skaluje się jak trzeba (zimny start i skalowanie dodają opóźnień).</p>
+<h2 id="e3-dobre-praktyki-weryfikacji">E3. Dobre praktyki weryfikacji</h2>
+<p><em>Źródło: [unit 6]</em></p>
+<ul>
+<li><strong>Zacznij od logów</strong> (<code>az containerapp logs show</code>): błędy startu i działania.</li>
+<li><strong>Rewizje do walidacji wdrożenia:</strong> po aktualizacji sprawdź, czy powstała nowa rewizja i czy jest aktywna.</li>
+<li><strong>Repliki podczas incydentów:</strong> wykryjesz scale-to-zero (skalowanie do zera), pętle awarii lub brak ruchu.</li>
+<li><strong>Wyjścia przyjazne automatyzacji:</strong> <code>--query</code> wyciąga pola, które często sprawdzasz (FQDN, stan rewizji).</li>
+</ul>
+<hr />
+<h1 id="czesc-f-cwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
+<p>Przeczytaj wcześniej części A-E. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze: rób je w osobnych grupach zasobów i zawsze wykonuj <strong>Sprzątanie</strong>. Kod aplikacji i SDK jest w Pythonie; odpowiedniki C# są w ćwiczeniach z kodem.</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, mcr.microsoft.com, <code>az version</code>): Python 3.12 (obraz <code>python:3.12-slim</code>, zgodny z wymaganiem modułu "Python 3.12 or greater" [unit 7]), Flask 3.1.3, gunicorn 27.0.1, azure-mgmt-appcontainers 5.1.0, azure-identity 1.27.0; C#: .NET SDK 10.0 (obrazy <code>mcr.microsoft.com/dotnet/sdk:10.0</code> i <code>aspnet:10.0</code> istnieją), Azure.ResourceManager.AppContainers 1.6.0, Azure.Identity 1.21.0; Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6. Starter laboratorium Microsoftu pinuje starsze <code>flask==3.0.0</code> i <code>gunicorn==22.0.0</code>. Przed użyciem sprawdź PyPI i NuGet.</p>
+</blockquote>
+<h2 id="i1-api-w-prywatnym-acr-z-tozsamoscia-zarzadzana-sekretem-i-weryfikacja-lab-moduu">I1. API w prywatnym ACR z tożsamością zarządzaną, sekretem i weryfikacją (lab modułu)</h2>
+<p>(rozwinięcie jednostki 7; źródło scenariusza: [unit 7])</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) w pustym katalogu; pliki <code>api/main.py</code>, <code>api/requirements.txt</code>, <code>api/Dockerfile</code>.</p>
+<p>Lab Microsoftu daje paczkę startową i skrypt <code>azdeploy.py</code>. Tutaj budujesz to samo ręcznie, żeby zobaczyć każdy krok. [unit 7]</p>
+<blockquote>
+<p>Uwaga o labie: lab wymaga planu Pay-As-You-Go lub innego płatnego, bo zadania ACR Tasks są tymczasowo wstrzymane dla darmowych kredytów Azure [unit 7].</p>
+</blockquote>
+<p><code>api/main.py</code> (pełny, sprawdzony lokalnie klientem testowym Flask):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">MODEL_NAME</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"MODEL_NAME"</span><span class="p">,</span> <span class="s2">"not-configured"</span><span class="p">)</span>
+<span class="n">EMBEDDINGS_API_KEY</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"EMBEDDINGS_API_KEY"</span><span class="p">,</span> <span class="s2">""</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/health"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">"healthy"</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">root</span><span class="p">():</span>
+    <span class="c1"># Nigdy nie zwracamy samego sekretu - tylko informacje, czy jest ustawiony.</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">MODEL_NAME</span><span class="p">,</span>
+        <span class="n">embeddings_api_key_configured</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">EMBEDDINGS_API_KEY</span><span class="o">.</span><span class="n">strip</span><span class="p">()),</span>
+        <span class="n">embeddings_api_key_length</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">EMBEDDINGS_API_KEY</span><span class="p">),</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<p><code>api/requirements.txt</code>:</p>
+<div class="codehilite"><pre><span></span><code>flask==3.1.3
+gunicorn==27.0.1
+</code></pre></div>
+
+<p><code>api/Dockerfile</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">FROM</span><span class="w"> </span><span class="s">python:3.12-slim</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>requirements.txt<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<span class="k">COPY</span><span class="w"> </span>main.py<span class="w"> </span>.
+<span class="k">ENV</span><span class="w"> </span><span class="nv">PORT</span><span class="o">=</span><span class="m">8000</span>
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">8000</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"sh"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-c"</span><span class="p">,</span><span class="w"> </span><span class="s2">"gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --access-logfile - main:app"</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Polecenia (zmienne ustaw raz, w tej samej sesji):</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-deploy-i1<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westeurope
+<span class="nv">ACR_NAME</span><span class="o">=</span>acrdeploy<span class="nv">$RANDOM$RANDOM</span><span class="w">                    </span><span class="c1"># (1)</span>
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.App
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.OperationalInsights
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.ContainerRegistry
+az<span class="w"> </span>extension<span class="w"> </span>add<span class="w"> </span>--name<span class="w"> </span>containerapp<span class="w"> </span>--upgrade
+
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>acr<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--sku<span class="w"> </span>Basic<span class="w"> </span>--admin-enabled<span class="w"> </span><span class="nb">false</span><span class="w">   </span><span class="c1"># (2)</span>
+az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>ai-api:v1<span class="w"> </span>--file<span class="w"> </span>api/Dockerfile<span class="w"> </span>api<span class="w">           </span><span class="c1"># (3)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>aca-env-i1<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span><span class="w">       </span><span class="c1"># (4)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>ai-api<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--environment<span class="w"> </span>aca-env-i1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--image<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io/ai-api:v1<span class="w"> </span>--ingress<span class="w"> </span>external<span class="w"> </span>--target-port<span class="w"> </span><span class="m">8000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--env-vars<span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span>demo-model<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--registry-server<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io<span class="w"> </span>--registry-identity<span class="w"> </span>system<span class="w">                    </span><span class="c1"># (5)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>secret<span class="w"> </span><span class="nb">set</span><span class="w"> </span>-n<span class="w"> </span>ai-api<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--secrets<span class="w"> </span>embeddings-api-key<span class="o">=</span>demo-key-12345<span class="w">  </span><span class="c1"># (6)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span>ai-api<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--set-env-vars<span class="w"> </span><span class="nv">EMBEDDINGS_API_KEY</span><span class="o">=</span>secretref:embeddings-api-key<span class="w">                       </span><span class="c1"># (7)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span>ai-api<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>-o<span class="w"> </span>table<span class="w">                                  </span><span class="c1"># (8)</span>
+
+<span class="nv">FQDN</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span>ai-api<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>properties.configuration.ingress.fqdn<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$FQDN</span>/health<span class="w">                                                             </span><span class="c1"># (9)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$FQDN</span>/
+az<span class="w"> </span>containerapp<span class="w"> </span>logs<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span>ai-api<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w">                                               </span><span class="c1"># (10)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) nazwa rejestru musi być globalnie unikalna; (2) najtańszy SKU, bez konta administratora (hasła admina nie używamy); (3) <code>az acr build</code> buduje obraz w chmurze, bez lokalnego Dockera; (4) środowisko; (5) <code>--registry-identity system</code> + <code>--registry-server</code>: pierwsza rewizja może pobrać obraz; CLI przypisuje rolę <code>AcrPull</code> [unit 7]; (6) sekret; (7) odwołanie z zmiennej, to tworzy nową rewizję (zmienna jest revision-scope); (8) lista rewizji - nazwa nowej kończy się sufiksem w rodzaju <code>--0000002</code> [unit 7]; (9) sprawdzenie; (10) logi - szukaj komunikatów <code>gunicorn</code> o uruchomieniu procesów i nasłuchu na porcie 8000 oraz wpisów żądań. [unit 7]</p>
+<p>Typowe problemy z labu [unit 7]: błędy <code>ImagePullBackOff</code> / <code>unauthorized</code> / 403 przy pobieraniu obrazu - sprawdź <code>az containerapp identity show</code> i rolę <strong>AcrPull</strong> (propagacja roli trwa minutę lub dwie); 502/503 tuż po wdrożeniu - odczekaj minutę, bo pierwszy start pobiera i uruchamia kontener; nieudany build - <code>az acr task list-runs --registry $ACR_NAME --output table</code> i <code>az acr task logs --registry $ACR_NAME --run-id &lt;run-id&gt;</code>; brak zmiennych w sesji - w labie wczytujesz je z pliku <code>.env</code> (<code>source .env</code>).</p>
+<p><strong>Koszt:</strong> ACR <strong>Basic</strong> jest naliczany stałą stawką dobową niezależnie od użycia (stawkę sprawdź na stronie cennika ACR: Niesprawdzone - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/). Container Apps (plan Consumption): pierwsze 180 000 vCPU-sekund, 360 000 GiB-sekund i 2 mln żądań HTTP w miesiącu na subskrypcję są bezpłatne; replika skalowana do zera nie kosztuje; środowisko z własną siecią lub innymi zasobami może dodać opłaty. [docs: https://learn.microsoft.com/azure/container-apps/billing] Log Analytics tworzony z środowiskiem rozlicza ilość przyjętych logów (przy kilku żądaniach grosze). Kilka godzin pracy to rząd groszy do kilku złotych, o ile wykonasz Sprzątanie.</p>
+<p><strong>Zadania:</strong> (a) wykonaj polecenia i potwierdź, że <code>/health</code> i <code>/</code> odpowiadają; (b) <strong>zepsuj to - rotacja sekretu:</strong> zmień wartość sekretu na dłuższą (<code>az containerapp secret set -n ai-api -g $RG --secrets embeddings-api-key=a-much-longer-key-0987654321</code>), wywołaj <code>/</code>, potem zrestartuj rewizję (<code>az containerapp revision restart -n ai-api -g $RG --revision &lt;aktywna-rewizja&gt;</code>) i wywołaj <code>/</code> ponownie; (c) <strong>zepsuj to - zły obraz:</strong> <code>az containerapp update -n ai-api -g $RG --image $ACR_NAME.azurecr.io/ai-api:v999</code>, zobacz <code>revision list</code>, logi systemowe (<code>--type system</code>) i czy <code>/health</code> nadal odpowiada; (d) przywróć dobry obraz <code>:v1</code>.</p>
+<p><strong>Sprawdź:</strong> (a) <code>/health</code> zwraca <code>{"status":"healthy"}</code>, a <code>/</code> pokazuje <code>model</code> równy <code>demo-model</code>, <code>embeddings_api_key_configured</code> równe <code>true</code> i <code>embeddings_api_key_length</code> równe 14 (długość <code>demo-key-12345</code>); (b) po samej zmianie sekretu długość nadal wynosi 14 (nowa rewizja nie powstała, replika ma starą wartość), po restarcie rewizji długość wynosi 28 [docs: https://learn.microsoft.com/azure/container-apps/manage-secrets]; (c) nowa rewizja nie staje się zdrowa, a logi systemowe pokazują problem z pobraniem obrazu; dokładny komunikat zależy od platformy, a to, czy poprzednia rewizja nadal obsługuje ruch w trybie Single, sprawdź sam i zapisz obserwację [autor: niezweryfikowane]; (d) po przywróceniu <code>:v1</code> powstaje kolejna rewizja i aplikacja działa.</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w">      </span><span class="c1"># po kilku minutach powinno wypisać false</span>
+</code></pre></div>
+
+<p>Usuwana jest cała grupa (ACR, środowisko, Log Analytics, aplikacja). Uważaj, by nie użyć istniejącej grupy z innymi zasobami.</p>
+<h2 id="i2-wdrozenie-plikiem-yaml-internal-vs-external-i-up">I2. Wdrożenie plikiem YAML, internal vs external i <code>up</code></h2>
+<p>(rozwinięcie sekcji B2, B5, A3)</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash); plik <code>containerapp.yml</code>.</p>
+<p>Wymaga środowiska. Ćwiczenie tworzy własne, osobne (publiczny obraz, bez rejestru):</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-deploy-i2<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westeurope
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>aca-env-i2<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+<span class="nv">ENV_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>env<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span>aca-env-i2<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+</code></pre></div>
+
+<p><code>containerapp.yml</code> (podstaw <code>&lt;ID środowiska&gt;</code> wartością <code>$ENV_ID</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">location</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">westeurope</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hello-yaml</span>
+<span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Microsoft.App/containerApps</span>
+<span class="nt">properties</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">managedEnvironmentId</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;ID środowiska&gt;</span>
+<span class="w">  </span><span class="nt">configuration</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">activeRevisionsMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Single</span>
+<span class="w">    </span><span class="nt">ingress</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">external</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">      </span><span class="nt">targetPort</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">80</span>
+<span class="w">  </span><span class="nt">template</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">containers</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">hello</span>
+<span class="w">      </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mcr.microsoft.com/k8se/quickstart:latest</span>
+<span class="w">      </span><span class="nt">env</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LOG_LEVEL</span>
+<span class="w">        </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">info</span>
+<span class="w">    </span><span class="nt">scale</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">minReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
+<span class="w">      </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>containerapp<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span>hello-yaml<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yaml<span class="w"> </span>./containerapp.yml<span class="w">   </span><span class="c1"># (1)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span>hello-yaml<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>properties.configuration.ingress.external<span class="w">   </span><span class="c1"># (2)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>ingress<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span>hello-yaml<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--type<span class="w"> </span>internal<span class="w">                       </span><span class="c1"># (3)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>list<span class="w"> </span>-n<span class="w"> </span>hello-yaml<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>-o<span class="w"> </span>table<span class="w">                               </span><span class="c1"># (4)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) <code>--yaml</code> ignoruje inne flagi; (2) odczyt ustawienia ingress; (3) zmiana ingress na wewnętrzny; (4) liczba rewizji przed i po zmianie.</p>
+<p><strong>Koszt:</strong> środowisko i aplikacja z <code>minReplicas: 0</code> w planie Consumption nie naliczają kosztu przy zerowym ruchu (darmowe progi miesięczne jak w I1) [docs: https://learn.microsoft.com/azure/container-apps/billing]; Log Analytics rozlicza ilość logów (pomijalna).</p>
+<p><strong>Zadania:</strong> (a) wdróż YAML i otwórz <code>https://&lt;fqdn&gt;</code> (FQDN z <code>az containerapp show -n hello-yaml -g $RG --query properties.configuration.ingress.fqdn -o tsv</code>); (b) zmień zmienną <code>LOG_LEVEL</code> w YAML na <code>debug</code>, wykonaj <code>az containerapp update --yaml ./containerapp.yml</code> i policz rewizje; (c) <strong>zepsuj to:</strong> zmień ingress na <code>internal</code> poleceniem (3), sprawdź, czy rewizji przybyło, i wywołaj stary adres z zewnątrz; (d) uruchom <code>az containerapp up</code> z inną nazwą aplikacji w tym samym środowisku i sprawdź, że środowisko nie zostało utworzone drugi raz.</p>
+<p><strong>Sprawdź:</strong> (a) strona przykładowa quickstart jest dostępna; (b) powstaje nowa rewizja (zmienna to zmiana revision-scope) [docs: https://learn.microsoft.com/azure/container-apps/revisions]; (c) zmiana ingress <strong>nie tworzy</strong> nowej rewizji (application-scope), a żądanie spoza środowiska kończy się odrzuceniem (404 z serwera pośredniczącego środowiska, wg dokumentacji dla ingress <code>internal</code>) [docs: https://learn.microsoft.com/azure/container-apps/ingress-overview]; (d) <code>up</code> użył istniejącego środowiska i grupy [docs: https://learn.microsoft.com/azure/container-apps/get-started].</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span>
+</code></pre></div>
+
+<h2 id="i3-rewizje-i-repliki-przez-sdk-python-i-odpowiednik-c-net">I3. Rewizje i repliki przez SDK: Python i odpowiednik C# (.NET)</h2>
+<p>(rozwinięcie sekcji E2; wymaga działającej aplikacji <code>ai-api</code> z I1, bez Sprzątania I1)</p>
+<p><strong>Gdzie / Plik:</strong> <code>list_revisions.py</code> (Python) oraz <code>Program.cs</code> (C#); zalogowany <code>az login</code>.</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>azure-mgmt-appcontainers<span class="o">==</span><span class="m">5</span>.1.0<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_SUBSCRIPTION_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>account<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RESOURCE_GROUP</span><span class="o">=</span>rg-aca-deploy-i1<span class="w"> </span><span class="nv">CONTAINER_APP_NAME</span><span class="o">=</span>ai-api
+</code></pre></div>
+
+<p><code>list_revisions.py</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.mgmt.appcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContainerAppsAPIClient</span>
+
+<span class="n">subscription_id</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AZURE_SUBSCRIPTION_ID"</span><span class="p">]</span>
+<span class="n">resource_group</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"RESOURCE_GROUP"</span><span class="p">]</span>
+<span class="n">app_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"CONTAINER_APP_NAME"</span><span class="p">]</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">ContainerAppsAPIClient</span><span class="p">(</span><span class="n">DefaultAzureCredential</span><span class="p">(),</span> <span class="n">subscription_id</span><span class="p">)</span>  <span class="c1"># (1)</span>
+
+<span class="k">for</span> <span class="n">rev</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">container_apps_revisions</span><span class="o">.</span><span class="n">list_revisions</span><span class="p">(</span><span class="n">resource_group</span><span class="p">,</span> <span class="n">app_name</span><span class="p">):</span>  <span class="c1"># (2)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">rev</span><span class="o">.</span><span class="n">properties</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">rev</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s2">"active ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">active</span><span class="p">,</span> <span class="s2">"traffic ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">traffic_weight</span><span class="p">,</span>
+          <span class="s2">"health ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">health_state</span><span class="p">,</span> <span class="s2">"provisioning ="</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">provisioning_state</span><span class="p">)</span>  <span class="c1"># (3)</span>
+    <span class="n">replicas</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">container_apps_revision_replicas</span><span class="o">.</span><span class="n">list_replicas</span><span class="p">(</span>
+        <span class="n">resource_group</span><span class="p">,</span> <span class="n">app_name</span><span class="p">,</span> <span class="n">rev</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>  <span class="c1"># (4)</span>
+    <span class="k">for</span> <span class="n">replica</span> <span class="ow">in</span> <span class="n">replicas</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>  <span class="c1"># (5)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"   replica"</span><span class="p">,</span> <span class="n">replica</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">replica</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">running_state</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) klient zarządzania <code>ContainerAppsAPIClient</code> z <code>DefaultAzureCredential</code> (łańcuch źródeł poświadczeń: zmienne środowiskowe, <code>az login</code> itd.), wzorzec z dokumentacji [docs: https://learn.microsoft.com/python/api/overview/azure/mgmt-appcontainers-readme?view=azure-python]; (2) lista rewizji; (3) pola <code>active</code>, <code>traffic_weight</code>, <code>health_state</code>, <code>provisioning_state</code> istnieją w <code>RevisionProperties</code> (sprawdzone w pakiecie, 2026-11-22) [autor: test 2026-11-22]; (4)-(5) lista replik rewizji zwraca kolekcję z polem <code>value</code>.</p>
+<p>Skrypt skompilowano (<code>py_compile</code>) i sprawdzono nazwy modeli w pakiecie; nie uruchamiano go na prawdziwej subskrypcji [autor: test 2026-11-22].</p>
+<p><strong>Odpowiednik C# (.NET)</strong></p>
+<p>Różnice: zamiast jednego klienta z operacjami (<code>container_apps_revisions</code>) pracujesz na <strong>obiektach zasobów</strong> ARM (<code>ContainerAppResource</code>, potem kolekcje <code>GetContainerAppRevisions()</code>), a listy są asynchroniczne (<code>await foreach</code>). Dane zasobu masz w <code>.Data</code>; właściwość <code>active</code> z Pythona to <code>IsActive</code>, <code>traffic_weight</code> to <code>TrafficWeight</code>. Nowy projekt: <code>dotnet new console -f net10.0</code>, potem <code>dotnet add package Azure.ResourceManager.AppContainers --version 1.6.0</code> i <code>dotnet add package Azure.Identity --version 1.21.0</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">using</span><span class="w"> </span><span class="nn">Azure.Identity</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager.AppContainers</span><span class="p">;</span>
+
+<span class="kt">string</span><span class="w"> </span><span class="n">sub</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"AZURE_SUBSCRIPTION_ID"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">rg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"RESOURCE_GROUP"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">appName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"CONTAINER_APP_NAME"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">arm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArmClient</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">DefaultAzureCredential</span><span class="p">());</span>
+<span class="n">ContainerAppResource</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arm</span><span class="p">.</span><span class="n">GetContainerAppResource</span><span class="p">(</span>
+<span class="w">    </span><span class="n">ContainerAppResource</span><span class="p">.</span><span class="n">CreateResourceIdentifier</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span><span class="w"> </span><span class="n">rg</span><span class="p">,</span><span class="w"> </span><span class="n">appName</span><span class="p">));</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="n">ContainerAppRevisionResource</span><span class="w"> </span><span class="n">rev</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">GetContainerAppRevisions</span><span class="p">().</span><span class="n">GetAllAsync</span><span class="p">())</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rev</span><span class="p">.</span><span class="n">Data</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"{d.Name} active={d.IsActive} traffic={d.TrafficWeight} "</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                      </span><span class="s">$"health={d.HealthState} state={d.ProvisioningState}"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="n">ContainerAppReplicaResource</span><span class="w"> </span><span class="n">rep</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">rev</span><span class="p">.</span><span class="n">GetContainerAppReplicas</span><span class="p">().</span><span class="n">GetAllAsync</span><span class="p">())</span>
+<span class="w">        </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  replica {rep.Data.Name} {rep.Data.RunningState}"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>[docs: https://learn.microsoft.com/dotnet/api/overview/azure/resourcemanager.appcontainers-readme?view=azure-dotnet] [autor: test 2026-11-22] (kod skompilowano na .NET SDK 10.0.401 z Azure.ResourceManager.AppContainers 1.6.0; nie uruchamiano go wobec prawdziwej subskrypcji).</p>
+<p>Aplikacja z I1 w C#: ten sam kontrakt (<code>/health</code>, <code>/</code> ze zmiennymi <code>MODEL_NAME</code> i <code>EMBEDDINGS_API_KEY</code>) daje minimalne API ASP.NET Core (<code>dotnet new web -f net10.0</code>), sprawdzone kompilacją: [autor: test 2026-11-22]</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">var</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">WebApplication</span><span class="p">.</span><span class="n">CreateBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+
+<span class="kt">string</span><span class="w"> </span><span class="n">modelName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"MODEL_NAME"</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s">"not-configured"</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">apiKey</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"EMBEDDINGS_API_KEY"</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/health"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Results</span><span class="p">.</span><span class="n">Json</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"healthy"</span><span class="w"> </span><span class="p">}));</span>
+
+<span class="c1">// Nigdy nie zwracamy samego sekretu - tylko informacje, czy jest ustawiony.</span>
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Results</span><span class="p">.</span><span class="n">Json</span><span class="p">(</span><span class="k">new</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">modelName</span><span class="p">,</span>
+<span class="w">    </span><span class="n">embeddings_api_key_configured</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">!</span><span class="kt">string</span><span class="p">.</span><span class="n">IsNullOrWhiteSpace</span><span class="p">(</span><span class="n">apiKey</span><span class="p">),</span>
+<span class="w">    </span><span class="n">embeddings_api_key_length</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">apiKey</span><span class="p">.</span><span class="n">Length</span>
+<span class="p">}));</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">Run</span><span class="p">();</span>
+</code></pre></div>
+
+<p>Różnice kontenerowe: obrazy <code>mcr.microsoft.com/dotnet/sdk:10.0</code> (build) i <code>mcr.microsoft.com/dotnet/aspnet:10.0</code> (uruchomienie); od .NET 8 obrazy ASP.NET Core nasłuchują domyślnie na porcie <strong>8080</strong>, nie 80, więc daj <code>--target-port 8080</code> (albo ustaw <code>ASPNETCORE_HTTP_PORTS</code>). [docs: https://learn.microsoft.com/en-us/dotnet/core/compatibility/containers/8.0/aspnet-port]</p>
+<p><strong>Koszt:</strong> brak kosztu własnego (odczyt metadanych); koszt aplikacji z I1 jak tam.</p>
+<p><strong>Zadania:</strong> (a) uruchom <code>python list_revisions.py</code> i porównaj wynik z <code>az containerapp revision list -o table</code>; (b) <strong>zepsuj to:</strong> ustaw <code>CONTAINER_APP_NAME=nie-ma-takiej</code> i przeczytaj błąd; (c) uruchom wersję C# (<code>dotnet run</code>) i porównaj kolumny.</p>
+<p><strong>Sprawdź:</strong> (a) te same rewizje, nazwy i stan aktywności; (b) błąd typu "nie znaleziono zasobu" (ResourceNotFound) z nazwą aplikacji; dokładny tekst zależy od wersji SDK [autor: niezweryfikowane]; (c) ten sam zestaw rewizji w formacie z <code>IsActive</code> i <code>TrafficWeight</code>.</p>
+<p><strong>Sprzątanie:</strong> brak (skrypty tylko czytają); po I3 wykonaj Sprzątanie I1.</p>
+<hr />
+<h1 id="czesc-g-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<p>Learn nie pokazuje poprawnych odpowiedzi w ocenie modułu, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
+<h2 id="g1-ktory-zasob-daje-wspolna-granice-sieci-i-logow-dla-wielu-aplikacji">G1. Który zasób daje wspólną granicę sieci i logów dla wielu aplikacji?</h2>
+<p>-&gt; <em>Container Apps environment.</em> Rewizja to wersja konfiguracji jednej aplikacji, replika to działająca instancja - żadne z nich nie jest wspólną granicą. <em>(odpowiedź wnioskowana: unit 2, sekcja "What a Container Apps environment provides")</em></p>
+<h2 id="g2-spojne-wdrozenie-z-kontrola-wersji-i-review-konfiguracji">G2. Spójne wdrożenie z kontrolą wersji i review konfiguracji</h2>
+<p>-&gt; <em><code>az containerapp create --yaml</code> i <code>az containerapp update --yaml</code> z plikiem YAML w repozytorium.</em> Same <code>--set-env-vars</code> bez pliku nie dają jednego recenzowalnego źródła prawdy; sama zmiana tagu obrazu nie przenosi konfiguracji środowiskowej. <em>(odpowiedź wnioskowana: unit 3, sekcja "Use YAML for consistent, reviewable deployments")</em></p>
+<h2 id="g3-klucz-api-dostawcy-embeddingow-bez-trzymania-go-w-yaml">G3. Klucz API dostawcy embeddingów bez trzymania go w YAML</h2>
+<p>-&gt; <em>Sekret Container Apps i odwołanie z zmiennej środowiskowej (<code>secretref:</code>).</em> Jawny tekst w <code>env:</code> i wypiekanie klucza w obrazie ujawniają wartość. <em>(odpowiedź wnioskowana: unit 4, sekcja "Store sensitive settings as Container Apps secrets")</em></p>
+<h2 id="g4-ktore-polecenie-pokazuje-wersjonowana-zmiane-po-aktualizacji">G4. Które polecenie pokazuje wersjonowaną zmianę po aktualizacji?</h2>
+<p>-&gt; <em><code>az containerapp revision list</code>.</em> <code>registry list</code> pokazuje rejestry, <code>secret list</code> sekrety. <em>(odpowiedź wnioskowana: unit 6, sekcja "Check revisions to confirm which version is active")</em></p>
+<h2 id="g5-aplikacja-nie-startuje-po-zmianie-obrazu-pierwszy-krok-diagnozy">G5. Aplikacja nie startuje po zmianie obrazu - pierwszy krok diagnozy</h2>
+<p>-&gt; <em><code>az containerapp logs show</code>.</em> Logi dają najszybszy wgląd w błąd startu; <code>revision list</code> i <code>replica list</code> pokazują stan, ale nie przyczynę. <em>(odpowiedź wnioskowana: unit 6, sekcja "Best practices for verification: Start with logs")</em></p>
+<hr />
+<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-co-wspodziela-aplikacje-w-jednym-srodowisku-container-apps">H1. Co współdzielą aplikacje w jednym środowisku Container Apps?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Sieć wirtualną i miejsce zapisu logów (domyślnie wspólny obszar Log Analytics). Środowiska rozdziela się według cyklu życia (dev/test/prod).</p>
+</details>
+<h2 id="h2-czym-rozni-sie-az-containerapp-up-od-az-containerapp-create">H2. Czym różni się <code>az containerapp up</code> od <code>az containerapp create</code>?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>up</code> jest szybkie i potrafi utworzyć środowisko oraz zasoby pomocnicze (a istniejące zasoby wykorzysta); <code>create</code> jest jawne, gdy środowisko już istnieje i chcesz pełnej kontroli.</p>
+</details>
+<h2 id="h3-ktore-zmiany-tworza-nowa-rewizje-a-ktore-nie">H3. Które zmiany tworzą nową rewizję, a które nie?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Nową rewizję tworzą zmiany revision-scope (sekcja <code>template</code>: obraz, zmienne, reguły skalowania, sufiks). Zmiany application-scope (sekcja <code>configuration</code>: wartości sekretów, ingress, tryb rewizji, poświadczenia rejestru, Dapr) nie tworzą rewizji.</p>
+</details>
+<h2 id="h4-jak-przekazac-sekret-do-kontenera-jako-zmienna-srodowiskowa">H4. Jak przekazać sekret do kontenera jako zmienną środowiskową?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Utwórz sekret (<code>az containerapp secret set --secrets nazwa=wartość</code>), potem ustaw zmienną <code>ZMIENNA=secretref:nazwa</code> (w YAML: pole <code>secretRef</code>). Po zmianie wartości sekretu trzeba wdrożyć nową rewizję lub zrestartować istniejącą.</p>
+</details>
+<h2 id="h5-jaka-rola-i-jaka-flaga-pozwalaja-aca-pobierac-obrazy-z-acr-bez-hasa">H5. Jaka rola i jaka flaga pozwalają ACA pobierać obrazy z ACR bez hasła?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Rola <code>AcrPull</code> dla tożsamości aplikacji na rejestrze; flaga <code>--identity system</code> w <code>az containerapp registry set</code> (lub <code>--registry-identity system</code> z <code>--registry-server</code> przy <code>create</code>).</p>
+</details>
+<h2 id="h6-co-robi-set-env-vars-a-co-replace-env-vars">H6. Co robi <code>--set-env-vars</code>, a co <code>--replace-env-vars</code>?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>--set-env-vars</code> dodaje lub zmienia wskazane zmienne i nie rusza pozostałych; <code>--replace-env-vars</code> zastępuje cały zestaw (pozostałe zmienne znikają).</p>
+</details>
+<h2 id="h7-jakie-sa-domyslne-wartosci-az-containerapp-logs-show-i-jak-zobaczyc-logi-platformy">H7. Jakie są domyślne wartości <code>az containerapp logs show</code> i jak zobaczyć logi platformy?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Domyślnie typ <code>console</code> i 20 linii (<code>--tail</code> przyjmuje 0-300). Logi platformy: <code>--type system</code>; strumień na żywo: <code>--follow</code>.</p>
+</details>
+<h2 id="h8-obraz-myregistryazurecrioai-apiv1-nie-chce-sie-pobrac-co-sprawdzisz-najpierw">H8. Obraz <code>MyRegistry.azurecr.io/Ai-Api:v1</code> nie chce się pobrać. Co sprawdzisz najpierw?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Wielkie litery w ścieżce obrazu (ścieżka musi być małymi literami; błąd wygląda jak problem z uwierzytelnianiem), potem uwierzytelnianie do rejestru i rolę <code>AcrPull</code>.</p>
+</details>
+<hr />
+<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<p><em>Źródło: [moduł kursu: manage-containers-azure-container-apps] + [moduł kursu: scale-containers-azure-container-apps]</em></p>
+<p>Dalej: moduł 05 (zarządzanie: aktualizacje obrazów, rewizje, cykl życia, health probes, optymalizacja ustawień kontenera), moduł 06 (skalowanie, KEDA, tryby rewizji i ruch), moduł 07 (dynamic sessions). Wróć do części B i C, gdy będziesz rozwiązywać zadania o rewizjach i sekretach.</p>
+<p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30):</p>
+<table>
+<thead>
+<tr>
+<th>Umiejętność (study guide)</th>
+<th>Domena</th>
+<th>Status</th>
+<th>Gdzie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deploy applications to Azure Container Apps, including environment configuration and revision management</td>
+<td>1</td>
+<td>uczone tutaj (wdrożenie, środowisko, rewizje); zarządzanie rewizjami także w module 05</td>
+<td><code>04-deploy-containers-azure-container-apps.md</code> §A1-§E3; <code>05-manage-containers-azure-container-apps.md</code></td>
+</tr>
+<tr>
+<td>Implement event-driven scaling by using KEDA in Container Apps</td>
+<td>1</td>
+<td>uczone w module 06</td>
+<td>https://learn.microsoft.com/en-us/training/modules/scale-containers-azure-container-apps/</td>
+</tr>
+<tr>
+<td>Monitor and troubleshoot solutions on AKS and Container Apps by inspecting logs, events, and end-to-end connectivity</td>
+<td>1</td>
+<td>tu tylko wzmianka (logi i rewizje w §E1-§E2); właściciel Container Apps: moduł 05</td>
+<td><code>05-manage-containers-azure-container-apps.md</code></td>
+</tr>
+<tr>
+<td>Build, store, version, and manage container images by using Azure Container Registry</td>
+<td>1</td>
+<td>uczone w module 01 (tu tylko pobieranie obrazu z ACR, §D3)</td>
+<td><code>01-store-manage-containers-azure-container-registry.md</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</h2>
+<p><em>Źródło: [autor]</em></p>
+<p>Ten moduł pokrywa wdrożenie (CLI, YAML), konfigurację środowiska, zmienne i sekrety, pobieranie obrazów z prywatnego ACR oraz podstawową weryfikację. Nie uczy: skalowania i KEDA (moduł 06), health probes, cyklu życia i aktualizacji obrazów w trybie wielu rewizji (moduł 05), dynamic sessions (moduł 07). Quiz modułu jest krótki (5 pytań), więc egzamin będzie głębszy: ćwicz rozróżnianie revision-scope i application-scope, <code>secretref:</code> oraz <code>--identity system</code>/<code>AcrPull</code>.</p></main></body></html>

@@ -1,0 +1,1111 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moduł 01: Rejestr kontenerów w Azure (Azure Container Registry, ACR Tasks, tagowanie, wersjonowanie)</title><style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#59636e;--bd:#d1d9e0;--code:#f6f8fa;--ac:#0969da;--qb:#f6f8fa}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--bd:#3d444d;--code:#151b23;--ac:#4493f8;--qb:#151b23}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+nav.top{font-size:14px;color:var(--mut);margin-bottom:16px}
+a{color:var(--ac)}
+h1,h2,h3,h4{line-height:1.25;margin:1.6em 0 .6em}
+h1{font-size:2em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h3{font-size:1.2em}
+pre{background:var(--code);border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;font-size:14px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--code);padding:.15em .35em;border-radius:4px}
+pre code{background:none;padding:0}
+.codehilite{background:var(--code)!important}
+.codehilite pre{margin:0;border:0;padding:0;background:none}
+.codehilite{border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;margin:1em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--bd);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+blockquote{margin:1em 0;padding:.2em 1em;border-left:4px solid var(--bd);color:var(--mut);background:var(--qb)}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--bd);margin:2em 0}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+@media (prefers-color-scheme:dark){pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */}
+
+@page{size:A4;margin:16mm 14mm}
+@media print{
+:root{--bg:#fff;--fg:#000;--mut:#333;--bd:#999;--code:#f3f3f3;--ac:#000;--qb:#f3f3f3}
+body{font-size:10.5pt;line-height:1.45}
+main{max-width:none;padding:0}
+nav.top{display:none}
+h1,h2,h3,h4{break-after:avoid}
+h2{break-before:auto}
+pre,.codehilite,table,blockquote,tr{break-inside:avoid}
+pre,.codehilite pre,code{white-space:pre-wrap;word-break:break-word;font-size:8.5pt}
+.codehilite{overflow:visible}
+table{display:table;font-size:9pt;width:100%}
+a{text-decoration:none}
+a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
+}
+</style></head>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-01-rejestr-kontenerow-w-azure-azure-container-registry-acr-tasks-tagowanie-wersjonowanie">Moduł 01: Rejestr kontenerów w Azure (Azure Container Registry, ACR Tasks, tagowanie, wersjonowanie)</h1>
+<p>Moduł Microsoft Learn: <strong>Store and manage containers in Azure Container Registry</strong> - https://learn.microsoft.com/en-us/training/modules/store-manage-containers-azure-container-registry/
+Ścieżka: Implement container application hosting on Azure (moduł 1 z 3), kurs AI-200T00, egzamin <strong>AI-200</strong> (Azure AI Cloud Developer Associate), domena 1 "Develop containerized solutions on Azure".
+Cel: po tym module rozumiesz, jak ACR organizuje obrazy (rejestr, repozytorium, artefakt, tag, digest), umiesz zbudować obraz w chmurze przez ACR Tasks, wybrać strategię tagowania i zabezpieczyć oraz posprzątać obrazy.
+Czas: ok. 4-6 h (czytanie + cztery ćwiczenia). Ćwiczenia robisz w Azure Cloud Shell (Bash) albo lokalnie z Azure CLI 2.x. Potrzebujesz subskrypcji <strong>płatnej</strong> (Pay-As-You-Go lub innej): uruchomienia ACR Tasks są tymczasowo wstrzymane dla darmowych kredytów Azure. Koszt: ćwiczenia tworzą rejestr ACR w poziomie Basic (płatny); szczegóły i sprzątanie w części D.</p>
+<p>Język kodu: egzamin AI-200 zakłada programowanie w <strong>Pythonie</strong>, więc kod aplikacji i SDK jest podany w Pythonie. Przy ćwiczeniach z kodem aplikacji lub SDK dodano blok <strong>Odpowiednik C# (.NET)</strong> z opisem różnic. Polecenia <code>az</code> (Azure CLI), Dockerfile i teoria są wspólne dla obu języków i nie są powtarzane.</p>
+<p>Znaczniki źródeł (linia <code>_Źródło: ..._</code> pod nagłówkiem):
+- <code>[unit N]</code> - jednostka (unit) modułu Microsoft Learn; N to prefiks pliku w <code>sources/store-manage-containers-azure-container-registry/</code> (<code>5-lab</code> = README laboratorium, <code>5-starter</code> = pliki startowe laboratorium).
+- <code>[moduł kursu: &lt;slug&gt;]</code> - inny moduł tego samego kursu.
+- <code>[docs: URL]</code> - oficjalna dokumentacja produktu.
+- <code>[autor]</code> - dodane przez autora tutoriala; <code>[autor: test &lt;data&gt;]</code> - sprawdzone testem w danym dniu; <code>[autor: niezweryfikowane]</code> - jeszcze nie sprawdzone w Azure.</p>
+<p>W tekście "moduł N" znaczy plik tutoriala <code>0N-*.md</code> (np. moduł 02 = <code>02-deploy-containers-azure-app-service.md</code>, o ile już istnieje).</p>
+<hr />
+<h1 id="czesc-a-rejestr-co-to-jest-i-jak-organizuje-obrazy">CZĘŚĆ A - REJESTR: CO TO JEST I JAK ORGANIZUJE OBRAZY</h1>
+<h2 id="a1-czym-jest-azure-container-registry-i-jakie-ma-poziomy">A1. Czym jest Azure Container Registry i jakie ma poziomy</h2>
+<p><em>Źródło: [unit 1] + [unit 2] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus]</em></p>
+<p><strong>Obraz kontenera</strong> (container image) to zapakowana aplikacja razem z jej zależnościami. Gdzieś trzeba taki obraz przechowywać, żeby serwery mogły go pobrać. Takie miejsce to <strong>rejestr</strong> (registry).</p>
+<p><strong>Azure Container Registry (ACR)</strong> to zarządzany, prywatny rejestr obrazów w stylu Dockera. W odróżnieniu od publicznego Docker Hub (publiczny rejestr obrazów) dajesz dostęp tylko wybranym osobom i usługom. ACR łączy się z Azure Kubernetes Service (AKS = zarządzany Kubernetes, system do uruchamiania wielu kontenerów w klastrze), Azure Container Apps (uruchamianie kontenerów bez zarządzania klastrem) i Azure App Service (hosting aplikacji webowych).</p>
+<p>Scenariusz z modułu: zespół buduje obrazy (API do wnioskowania modelu AI, serwis wstępnego przetwarzania, kontener pomocniczy do monitoringu) na laptopach i wypycha je ręcznie. Efekt: różne buildy, niejasne wersje, brak możliwości cofnięcia. Rozwiązanie: jeden centralny rejestr, buildy w chmurze, spójne tagowanie.</p>
+<p>Co daje ACR dla aplikacji AI:</p>
+<table>
+<thead>
+<tr>
+<th>Możliwość</th>
+<th>Znaczenie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prywatne przechowywanie</td>
+<td>Obrazy zostają w Twoim środowisku Azure</td>
+</tr>
+<tr>
+<td>Geo-replikacja (geo-replication)</td>
+<td>Kopie obrazów w wielu regionach: szybsze pobieranie i mniejsze opóźnienia</td>
+</tr>
+<tr>
+<td>Integracja</td>
+<td>AKS, Container Apps, App Service pobierają obrazy bezpośrednio</td>
+</tr>
+<tr>
+<td>Formaty</td>
+<td>Obrazy Dockera, wykresy Helm (Helm chart = paczka konfiguracji dla Kubernetes) i artefakty OCI (OCI = otwarty standard formatu obrazów) w jednym rejestrze</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Poziomy usługi (SKU = wariant cenowy i funkcjonalny):</strong> Basic, Standard, Premium. Większość codziennych operacji działa tak samo na każdym poziomie. Różnice (egzamin je lubi):</p>
+<table>
+<thead>
+<tr>
+<th>Funkcja</th>
+<th>Basic</th>
+<th>Standard</th>
+<th>Premium</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Wliczony magazyn</td>
+<td>10 GiB</td>
+<td>100 GiB</td>
+<td>500 GiB</td>
+</tr>
+<tr>
+<td>Geo-replikacja</td>
+<td>nie</td>
+<td>nie</td>
+<td>tak</td>
+</tr>
+<tr>
+<td>Prywatne punkty końcowe (private endpoints)</td>
+<td>nie</td>
+<td>nie</td>
+<td>tak</td>
+</tr>
+<tr>
+<td>Zaufanie do treści (content trust = podpisywanie obrazów)</td>
+<td>nie</td>
+<td>nie</td>
+<td>tak</td>
+</tr>
+<tr>
+<td>Retention policy (automatyczne usuwanie untagged manifests, czyli manifestów bez tagu; patrz C6)</td>
+<td>nie</td>
+<td>nie</td>
+<td>tak</td>
+</tr>
+</tbody>
+</table>
+<p>Basic jest do nauki i rozwoju, Standard do większości produkcji, Premium do wdrożeń korporacyjnych. [docs: skus] Zmiana poziomu nie powoduje przestoju, ale przy przejściu z Premium na niższy trzeba najpierw usunąć np. geo-replikacje. [docs: skus]</p>
+<p>Cele modułu (z unit 1): wyjaśnić hierarchię rejestr - repozytorium - artefakt; budować i zarządzać obrazami w chmurze przez ACR Tasks; wdrożyć strategie tagowania i wersjonowania; używać Azure CLI do zarządzania obrazami i uruchamiania szybkich zadań (quick tasks). [unit 1]</p>
+<h2 id="a2-hierarchia-rejestr-repozytorium-artefakt">A2. Hierarchia: rejestr, repozytorium, artefakt</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>ACR ma trzy poziomy:</p>
+<div class="codehilite"><pre><span></span><code>rejestr  (contosoinference.azurecr.io)
+  +-- repozytorium  (inference-api)
+  |      +-- artefakt  inference-api:v1.2.0   (tagi, warstwy, manifest)
+  |      +-- artefakt  inference-api:stable
+  +-- repozytorium  (production/inference-api)
+</code></pre></div>
+
+<ul>
+<li><strong>Rejestr (registry)</strong> - zasób najwyższego poziomu. Ma unikalny <strong>login server</strong> w formacie <code>&lt;nazwa-rejestru&gt;.azurecr.io</code> (nazwa rejestru <code>contosoinference</code> daje <code>contosoinference.azurecr.io</code>). Tu ustawiasz uwierzytelnianie, dostęp (kto może push i pull, czyli wypychać i pobierać), retencję i geo-replikację.</li>
+<li><strong>Repozytorium (repository)</strong> - kolekcja obrazów o tej samej nazwie i różnych tagach. Repozytorium <code>inference-api</code> zawiera wszystkie wersje obrazu API. Nazwa może mieć <strong>przestrzenie nazw</strong> (namespace) z ukośnikiem: <code>production/inference-api</code>, <code>staging/inference-api</code>, <code>ml-team/model-server</code>. Dzięki temu nadasz zespołowi prawo zapisu tylko do jego przestrzeni i zablokujesz obrazy produkcyjne.</li>
+<li><strong>Artefakt (artifact)</strong> - właściwa zawartość w repozytorium: obraz Dockera, wykres Helm lub inna zgodna z OCI zawartość. Ma tagi, warstwy i manifest (patrz A3).</li>
+</ul>
+<h2 id="a3-tagi-warstwy-i-manifesty">A3. Tagi, warstwy i manifesty</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<ul>
+<li><strong>Tag</strong> - czytelna etykieta wersji w repozytorium, format <code>repozytorium:tag</code>, np. <code>inference-api:v1.2.0</code>. Bez podania tagu Docker używa <code>latest</code>. Jeden obraz może mieć wiele tagów (<code>v1.2.0</code> i <code>stable</code> wskazują ten sam obraz). <strong>Tagi są mutowalne</strong>: gdy wypchniesz nowy obraz z istniejącym tagiem, tag przesuwa się na nowy obraz. Przydatne dla <code>latest</code>, groźne na produkcji.</li>
+<li><strong>Warstwa (layer)</strong> - obraz składa się z warstw; każda odpowiada instrukcji w Dockerfile (Dockerfile = plik z przepisem na obraz), która zmienia system plików (instalacja pakietu, kopiowanie plików). Warstwy są adresowane treścią (content-addressable): identyfikuje je skrót (hash) zawartości. ACR współdzieli wspólne warstwy między obrazami (<strong>deduplikacja</strong>): jeśli wiele obrazów ma bazę <code>python:3.11</code>, w rejestrze leży jedna kopia. To oszczędza miejsce i przyspiesza pobieranie.</li>
+<li><strong>Manifest</strong> - dokument wymieniający warstwy i konfigurację artefaktu. Identyfikuje go <strong>digest</strong> w formacie <code>sha256:abc123...</code> (skrót SHA-256). <strong>Digest jest niemutowalny</strong>: po wypchnięciu obrazu nigdy się nie zmienia. Pobranie po digeście gwarantuje dokładnie ten obraz, nawet gdy ktoś wypchnie nowy obraz pod tym samym tagiem (egzamin je lubi).</li>
+</ul>
+<h2 id="a4-adresowanie-obrazu-po-tagu-i-po-digescie">A4. Adresowanie obrazu: po tagu i po digeście</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p><strong>Po tagu</strong> - <code>rejestr/repozytorium:tag</code>. Czytelne, wygodne w konfiguracji wdrożeń, ale tag może się zmienić, więc wdrożenie nie jest w pełni powtarzalne.</p>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>pull<span class="w"> </span>myregistry.azurecr.io/inference-api:v1.2.0<span class="w">   </span><span class="c1"># (1) pobranie po tagu</span>
+docker<span class="w"> </span>push<span class="w"> </span>myregistry.azurecr.io/inference-api:v1.2.0<span class="w">   </span><span class="c1"># (2) wypchnięcie z tagiem</span>
+</code></pre></div>
+
+<p><strong>Po digeście</strong> - <code>rejestr/repozytorium@sha256:skrót</code>. Wskazuje konkretny, niezmienny obraz bez względu na tagi.</p>
+<div class="codehilite"><pre><span></span><code>docker<span class="w"> </span>pull<span class="w"> </span>myregistry.azurecr.io/inference-api@sha256:0a2e01852872580b2c2fea9380ff8d7b637d3928783c55beb3f21a6e58d5d108<span class="w">   </span><span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) tag może wskazywać inny obraz jutro; (2) <code>push</code> wymaga wcześniejszego zalogowania do rejestru; (3) digest znajdziesz w portalu, w Azure CLI (<code>az acr manifest list-metadata</code>) albo w wyniku <code>push</code>. Digest stosuj tam, gdzie liczy się powtarzalność (produkcja, wszystkie węzły mają ten sam obraz).</p>
+<h2 id="a5-dobre-praktyki-organizacji-rejestru">A5. Dobre praktyki organizacji rejestru</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<ul>
+<li><strong>Używaj namespace</strong> (zespół, środowisko, projekt) - upraszcza kontrolę dostępu i wyszukiwanie.</li>
+<li><strong>Zaplanuj strukturę repozytoriów</strong> - grupuj obrazy według wzorca wdrożeń, właściciela lub cyklu życia.</li>
+<li><strong>Włącz geo-replikację</strong> dla globalnych wdrożeń AI (Premium) - krótsze pobieranie, większa niezawodność.</li>
+<li><strong>Monitoruj magazyn</strong> i stosuj polityki retencji, które usuwają untagged manifests (manifesty bez tagów). Bez sprzątania obrazy się kumulują i rosną koszty.</li>
+</ul>
+<hr />
+<h1 id="czesc-b-acr-tasks-budowanie-i-uruchamianie-obrazow-w-chmurze">CZĘŚĆ B - ACR TASKS: BUDOWANIE I URUCHAMIANIE OBRAZÓW W CHMURZE</h1>
+<h2 id="b1-czym-jest-acr-tasks">B1. Czym jest ACR Tasks</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-overview]</em></p>
+<p><strong>ACR Tasks</strong> to zestaw funkcji, które przenoszą budowanie obrazów do Azure. Zamiast budować lokalnie i wypychać, wysyłasz kod źródłowy do ACR, a chmura wykonuje build. Korzyści:</p>
+<ul>
+<li><strong>Spójne buildy</strong> - koniec z "u mnie działa": każdy build w tym samym środowisku.</li>
+<li><strong>Bez lokalnego Dockera</strong> - nie musisz instalować Dockera na stacji roboczej.</li>
+<li><strong>Integracja CI/CD</strong> (CI/CD = automatyczne budowanie, testowanie i wdrażanie) - wyzwalanie z commitów (GitHub, Azure DevOps) i aktualizacji obrazu bazowego.</li>
+<li><strong>Wiele platform</strong> - Linux i Windows, także ARM (np. ARM64 dla urządzeń brzegowych).</li>
+</ul>
+<p>Domyślnie ACR Tasks buduje dla Linux/AMD64; inną platformę wskazujesz parametrem <code>--platform</code> (np. <code>Linux/arm64/v8</code>). [docs: tasks-overview]</p>
+<p>Trzy scenariusze: <strong>quick tasks</strong> (build na żądanie), <strong>zadania wyzwalane automatycznie</strong> (triggery) i <strong>zadania wieloetapowe</strong> (multi-step). Uwaga: uruchomienia ACR Tasks są tymczasowo wstrzymane dla darmowych kredytów Azure, więc ćwiczenie wymaga płatnej subskrypcji. [unit 5] [docs: tasks-overview]</p>
+<h2 id="b2-quick-tasks-build-na-zadanie">B2. Quick tasks: build na żądanie</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>Quick task buduje i wypycha pojedynczy obraz poleceniem <code>az acr build</code>. To odpowiednik <code>docker build</code> + <code>docker push</code>, ale w Azure.</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span>myregistry<span class="w"> </span>--image<span class="w"> </span>inference-api:v1.0.0<span class="w"> </span>.<span class="w">   </span><span class="c1"># (1)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) kropka na końcu to <strong>kontekst builda</strong> (build context = katalog ze źródłami; tu bieżący). ACR wysyła kontekst, buduje obraz według Dockerfile i wypycha go do rejestru.</p>
+<p><strong>Skąd może pochodzić kontekst:</strong></p>
+<ul>
+<li>lokalny katalog (ACR kompresuje go i wysyła),</li>
+<li>repozytorium Git (publiczne lub prywatne, GitHub lub Azure DevOps) - podajesz adres URL,</li>
+<li>zdalny tarball (spakowane archiwum dostępne pod URL).</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:v1.0.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>https://github.com/myorg/inference-api.git<span class="w">    </span><span class="c1"># (1) build bez klonowania repozytorium lokalnie</span>
+</code></pre></div>
+
+<p><strong>Kiedy quick task:</strong> weryfikacja zmian w Dockerfile przed commitem, build bez Dockera lokalnie, jednorazowy krok builda w CI/CD, testy nowych obrazów bazowych lub zależności.</p>
+<h2 id="b3-zadania-wyzwalane-automatycznie-triggery">B3. Zadania wyzwalane automatycznie (triggery)</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-overview]</em></p>
+<p><strong>Trigger</strong> (wyzwalacz) uruchamia build automatycznie, gdy zmieni się warunek. Trzy rodzaje (egzamin je lubi):</p>
+<table>
+<thead>
+<tr>
+<th>Trigger</th>
+<th>Co go uruchamia</th>
+<th>Typowe użycie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Source code (kod źródłowy)</td>
+<td>commit lub pull request w GitHub / Azure DevOps (ACR tworzy w repozytorium webhook = wywołanie HTTP po zdarzeniu)</td>
+<td>CI po każdym commicie</td>
+</tr>
+<tr>
+<td>Base image (obraz bazowy)</td>
+<td>aktualizacja obrazu z instrukcji <code>FROM</code></td>
+<td>automatyczne łatki bezpieczeństwa</td>
+</tr>
+<tr>
+<td>Scheduled (czasowy)</td>
+<td>harmonogram w formacie cron (zapis czasu <code>minuta godzina dzień miesiąc dzień-tygodnia</code>)</td>
+<td>nocne buildy, cykliczne sprzątanie</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Source code trigger.</strong> Zadanie tworzysz przez <code>az acr task create</code>. Znacznik <code>{{.Run.ID}}</code> daje unikalny tag dla każdego uruchomienia. Do dostępu do repozytorium ACR potrzebuje <strong>osobistego tokena dostępu (PAT = personal access token)</strong>, który przechowuj w Azure Key Vault, nie w skryptach.</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>task<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>build-inference-api<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:<span class="o">{{</span>.Run.ID<span class="o">}}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--context<span class="w"> </span>https://github.com/myorg/inference-api.git#main<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>Dockerfile<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--git-access-token<span class="w"> </span><span class="nv">$PAT</span><span class="w">      </span><span class="c1"># (1)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) token pozwala ACR czytać repozytorium i założyć webhook.</p>
+<p><strong>Base image trigger.</strong> Gdy zaktualizujesz obraz bazowy (np. <code>python:3.11</code> albo własny obraz z PyTorch), ACR wykrywa zmianę i przebudowuje wszystkie obrazy, które mają go w <code>FROM</code>. Działa dla obrazów bazowych w tym samym rejestrze albo w Docker Hub i innych rejestrach publicznych. Dla prywatnych obrazów bazowych baza i obraz aplikacji powinny być w tym samym rejestrze. [unit 3]</p>
+<p><strong>Scheduled trigger</strong> - przykład (codziennie o północy UTC):</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>task<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>nightly-build<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:nightly<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--context<span class="w"> </span>https://github.com/myorg/inference-api.git<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schedule<span class="w"> </span><span class="s2">"0 0 * * *"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>Dockerfile<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--git-access-token<span class="w"> </span><span class="nv">$PAT</span><span class="w">     </span><span class="c1"># (1)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) pięć pól cron: minuta, godzina, dzień miesiąca, miesiąc, dzień tygodnia; <code>0 0 * * *</code> = 00:00 każdego dnia.</p>
+<p>Zastosowania triggerów czasowych: nocne buildy z najnowszymi zależnościami, okresowe przebudowy (gdy wykrywanie zmian bazy nie zadziała), regularne skany bezpieczeństwa, zadania sprzątające stare untagged obrazy.</p>
+<h2 id="b4-zadania-wieloetapowe-multi-step">B4. Zadania wieloetapowe (multi-step)</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-reference-yaml]</em></p>
+<p><strong>Multi-step task</strong> rozszerza quick task o sekwencję kroków zapisaną w pliku YAML. Krok może zbudować obraz (<code>build</code>), wypchnąć go (<code>push</code>) albo uruchomić kontener lub polecenie (<code>cmd</code>). Dzięki temu cały cykl build - test - push mieści się w ACR.</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.1.0</span>
+<span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-t {{.Run.Registry}}/inference-api:{{.Run.ID}} .</span><span class="w">          </span><span class="c1"># (1)</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="nv">.Run.Registry</span><span class="p p-Indicator">}}</span><span class="l l-Scalar l-Scalar-Plain">/inference-api:{{.Run.ID}}</span><span class="w">                    </span><span class="c1"># (2)</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cmd</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{{</span><span class="nv">.Run.Registry</span><span class="p p-Indicator">}}</span><span class="l l-Scalar l-Scalar-Plain">/inference-api:{{.Run.ID}} python -m pytest tests/</span><span class="w">   </span><span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) budowa obrazu; (2) wypchnięcie do rejestru; (3) uruchomienie obrazu i testów (<code>pytest</code> = framework testów w Pythonie). Jeśli testy zawiodą, wiesz o tym zanim obraz trafi na wdrożenie. W dokumentacji używa się też aliasów <code>$Registry</code> i <code>$ID</code> zamiast <code>{{.Run.Registry}}</code> i <code>{{.Run.ID}}</code>. [docs: tasks-reference-yaml]</p>
+<p>Multi-step obsługuje: workflowy build + test, sekwencję operacji z zależnościami między krokami, równoległe wykonanie niezależnych kroków i logikę warunkową zależną od wyniku poprzedniego kroku.</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>task<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>build-test-push<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--context<span class="w"> </span>https://github.com/myorg/inference-api.git<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--file<span class="w"> </span>acr-task.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--git-access-token<span class="w"> </span><span class="nv">$PAT</span><span class="w">     </span><span class="c1"># (1)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) zadanie z pliku YAML; samo <code>az acr run -f plik.yaml</code> uruchamia taki plik jednorazowo (patrz I3).</p>
+<h2 id="b5-uruchamianie-obrazu-az-acr-run">B5. Uruchamianie obrazu: <code>az acr run</code></h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-reference-yaml]</em></p>
+<p><code>az acr run</code> wykonuje polecenie w kontenerze z obrazu z Twojego rejestru. Pomaga wykryć błędy konfiguracji przed wdrożeniem. Kontekst <code>/dev/null</code> znaczy "żadne pliki źródłowe nie są potrzebne", bo uruchamiasz gotowy obraz.</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s1">'myregistry.azurecr.io/inference-api:v1.0.0 python --version'</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null
+</code></pre></div>
+
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 3): przykład <code>--cmd 'inference-api:v1.0.0 python --version'</code> podaje obraz bez nazwy rejestru -&gt; krok <code>cmd</code> używa standardowego formatu <code>docker run</code>, a obraz bez rejestru jest traktowany jako pochodzący z docker.io; poprawnie podaj pełny adres <code>myregistry.azurecr.io/inference-api:v1.0.0</code> (tak robi też laboratorium w unit 5) albo <code>$Registry/inference-api:v1.0.0</code> w pliku YAML. Źródło: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-tasks-reference-yaml.</p>
+</blockquote>
+<p>Zastosowania: sprawdzenie, czy obraz startuje; czy są potrzebne narzędzia i frameworki; testy dymne (smoke tests = szybkie sprawdzenia podstawowej sprawności); polecenia kontroli stanu.</p>
+<h2 id="b6-dobre-praktyki-acr-tasks">B6. Dobre praktyki ACR Tasks</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<ul>
+<li><strong>Zmienne uruchomienia</strong> - <code>{{.Run.ID}}</code> lub <code>{{.Run.Date}}</code> w tagach dają unikalne, śledzone buildy.</li>
+<li><strong>Zabezpiecz tokeny</strong> - PAT w Azure Key Vault, nie w repozytorium ani skryptach.</li>
+<li><strong>Logi zadań</strong> - <code>az acr task logs</code> pokazuje cały przebieg builda z błędami.</li>
+<li><strong>Kontekst builda</strong> - plik <code>.dockerignore</code> wyklucza zbędne pliki; duży kontekst spowalnia build i zużywa transfer.</li>
+<li><strong>Cache warstw</strong> - ACR Tasks zapamiętuje warstwy między buildami; ustaw instrukcje Dockerfile tak, by często zmieniane były na końcu pliku.</li>
+</ul>
+<hr />
+<h1 id="czesc-c-tagowanie-wersjonowanie-blokady-i-sprzatanie">CZĘŚĆ C - TAGOWANIE, WERSJONOWANIE, BLOKADY I SPRZĄTANIE</h1>
+<h2 id="c1-stabilne-i-unikalne-tagi">C1. Stabilne i unikalne tagi</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p><strong>Stabilne tagi</strong> (<code>v1</code>, <code>v1.2</code>, <code>latest</code>) są używane wielokrotnie: nowy obraz z istniejącym tagiem przejmuje tag, a poprzedni obraz zostaje w rejestrze bez tego tagu. Pasują do: obrazów bazowych z łatkami bezpieczeństwa, środowisk deweloperskich (zawsze najnowsze zmiany) i ciągłego dostarczania (continuous delivery = każda zmiana automatycznie trafia do odbiorców). Wada: brak przewidywalności. Różne węzły mogą pobrać ten sam tag w różnym czasie i dostać różne obrazy, a dla usługi wnioskowania AI to oznacza różne wersje modelu.</p>
+<p><strong>Unikalne tagi</strong> (<code>v1.2.0-build456</code>, <code>20260102-abc123</code>) nigdy nie są ponownie używane; każdy push tworzy nowy tag i zachowuje wszystkie wersje. Pasują do: wdrożeń produkcyjnych (każdy węzeł ma ten sam obraz), ścieżki audytu, cofania do znanego dobrego stanu (rollback) i wymogów zgodności. Wada: przy każdym wydaniu trzeba zaktualizować konfigurację wdrożenia, ale na produkcji to zaleta, bo zmiana jest świadoma.</p>
+<h2 id="c2-wersjonowanie-semantyczne">C2. Wersjonowanie semantyczne</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p><strong>Semantic versioning</strong> to format <code>MAJOR.MINOR.PATCH</code>:</p>
+<ul>
+<li><strong>MAJOR</strong> - zmiany łamiące zgodność (zmiana API, usunięta funkcja),</li>
+<li><strong>MINOR</strong> - nowe funkcje zgodne wstecz,</li>
+<li><strong>PATCH</strong> - poprawki błędów i bezpieczeństwa bez zmiany API.</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>inference-api:1.0.0    # pierwsze wydanie
+inference-api:1.0.1    # poprawka błędu w przetwarzaniu wstępnym
+inference-api:1.1.0    # nowy endpoint modelu
+inference-api:2.0.0    # zmiana łamiąca API
+</code></pre></div>
+
+<p>Połącz wersje semantyczne ze stabilnymi tagami, żeby odbiorcy wybrali strategię aktualizacji:</p>
+<div class="codehilite"><pre><span></span><code>inference-api:1        # wskazuje najnowszą 1.x.x  (tag stabilny)
+inference-api:1.1      # wskazuje najnowszą 1.1.x  (tag stabilny)
+inference-api:1.1.0    # konkretna wersja          (tag unikalny)
+</code></pre></div>
+
+<p>Kto używa <code>inference-api:1</code>, dostaje aktualizacje w obrębie wersji głównej; kto <code>inference-api:1.1.0</code>, dostaje tylko tę wersję.</p>
+<h2 id="c3-wzorce-unikalnych-tagow">C3. Wzorce unikalnych tagów</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<table>
+<thead>
+<tr>
+<th>Wzorzec</th>
+<th>Przykład</th>
+<th>Po co</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ID builda z systemu CI/CD</td>
+<td><code>inference-api:build-4567</code></td>
+<td>Łączy obraz z uruchomieniem pipeline (pipeline = zautomatyzowany ciąg kroków builda i testów; logi, wyniki testów)</td>
+</tr>
+<tr>
+<td>Skrót commitu Git (commit SHA)</td>
+<td><code>inference-api:abc123f</code></td>
+<td>Najprostsze powiązanie obrazu z kodem źródłowym; każdy z dostępem do repozytorium sprawdzi kod</td>
+</tr>
+<tr>
+<td>Znacznik czasu</td>
+<td><code>inference-api:20260102-143022</code></td>
+<td>Widać wiek i kolejność obrazów</td>
+</tr>
+<tr>
+<td>Połączony</td>
+<td><code>inference-api:v1.2.0-build4567-abc123f</code></td>
+<td>Pełna śledzalność przy incydencie</td>
+</tr>
+</tbody>
+</table>
+<p>W ACR Tasks zmienna <code>{{.Run.ID}}</code> generuje unikalny identyfikator każdego builda:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:v1.2.0-<span class="o">{{</span>.Run.ID<span class="o">}}</span><span class="w"> </span>.<span class="w">     </span><span class="c1"># (1)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) tag będzie np. <code>v1.2.0-ca3</code> (ID uruchomienia zadania ACR).</p>
+<h2 id="c4-tag-latest">C4. Tag <code>latest</code></h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Gdy nie podasz tagu, Docker użyje <code>latest</code>. Na produkcji to pułapka (egzamin je lubi):</p>
+<ul>
+<li><strong>niespójne wdrożenia</strong> - węzły pobierają <code>latest</code> w różnych momentach i dostają różne obrazy,</li>
+<li><strong>nieprzewidywalne aktualizacje</strong> - wdrożenie zmienia się, gdy ktoś wypchnie nowy obraz, bez świadomego wdrożenia,</li>
+<li><strong>trudna diagnostyka</strong> - nie wiesz, jaka wersja działa.</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Unikaj na produkcji</span>
+<span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myregistry.azurecr.io/inference-api:latest</span>
+
+<span class="c1"># Używaj jawnej wersji</span>
+<span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">myregistry.azurecr.io/inference-api:v1.2.0</span>
+</code></pre></div>
+
+<p>Jeśli workflow wymaga <code>latest</code>, używaj go tylko w środowiskach deweloperskich.</p>
+<h2 id="c5-blokowanie-wdrozonych-obrazow">C5. Blokowanie wdrożonych obrazów</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-image-lock]</em></p>
+<p>Domyślnie otagowany obraz w ACR jest <strong>mutowalny</strong> (możesz go nadpisać i usunąć). Dla obrazu działającego na produkcji chcesz <strong>niemutowalności</strong>. Blokadę ustawiasz przez atrybuty poleceniem <code>az acr repository update</code>:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>update<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:v1.2.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--write-enabled<span class="w"> </span><span class="nb">false</span><span class="w">      </span><span class="c1"># (1) blokada</span>
+
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>update<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:v1.2.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--write-enabled<span class="w"> </span><span class="nb">true</span><span class="w">       </span><span class="c1"># (2) odblokowanie przed wycofaniem wersji</span>
+</code></pre></div>
+
+<p>Zablokowany obraz: <strong>nie da się go usunąć</strong> (nawet administrator przypadkiem), <strong>nie da się go nadpisać</strong> (push z tym samym tagiem kończy się błędem), <strong>przeżywa polityki retencji</strong> i daje pewność, że obraz produkcyjny pozostanie dostępny. [unit 4]</p>
+<p>Z dokumentacji [docs: image-lock]: atrybuty <code>write-enabled</code>, <code>delete-enabled</code> i <code>list-enabled</code> ustawiasz dla wersji obrazu (tag lub digest) albo dla całego repozytorium (<code>--repository</code>). <code>delete-enabled=false</code> chroni przed usunięciem, ale pozwala na aktualizację; <code>list-enabled=false</code> blokuje listowanie. Atrybuty tagu i jego manifestu są zarządzane osobno: ustawienie <code>deleteEnabled=false</code> na tagu nie ustawia go na manifeście. Blokada rejestru jako zasobu (Azure Locks, <code>az lock</code>) to co innego: nie chroni danych w repozytoriach.</p>
+<h2 id="c6-sprzatanie-untagged-images-acr-purge-retention-policy">C6. Sprzątanie: untagged images, <code>acr purge</code>, retention policy</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-auto-purge] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-retention-policy]</em></p>
+<p>Gdy wypchniesz nowy obraz pod istniejącym stabilnym tagiem, poprzedni obraz traci tag i staje się <strong>untagged</strong> (manifest bez tagu). Takie "osierocone" obrazy zajmują miejsce i rosną koszty.</p>
+<p><strong><code>acr purge</code></strong> to polecenie działające jako kontener w ACR Tasks. Uruchamiasz je na żądanie przez <code>az acr run</code>:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"acr purge --filter 'inference-api:.*' --untagged --ago 30d"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null
+</code></pre></div>
+
+<p>Zaplanowane sprzątanie (zadanie co tydzień, niedziela 00:00):</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>task<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--registry<span class="w"> </span>myregistry<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--name<span class="w"> </span>cleanup-untagged<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"acr purge --filter '.*:.*' --untagged --ago 7d"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--schedule<span class="w"> </span><span class="s2">"0 0 * * 0"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--context<span class="w"> </span>/dev/null
+</code></pre></div>
+
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 4): moduł opisuje oba polecenia jako usuwanie tylko untagged images starszych niż 30 dni (7 dni), a drugie jako dotyczące "untagged images across all repositories" -&gt; <code>acr purge --filter 'repo:tag' --ago N</code> <strong>usuwa także tagi</strong> pasujące do filtra i starsze niż N; <code>--untagged</code> dodatkowo usuwa manifesty bez tagów. Filtr <code>'.*:.*'</code> z <code>--ago 7d</code> dopasowuje wszystkie tagi we wszystkich repozytoriach, więc zaplanowane zadanie co tydzień kasuje wszystkie obrazy starsze niż 7 dni (poza zablokowanymi). Do usuwania wyłącznie untagged użyj <code>--untagged-only</code> albo filtra bez dopasowania tagów (<code>^$</code>). Źródło: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-auto-purge.</p>
+</blockquote>
+<p>Co jeszcze mówi dokumentacja [docs: auto-purge] (egzamin je lubi):</p>
+<ul>
+<li><code>--filter</code> to <strong>wyrażenie regularne nazwy repozytorium i wyrażenie regularne nazwy tagu</strong> w postaci <code>repo:tag</code>, a nie sama nazwa repozytorium (<code>'hello-world:.*'</code> = wszystkie tagi repozytorium <code>hello-world</code>),</li>
+<li><code>--ago</code> to czas w stylu Go: <code>d</code> dni, <code>h</code> godziny, <code>m</code> minuty (np. <code>2d3h6m</code>),</li>
+<li><code>--dry-run</code> pokazuje, co zostałoby usunięte, bez usuwania - używaj przed każdym realnym purge,</li>
+<li><code>--keep N</code> zachowuje N ostatnich pozycji,</li>
+<li>domyślnie <code>acr purge</code> <strong>pomija zablokowane</strong> tagi i manifesty (<code>write-enabled</code> lub <code>delete-enabled</code> = false); <code>--include-locked</code> odblokowuje je i usuwa (dostępne od <code>mcr.microsoft.com/acr/acr-cli:0.17</code>),</li>
+<li>usunięte dane są <strong>nieodwracalne</strong>.</li>
+</ul>
+<p><strong>Retention policy</strong> (polityka retencji) to prostsza alternatywa dla zaplanowanego purge: jedno ustawienie na cały rejestr usuwa untagged manifests po zadanej liczbie dni, bez zadań i harmonogramów. Dla rejestrów <strong>Premium</strong>. Dokumentacja dodaje: to funkcja w wersji <strong>preview</strong> (podglądowa); domyślny okres to 7 dni (zakres 0-365; 0 = natychmiast po odtagowaniu); dotyczy tylko manifestów odtagowanych po włączeniu polityki; nie obsługuje manifestów w typach OCI (tylko manifesty Dockera) - do nich użyj <code>acr purge</code>; nie ustawiaj jej, jeśli systemy pobierają obrazy po digeście, bo untagged obraz zniknie. Manifest z <code>delete-enabled=false</code> jest z polityki wyłączony. [docs: retention-policy] Stan na 2026-11-22; sprawdź status preview w aktualnej dokumentacji przed użyciem.</p>
+<h2 id="c7-dobre-praktyki-tagowania-i-wersjonowania">C7. Dobre praktyki tagowania i wersjonowania</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<ul>
+<li><strong>Unikalne tagi na produkcji</strong> - spójność na wszystkich węzłach.</li>
+<li><strong>Stabilne tagi tylko dla obrazów bazowych</strong> - łatki płyną do zależnych obrazów przez base image triggers.</li>
+<li><strong>Blokuj obrazy produkcyjne</strong> - odblokuj dopiero przy wycofywaniu wersji.</li>
+<li><strong>Polityki retencji i regularny purge</strong> - kontrola kosztów magazynu.</li>
+<li><strong>Metadane builda w tagu</strong> - ID builda i commit ułatwiają diagnostykę i audyt.</li>
+<li><strong>Udokumentuj schemat tagowania</strong> - zespół ma wiedzieć, które tagi są stabilne, a które unikalne.</li>
+</ul>
+<h2 id="c8-zarzadzanie-obrazami-z-kodu-sdk-dla-pythona-i-net">C8. Zarządzanie obrazami z kodu: SDK dla Pythona i .NET</h2>
+<p><em>Źródło: [docs: https://learn.microsoft.com/en-us/python/api/overview/azure/containerregistry-readme] + [docs: https://learn.microsoft.com/en-us/dotnet/api/overview/azure/containers.containerregistry-readme] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-roles] + [autor: test 2026-11-22]</em></p>
+<p>Nazwy klas i metod poniżej sprawdzono 2026-11-22 introspekcją zainstalowanego pakietu (Python) i kompilacją projektu .NET; wywołań na prawdziwym rejestrze nie testowano.</p>
+<p>Egzamin AI-200 sprawdza biegłość w <strong>Azure SDK</strong> i w Pythonie, więc oprócz <code>az</code> warto znać bibliotekę klienta rejestru (<strong>SDK</strong> = Software Development Kit, biblioteka do wywoływania usługi z kodu). Moduł Microsoftu uczy tego przez CLI; ta sekcja uzupełnia go o odpowiedniki w kodzie.</p>
+<table>
+<thead>
+<tr>
+<th>Zadanie</th>
+<th>Python (<code>azure-containerregistry</code>)</th>
+<th>C# (<code>Azure.Containers.ContainerRegistry</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Klient</td>
+<td><code>ContainerRegistryClient(endpoint, DefaultAzureCredential(), audience=...)</code></td>
+<td><code>new ContainerRegistryClient(uri, new DefaultAzureCredential(), options)</code></td>
+</tr>
+<tr>
+<td>Lista repozytoriów</td>
+<td><code>list_repository_names()</code></td>
+<td><code>GetRepositoryNamesAsync()</code></td>
+</tr>
+<tr>
+<td>Lista manifestów</td>
+<td><code>list_manifest_properties(repo)</code></td>
+<td><code>GetRepository(repo).GetAllManifestPropertiesAsync()</code></td>
+</tr>
+<tr>
+<td>Blokada obrazu</td>
+<td><code>update_manifest_properties(repo, tag_or_digest, can_write=False)</code></td>
+<td><code>GetArtifact(repo, tag).UpdateManifestPropertiesAsync(new ArtifactManifestProperties { CanWrite = false })</code></td>
+</tr>
+</tbody>
+</table>
+<p>Ważne (egzamin je lubi): uwierzytelnianie przez Microsoft Entra ID (<code>DefaultAzureCredential</code> bierze np. dane z <code>az login</code>); w chmurze publicznej ustaw <strong>audience</strong> na <code>https://management.azure.com</code> (Python) albo <code>ContainerRegistryAudience.AzureResourceManagerPublicCloud</code> (.NET). <code>can_write=False</code> w SDK odpowiada <code>--write-enabled false</code> w CLI. Do operacji na obrazach potrzebna jest rola danych w rejestrze (np. <code>Container Registry Repository Writer</code> do wypychania i zmian, <code>Container Registry Repository Contributor</code> do usuwania), nadawana osobno od ról zarządzania rejestrem. [docs: roles]</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: https://pypi.org/project/azure-containerregistry/, https://www.nuget.org/packages/Azure.Containers.ContainerRegistry): Python <code>azure-containerregistry</code> 1.2.0, <code>azure-identity</code> 1.27.0; .NET <code>Azure.Containers.ContainerRegistry</code> 1.4.0. Moduł Microsoftu nie podaje wersji SDK; na egzaminie liczy się zasada (klient + <code>DefaultAzureCredential</code> + właściwy audience). Przed użyciem sprawdź PyPI i NuGet.</p>
+</blockquote>
+<hr />
+<h1 id="czesc-d-cwiczenia">CZĘŚĆ D - ĆWICZENIA</h1>
+<p>Przed ćwiczeniami przeczytaj części A-C. Każde ćwiczenie ma układ: Gdzie / Plik, kod lub kroki, Koszt, Zadania, Sprawdź, Sprzątanie. I1 jest laboratorium z modułu (unit 5) w wersji niezależnej od pobranego archiwum; I2-I4 są autorskie i korzystają z rejestru utworzonego w I1 (zmienne <code>RG</code> i <code>ACR_NAME</code>). Wszystkie ćwiczenia tworzą płatny rejestr ACR; wykonaj Sprzątanie z ostatniego ćwiczenia, które robisz.</p>
+<blockquote>
+<p>Niesprawdzone: dokładna cena rejestru ACR Basic za dzień - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/. Poziom Basic wlicza 10 GiB magazynu [docs: skus]; builds ACR Tasks są dodatkowo naliczane za czas obliczeń.</p>
+</blockquote>
+<h2 id="i1-build-weryfikacja-uruchomienie-i-blokada-obrazu-przez-acr-tasks-laboratorium-moduu">I1. Build, weryfikacja, uruchomienie i blokada obrazu przez ACR Tasks (laboratorium modułu)</h2>
+<p><em>Źródło: [unit 5] + [unit 5-lab] + [unit 5-starter] + [autor: niezweryfikowane]</em>
+(rozwinięte w <code>01-store-manage-containers-azure-container-registry.md</code> §B2, §B5, §A3, §C5)</p>
+<p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash), katalog roboczy <code>acr-lab</code>. Pliki aplikacji: <code>acr-lab/api/app.py</code> i <code>acr-lab/api/Dockerfile</code> (to pliki startowe laboratorium Microsoftu, podane tu w całości, żeby nie pobierać archiwum). Wymaga subskrypcji płatnej (nie darmowych kredytów).</p>
+<p>Krok 1 - aplikacja (Python, Flask = lekki framework WWW; endpoint = adres URL, pod którym API odpowiada; tu <code>/</code>, <code>/health</code>, <code>/predict</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># acr-lab/api/app.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/health'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"healthy"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"APP_VERSION"</span><span class="p">,</span> <span class="s2">"1.0.0"</span><span class="p">)})</span>        <span class="c1"># (1)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/predict'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">"prediction"</span><span class="p">:</span> <span class="s2">"sample-result"</span><span class="p">,</span> <span class="s2">"confidence"</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>
+                    <span class="s2">"model_version"</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"MODEL_VERSION"</span><span class="p">,</span> <span class="s2">"v1"</span><span class="p">)})</span>                        <span class="c1"># (2)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">root</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Inference API"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"APP_VERSION"</span><span class="p">,</span> <span class="s2">"1.0.0"</span><span class="p">),</span>
+                    <span class="s2">"endpoints"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"/health"</span><span class="p">,</span> <span class="s2">"/predict"</span><span class="p">]})</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">'0.0.0.0'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>                                                         <span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) <code>/health</code> to endpoint kontroli stanu dla orkiestratorów (np. Kubernetes); wersja z zmiennej środowiskowej <code>APP_VERSION</code>; (2) udaje endpoint wnioskowania - w produkcji wywołałby model; (3) <code>host='0.0.0.0'</code> pozwala na połączenia spoza kontenera, port 5000.</p>
+<div class="codehilite"><pre><span></span><code><span class="c"># acr-lab/api/Dockerfile</span>
+<span class="k">FROM</span><span class="w"> </span><span class="s">python:3.11-slim</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>flask
+<span class="k">COPY</span><span class="w"> </span>app.py<span class="w"> </span>.
+<span class="k">ENV</span><span class="w"> </span><span class="nv">APP_VERSION</span><span class="o">=</span><span class="m">1</span>.0.0
+<span class="k">ENV</span><span class="w"> </span><span class="nv">MODEL_VERSION</span><span class="o">=</span>v1
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">5000</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"python"</span><span class="p">,</span><span class="w"> </span><span class="s2">"app.py"</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Krok 2 - środowisko i rejestr (SKU Basic, jak w skrypcie laboratorium):</p>
+<div class="codehilite"><pre><span></span><code>mkdir<span class="w"> </span>-p<span class="w"> </span>acr-lab/api<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>acr-lab<span class="w">                                  </span><span class="c1"># utwórz pliki app.py i Dockerfile w api/ (powyżej)</span>
+az<span class="w"> </span>login
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.ContainerRegistry<span class="w">        </span><span class="c1"># (1)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-acr-i1
+<span class="nb">export</span><span class="w"> </span><span class="nv">ACR_NAME</span><span class="o">=</span>acrtut<span class="nv">$RANDOM$RANDOM</span><span class="w">                                </span><span class="c1"># (2)</span>
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span>westeurope
+az<span class="w"> </span>acr<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--sku<span class="w"> </span>Basic<span class="w">     </span><span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) rejestruje dostawcę zasobów, jeśli subskrypcja go jeszcze nie ma; (2) nazwa rejestru musi być globalnie unikalna (litery i cyfry, 5-50 znaków); (3) rejestr w poziomie Basic.</p>
+<p>Krok 3 - build w chmurze i weryfikacja:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>inference-api:v1.0.0<span class="w"> </span>./api<span class="w">          </span><span class="c1"># (1)</span>
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>list<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--output<span class="w"> </span>table<span class="w">                        </span><span class="c1"># (2)</span>
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>show-tags<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--repository<span class="w"> </span>inference-api<span class="w"> </span>--output<span class="w"> </span>table<span class="w">   </span><span class="c1"># (3)</span>
+az<span class="w"> </span>acr<span class="w"> </span>manifest<span class="w"> </span>list-metadata<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--name<span class="w"> </span>inference-api<span class="w"> </span>--output<span class="w"> </span>table<span class="w">   </span><span class="c1"># (4)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) wysyła kontekst <code>./api</code>, buduje i wypycha obraz bez Dockera lokalnie; wynik pokazuje etapy: spakowanie i wysłanie kontekstu, kolejkowanie, strumień budowy warstw, wypchnięcie, digest i status; (2) lista repozytoriów; (3) lista tagów; (4) metadane manifestów razem z digestem.</p>
+<p>Krok 4 - uruchomienie obrazu i kolejna wersja:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"</span><span class="nv">$ACR_NAME</span><span class="s2">.azurecr.io/inference-api:v1.0.0 python -c 'from app import app'"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null<span class="w">                                                                    </span><span class="c1"># (1)</span>
+az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>inference-api:v1.1.0<span class="w"> </span>./api<span class="w">           </span><span class="c1"># (2)</span>
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>show-tags<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--repository<span class="w"> </span>inference-api<span class="w"> </span>--output<span class="w"> </span>table
+</code></pre></div>
+
+<p>Objaśnienie: (1) sprawdza, że aplikacja Flask importuje się w kontenerze (pełny adres obrazu, patrz uwaga o błędzie w B5); (2) druga wersja obrazu, ta sama zawartość.</p>
+<p>Krok 5 - historia i blokada:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>task<span class="w"> </span>list-runs<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--output<span class="w"> </span>table<span class="w">                      </span><span class="c1"># (1)</span>
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>update<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>inference-api:v1.0.0<span class="w"> </span>--write-enabled<span class="w"> </span><span class="nb">false</span><span class="w">   </span><span class="c1"># (2)</span>
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>inference-api:v1.0.0<span class="w">           </span><span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) historia uruchomień (ID, status, trigger, czas); (2) blokada obrazu <code>v1.0.0</code>; (3) w wyniku pole <code>writeEnabled</code> ma wartość <code>false</code>.</p>
+<p>Gdy coś nie działa (rozwiązywanie problemów z laboratorium Microsoftu): sprawdź <code>az account show</code> (czy jesteś w dobrej subskrypcji) i <code>echo $ACR_NAME</code> (czy zmienna jest ustawiona; po otwarciu nowego terminala ustaw ją ponownie); w portalu sprawdź, czy rejestr ma stan wdrożenia <strong>Succeeded</strong>, albo uruchom <code>az acr list --output table</code>; przy błędach builda sprawdź, czy jesteś w katalogu zawierającym folder <code>api</code>, czy istnieje Dockerfile i poprawne ścieżki, a stan buildów obejrzyj przez <code>az acr task list-runs --registry $ACR_NAME --output table</code>. [unit 5-lab]</p>
+<p><strong>Koszt:</strong> rejestr ACR Basic jest płatny i naliczany za dzień istnienia (cena: patrz ostrzeżenie "Niesprawdzone" na początku części D); builds ACR Tasks są naliczane za czas obliczeń. Przy kilkudziesięciu minutach pracy koszt jest niewielki, o ile wykonasz Sprzątanie. Darmowe kredyty Azure nie obsługują uruchomień ACR Tasks. [unit 5]</p>
+<p><strong>Zadania:</strong> (a) zbuduj <code>v1.0.0</code> i odczytaj z wyniku digest; (b) wypisz repozytoria i tagi; (c) uruchom <code>az acr run</code> i potwierdź sukces; (d) zbuduj <code>v1.1.0</code> i sprawdź, że oba tagi istnieją; (e) zablokuj <code>v1.0.0</code> i odczytaj <code>writeEnabled</code>; (f) <strong>zepsuj to:</strong> spróbuj zbudować jeszcze raz <code>inference-api:v1.0.0</code> (to samo polecenie co w kroku 3).</p>
+<p><strong>Sprawdź:</strong> (a) w wyniku jest linia z digestem <code>sha256:...</code>; (b) widoczne repozytorium <code>inference-api</code> i tag <code>v1.0.0</code>; (c) wynik kończy się komunikatem w stylu <code>Run ID: xxx was successful after xxx</code>; (d) lista tagów zawiera <code>v1.0.0</code> i <code>v1.1.0</code>; (e) <code>writeEnabled</code> = <code>false</code>; (f) build kończy się błędem przy wypychaniu, bo zablokowanego tagu nie można nadpisać (dokładny komunikat zależy od wersji ACR - [autor: niezweryfikowane]).</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span>rg-acr-i1<span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span>rg-acr-i1<span class="w">     </span><span class="c1"># po kilku minutach powinno wypisać false</span>
+</code></pre></div>
+
+<p>Uwaga: usunięcie grupy zasobów usuwa wszystkie zasoby w niej (rejestr i obrazy). Rejestr z I1 jest używany w I2-I4, więc wykonaj sprzątanie po ostatnim ćwiczeniu, które robisz.</p>
+<h2 id="i2-unikalne-tagi-tagi-stabilne-i-pobranie-po-digescie-python-i-c">I2. Unikalne tagi, tagi stabilne i pobranie po digeście - Python i C</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-image-tag-version] + [autor: niezweryfikowane]</em></p>
+<p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash), katalog <code>acr-lab</code> z I1 (aplikacja Pythona w <code>api/</code>); rejestr z I1 (<code>RG</code>, <code>ACR_NAME</code>). Dla bloku C# nowy katalog <code>acr-lab/api-dotnet</code> z trzema plikami (poniżej).</p>
+<p>Krok 1 - unikalny tag z numerem uruchomienia oraz tagi stabilne (jeden build, wiele tagów <code>--image</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-acr-i1
+<span class="nb">export</span><span class="w"> </span><span class="nv">ACR_NAME</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>acr<span class="w"> </span>list<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"[0].name"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span><span class="w">       </span><span class="c1"># (1)</span>
+
+az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:v1.2.0-<span class="o">{{</span>.Run.ID<span class="o">}}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:1.2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--image<span class="w"> </span>inference-api:1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>./api<span class="w">                                                                              </span><span class="c1"># (2)</span>
+
+az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>show-tags<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--repository<span class="w"> </span>inference-api<span class="w"> </span>--output<span class="w"> </span>table
+<span class="nv">DIGEST</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>acr<span class="w"> </span>manifest<span class="w"> </span>list-metadata<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--name<span class="w"> </span>inference-api<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--query<span class="w"> </span><span class="s2">"[?tags &amp;&amp; contains(tags, '1.2')].digest | [0]"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span><span class="w">                     </span><span class="c1"># (3)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$DIGEST</span>
+az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"</span><span class="nv">$ACR_NAME</span><span class="s2">.azurecr.io/inference-api@</span><span class="nv">$DIGEST</span><span class="s2"> python -c 'from app import app; print(\"ok\")'"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null<span class="w">                                                                           </span><span class="c1"># (4)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) odczyt nazwy rejestru z grupy, jeśli nie masz już zmiennej; (2) jeden obraz dostaje trzy tagi: unikalny <code>v1.2.0-&lt;RunID&gt;</code> (np. <code>v1.2.0-ca3</code>) oraz stabilne <code>1.2</code> i <code>1</code> (patrz C2); (3) wyszukanie digestu obrazu z tagiem <code>1.2</code> (zapytanie JMESPath = język zapytań <code>--query</code> w <code>az</code>); (4) uruchomienie obrazu po <strong>digeście</strong> - gwarantuje dokładnie ten obraz niezależnie od tagów.</p>
+<p><strong>Kod Pythona do tego ćwiczenia.</strong> Krok 1 buduje aplikację z <code>./api</code>, czyli kod z I1, tylko z nowymi tagami. Dla wygody ten sam kod jest tu jeszcze raz. Jeśli zrobiłeś I1, pliki już masz i nic nie zmieniasz (tag <code>v1.2.0-...</code> to ten sam kod; zmieniają się tylko tagi).</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># acr-lab/api/app.py</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/health'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"healthy"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"APP_VERSION"</span><span class="p">,</span> <span class="s2">"1.0.0"</span><span class="p">)})</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/predict'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">"prediction"</span><span class="p">:</span> <span class="s2">"sample-result"</span><span class="p">,</span> <span class="s2">"confidence"</span><span class="p">:</span> <span class="mf">0.95</span><span class="p">,</span>
+                    <span class="s2">"model_version"</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"MODEL_VERSION"</span><span class="p">,</span> <span class="s2">"v1"</span><span class="p">)})</span>
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">root</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">({</span><span class="s2">"name"</span><span class="p">:</span> <span class="s2">"Inference API"</span><span class="p">,</span> <span class="s2">"version"</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"APP_VERSION"</span><span class="p">,</span> <span class="s2">"1.0.0"</span><span class="p">),</span>
+                    <span class="s2">"endpoints"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"/health"</span><span class="p">,</span> <span class="s2">"/predict"</span><span class="p">]})</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">app</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="s1">'0.0.0.0'</span><span class="p">,</span> <span class="n">port</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c"># acr-lab/api/Dockerfile</span>
+<span class="k">FROM</span><span class="w"> </span><span class="s">python:3.11-slim</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>flask
+<span class="k">COPY</span><span class="w"> </span>app.py<span class="w"> </span>.
+<span class="k">ENV</span><span class="w"> </span><span class="nv">APP_VERSION</span><span class="o">=</span><span class="m">1</span>.0.0
+<span class="k">ENV</span><span class="w"> </span><span class="nv">MODEL_VERSION</span><span class="o">=</span>v1
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">5000</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"python"</span><span class="p">,</span><span class="w"> </span><span class="s2">"app.py"</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Poniżej odpowiednik tej samej aplikacji w C#.</p>
+<p><strong>Odpowiednik C# (.NET).</strong> Aplikacja ASP.NET Core (minimal API = bez kontrolerów, endpointy w kilku liniach) z tymi samymi trzema endpointami. Dockerfile jest wieloetapowy (osobno SDK do budowy, osobno lekki runtime), ale sposób budowania w ACR Tasks jest taki sam.</p>
+<p>Plik <code>acr-lab/api-dotnet/InferenceApi.csproj</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;Project</span><span class="w"> </span><span class="na">Sdk=</span><span class="s">"Microsoft.NET.Sdk.Web"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;PropertyGroup&gt;</span>
+<span class="w">    </span><span class="nt">&lt;TargetFramework&gt;</span>net10.0<span class="nt">&lt;/TargetFramework&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Nullable&gt;</span>enable<span class="nt">&lt;/Nullable&gt;</span>
+<span class="w">    </span><span class="nt">&lt;ImplicitUsings&gt;</span>enable<span class="nt">&lt;/ImplicitUsings&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/PropertyGroup&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1">// acr-lab/api-dotnet/Program.cs</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">WebApplication</span><span class="p">.</span><span class="n">CreateBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="n">Build</span><span class="p">();</span>
+
+<span class="kt">string</span><span class="w"> </span><span class="n">appVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"APP_VERSION"</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s">"1.0.0"</span><span class="p">;</span><span class="w">    </span><span class="c1">// (1)</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">modelVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"MODEL_VERSION"</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s">"v1"</span><span class="p">;</span><span class="w">  </span><span class="c1">// (2)</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Inference API"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">appVersion</span><span class="p">,</span><span class="w"> </span><span class="n">endpoints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">"/health"</span><span class="p">,</span><span class="w"> </span><span class="s">"/predict"</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">});</span>
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/health"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"healthy"</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">appVersion</span><span class="w"> </span><span class="p">});</span>
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/predict"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">prediction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"sample-result"</span><span class="p">,</span><span class="w"> </span><span class="n">confidence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.95</span><span class="p">,</span><span class="w"> </span><span class="n">model_version</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">modelVersion</span><span class="w"> </span><span class="p">});</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">Run</span><span class="p">();</span><span class="w">                                                                            </span><span class="c1">// (3)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c"># acr-lab/api-dotnet/Dockerfile</span>
+<span class="k">FROM</span><span class="w"> </span><span class="s">mcr.microsoft.com/dotnet/sdk:10.0</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">build</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/src</span>
+<span class="k">COPY</span><span class="w"> </span>InferenceApi.csproj<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>dotnet<span class="w"> </span>restore
+<span class="k">COPY</span><span class="w"> </span>.<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>dotnet<span class="w"> </span>publish<span class="w"> </span>-c<span class="w"> </span>Release<span class="w"> </span>-o<span class="w"> </span>/out<span class="w"> </span>--no-restore
+
+<span class="k">FROM</span><span class="w"> </span><span class="s">mcr.microsoft.com/dotnet/aspnet:10.0</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>--from<span class="o">=</span>build<span class="w"> </span>/out<span class="w"> </span>.
+<span class="k">ENV</span><span class="w"> </span><span class="nv">ASPNETCORE_URLS</span><span class="o">=</span>http://+:5000
+<span class="k">ENV</span><span class="w"> </span><span class="nv">APP_VERSION</span><span class="o">=</span><span class="m">1</span>.0.0
+<span class="k">ENV</span><span class="w"> </span><span class="nv">MODEL_VERSION</span><span class="o">=</span>v1
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">5000</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"dotnet"</span><span class="p">,</span><span class="w"> </span><span class="s2">"InferenceApi.dll"</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1)-(2) zmienne środowiskowe czytane tak samo jak <code>os.getenv</code> w Pythonie; (3) uruchomienie serwera (w Pythonie robi to <code>app.run</code>); <code>ASPNETCORE_URLS</code> ustawia port 5000, tak jak w wersji Pythona.</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>inference-api-dotnet:v1.0.0<span class="w"> </span>./api-dotnet
+az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"</span><span class="nv">$ACR_NAME</span><span class="s2">.azurecr.io/inference-api-dotnet:v1.0.0 dotnet --list-runtimes"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null
+</code></pre></div>
+
+<p>Różnice względem Pythona: build wieloetapowy zamiast jednego <code>pip install</code>; zamiast "import aplikacji" smoke test sprawdza dostępność runtime .NET (<code>dotnet --list-runtimes</code>); tagi, digesty i polecenia <code>az acr</code> są identyczne. Wersje obrazów bazowych <code>mcr.microsoft.com/dotnet/sdk:10.0</code> i <code>aspnet:10.0</code> istnieją w rejestrze MCR (sprawdzone 2026-11-22), podobnie <code>python:3.12-slim</code> w Docker Hub; I1 używa <code>python:3.11-slim</code> jak laboratorium.</p>
+<p><strong>Koszt:</strong> dodatkowe buildy ACR Tasks na istniejącym rejestrze (czas obliczeń, groszowe kwoty); brak nowych zasobów.</p>
+<p><strong>Zadania:</strong> (a) zbuduj obraz z trzema tagami i wypisz tagi; (b) odczytaj digest i uruchom obraz po digeście; (c) zbuduj aplikację C# w tym samym rejestrze i uruchom smoke test; (d) <strong>zepsuj to:</strong> w <code>az acr run</code> podaj obraz bez nazwy rejestru (<code>inference-api:1.2</code>) i przeczytaj błąd; (e) wypisz repozytoria rejestru.</p>
+<p><strong>Sprawdź:</strong> (a) widać tag <code>v1.2.0-&lt;RunID&gt;</code> oraz <code>1.2</code> i <code>1</code>; (b) komenda wypisuje <code>ok</code>; (c) lista runtime'ów zawiera <code>Microsoft.AspNetCore.App 10.0.x</code> i <code>Microsoft.NETCore.App 10.0.x</code>; (d) bez rejestru obraz jest szukany w docker.io i uruchomienie kończy się błędem pobrania obrazu (patrz uwaga o błędzie w B5; dokładny komunikat - [autor: niezweryfikowane]); (e) są dwa repozytoria: <code>inference-api</code> i <code>inference-api-dotnet</code>.</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>repository<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>inference-api-dotnet:v1.0.0<span class="w"> </span>--yes<span class="w">   </span><span class="c1"># opcjonalnie: sam obraz C#</span>
+az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span>rg-acr-i1<span class="w"> </span>--yes<span class="w"> </span>--no-wait<span class="w">                                       </span><span class="c1"># pełne sprzątanie po ostatnim ćwiczeniu</span>
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span>rg-acr-i1<span class="w">     </span><span class="c1"># po kilku minutach: false</span>
+</code></pre></div>
+
+<h2 id="i3-zadanie-wieloetapowe-i-bezpieczny-acr-purge-z-dry-run">I3. Zadanie wieloetapowe i bezpieczny <code>acr purge</code> z <code>--dry-run</code></h2>
+<p><em>Źródło: [unit 3] + [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-auto-purge] + [autor: niezweryfikowane]</em></p>
+<p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash), katalog <code>acr-lab</code>; plik <code>acr-lab/acr-task.yaml</code>; rejestr z I1 i obrazy z I1-I2.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># acr-lab/acr-task.yaml</span>
+<span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">v1.1.0</span>
+<span class="nt">steps</span><span class="p">:</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">build</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-t $Registry/inference-api:v1.3.0-$ID ./api</span><span class="w">         </span><span class="c1"># (1)</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">push</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$Registry/inference-api:v1.3.0-$ID</span><span class="w">                       </span><span class="c1"># (2)</span>
+<span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">cmd</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">$Registry/inference-api:v1.3.0-$ID python -c "from app import app; print('test ok')"</span><span class="w">   </span><span class="c1"># (3)</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>-f<span class="w"> </span>acr-task.yaml<span class="w"> </span>.<span class="w">             </span><span class="c1"># (4)</span>
+
+<span class="c1"># dry-run: pokaż, co usunąłby purge, bez usuwania</span>
+az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"acr purge --filter 'inference-api:.*' --ago 0d --untagged --dry-run"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null<span class="w">                                                    </span><span class="c1"># (5)</span>
+
+<span class="c1"># bezpieczny wariant: tylko untagged</span>
+az<span class="w"> </span>acr<span class="w"> </span>run<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmd<span class="w"> </span><span class="s2">"acr purge --filter 'inference-api:^\$' --ago 0d --untagged --dry-run"</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/dev/null<span class="w">                                                    </span><span class="c1"># (6)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) krok <code>build</code> z aliasem <code>$Registry</code> (login server) i <code>$ID</code> (ID uruchomienia); kontekst <code>./api</code> to katalog z Dockerfile, bo cały plik uruchamiasz z kropką jako kontekstem (4); (2) wypchnięcie; (3) krok <code>cmd</code> uruchamia właśnie zbudowany obraz i sprawdza import aplikacji; (4) jednorazowe uruchomienie pliku YAML bez tworzenia zadania; (5) <code>--dry-run</code> wypisuje tagi i manifesty, które zostałyby usunięte: widzisz, że filtr <code>inference-api:.*</code> z <code>--ago 0d</code> obejmuje <strong>wszystkie tagi</strong> (patrz uwaga o błędzie w C6); zablokowany <code>v1.0.0</code> jest pomijany; (6) filtr tagu <code>^$</code> nie pasuje do żadnego tagu, więc dry-run pokazuje tylko untagged manifests.</p>
+<p><strong>Koszt:</strong> buildy ACR Tasks na istniejącym rejestrze (czas obliczeń); <code>--dry-run</code> nic nie usuwa.</p>
+<p><strong>Zadania:</strong> (a) uruchom plik YAML i potwierdź, że kroki build, push i cmd zakończyły się sukcesem; (b) wykonaj dry-run z filtrem <code>inference-api:.*</code> i zapisz, które tagi byłyby usunięte; (c) wykonaj dry-run z filtrem <code>inference-api:^\$</code> i porównaj listę; (d) <strong>zepsuj to:</strong> zmień w pliku YAML test w kroku <code>cmd</code> na <code>from app import nieistnieje</code> i uruchom ponownie.</p>
+<p><strong>Sprawdź:</strong> (a) log pokazuje trzy kroki i <code>test ok</code>; (b) lista zawiera tagi starsze niż 0 dni, z wyjątkiem zablokowanego <code>v1.0.0</code>; (c) lista zawiera tylko manifesty bez tagów (może być pusta); (d) krok <code>cmd</code> kończy się błędem (<code>ImportError</code>), a całe zadanie ma status Failed - tak wiesz o problemie zanim obraz trafi na wdrożenie. [autor: niezweryfikowane]</p>
+<p><strong>Sprzątanie:</strong> brak dodatkowych zasobów (dry-run nic nie usuwa). Jeśli to ostatnie ćwiczenie, usuń grupę: <code>az group delete --name rg-acr-i1 --yes --no-wait</code>, potem <code>az group exists --name rg-acr-i1</code> (po kilku minutach: <code>false</code>).</p>
+<h2 id="i4-rejestr-z-kodu-lista-obrazow-i-blokada-przez-sdk-python-i-c">I4. Rejestr z kodu: lista obrazów i blokada przez SDK - Python i C</h2>
+<p><em>Źródło: [docs: https://learn.microsoft.com/en-us/python/api/overview/azure/containerregistry-readme] + [docs: https://learn.microsoft.com/en-us/dotnet/api/overview/azure/containers.containerregistry-readme] + [docs: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-roles] + [autor: niezweryfikowane]</em></p>
+<p><strong>Gdzie / Plik:</strong> terminal lokalny z Azure CLI, Python 3.10+ i .NET SDK 10 (lub Cloud Shell z Pythonem). Pliki: <code>acr-lab/sdk/inspect_acr.py</code> (Python) oraz <code>acr-lab/sdk/AcrInspect/</code> (C#). Rejestr z I1 i obraz <code>inference-api:v1.1.0</code>. Kod skompilowano/sprawdzono składniowo 2026-11-22 [autor: niezweryfikowane] - nie był uruchamiany na prawdziwym rejestrze.</p>
+<p>Krok 0 - uprawnienia i środowisko:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>login
+<span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-acr-i1
+<span class="nb">export</span><span class="w"> </span><span class="nv">ACR_NAME</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>acr<span class="w"> </span>list<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"[0].name"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nv">ME</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>ad<span class="w"> </span>signed-in-user<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nv">ACR_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>acr<span class="w"> </span>show<span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+az<span class="w"> </span>role<span class="w"> </span>assignment<span class="w"> </span>create<span class="w"> </span>--assignee<span class="w"> </span><span class="nv">$ME</span><span class="w"> </span>--role<span class="w"> </span><span class="s2">"Container Registry Repository Writer"</span><span class="w"> </span>--scope<span class="w"> </span><span class="nv">$ACR_ID</span><span class="w">   </span><span class="c1"># (1)</span>
+python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>.venv/bin/activate<span class="w">         </span><span class="c1"># Windows: .venv\Scripts\activate</span>
+pip<span class="w"> </span>install<span class="w"> </span>azure-containerregistry<span class="o">==</span><span class="m">1</span>.2.0<span class="w"> </span>azure-identity<span class="w">      </span><span class="c1"># (2)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) rola danych potrzebna do zmiany atrybutów obrazów przez Entra ID; propagacja roli może potrwać kilka minut [docs: roles]; jeśli masz rolę Owner na subskrypcji, zarządzanie rejestrem już masz, ale uprawnienia do danych nadaje się osobno; (2) wersja 1.2.0 sprawdzona 2026-11-22.</p>
+<p>Krok 1 - kod Pythona:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># acr-lab/sdk/inspect_acr.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.containerregistry</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContainerRegistryClient</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+
+<span class="n">endpoint</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"https://</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">'ACR_NAME'</span><span class="p">]</span><span class="si">}</span><span class="s2">.azurecr.io"</span>        <span class="c1"># (1)</span>
+<span class="n">audience</span> <span class="o">=</span> <span class="s2">"https://management.azure.com"</span>                         <span class="c1"># (2)</span>
+
+<span class="k">with</span> <span class="n">ContainerRegistryClient</span><span class="p">(</span><span class="n">endpoint</span><span class="p">,</span> <span class="n">DefaultAzureCredential</span><span class="p">(),</span> <span class="n">audience</span><span class="o">=</span><span class="n">audience</span><span class="p">)</span> <span class="k">as</span> <span class="n">client</span><span class="p">:</span>  <span class="c1"># (3)</span>
+    <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">list_repository_names</span><span class="p">():</span>                   <span class="c1"># (4)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"repozytorium:"</span><span class="p">,</span> <span class="n">repo</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">list_manifest_properties</span><span class="p">(</span><span class="n">repo</span><span class="p">):</span>           <span class="c1"># (5)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"  digest:"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">digest</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">"  tagi:"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">tags</span><span class="p">,</span> <span class="s2">" can_write:"</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">can_write</span><span class="p">)</span>
+
+    <span class="n">props</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">update_manifest_properties</span><span class="p">(</span>                    <span class="c1"># (6)</span>
+        <span class="s2">"inference-api"</span><span class="p">,</span> <span class="s2">"v1.1.0"</span><span class="p">,</span> <span class="n">can_write</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"po blokadzie: can_write ="</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">can_write</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) adres rejestru z nazwy w zmiennej środowiskowej; (2) audience dla chmury publicznej (tokeny Entra dla zarządzania Azure); (3) <code>with</code> zamyka klienta; <code>DefaultAzureCredential</code> użyje m.in. sesji <code>az login</code>; (4) iterator nazw repozytoriów; (5) właściwości manifestów: digest, tagi, uprawnienia; (6) blokada zapisu (odpowiednik <code>--write-enabled false</code>).</p>
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>acr-lab/sdk/inspect_acr.py
+</code></pre></div>
+
+<p><strong>Odpowiednik C# (.NET).</strong> Ten sam przepływ w pakiecie <code>Azure.Containers.ContainerRegistry</code> 1.4.0.</p>
+<p>Plik <code>acr-lab/sdk/AcrInspect/AcrInspect.csproj</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;Project</span><span class="w"> </span><span class="na">Sdk=</span><span class="s">"Microsoft.NET.Sdk"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;PropertyGroup&gt;</span>
+<span class="w">    </span><span class="nt">&lt;OutputType&gt;</span>Exe<span class="nt">&lt;/OutputType&gt;</span>
+<span class="w">    </span><span class="nt">&lt;TargetFramework&gt;</span>net10.0<span class="nt">&lt;/TargetFramework&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Nullable&gt;</span>enable<span class="nt">&lt;/Nullable&gt;</span>
+<span class="w">    </span><span class="nt">&lt;ImplicitUsings&gt;</span>enable<span class="nt">&lt;/ImplicitUsings&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/PropertyGroup&gt;</span>
+<span class="w">  </span><span class="nt">&lt;ItemGroup&gt;</span>
+<span class="w">    </span><span class="nt">&lt;PackageReference</span><span class="w"> </span><span class="na">Include=</span><span class="s">"Azure.Containers.ContainerRegistry"</span><span class="w"> </span><span class="na">Version=</span><span class="s">"1.4.0"</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;PackageReference</span><span class="w"> </span><span class="na">Include=</span><span class="s">"Azure.Identity"</span><span class="w"> </span><span class="na">Version=</span><span class="s">"1.21.0"</span><span class="w"> </span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/ItemGroup&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1">// acr-lab/sdk/AcrInspect/Program.cs</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.Containers.ContainerRegistry</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.Identity</span><span class="p">;</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">acrName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"ACR_NAME"</span><span class="p">)</span>
+<span class="w">    </span><span class="o">??</span><span class="w"> </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">InvalidOperationException</span><span class="p">(</span><span class="s">"Ustaw zmienną ACR_NAME."</span><span class="p">);</span><span class="w">        </span><span class="c1">// (1)</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">endpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Uri</span><span class="p">(</span><span class="s">$"https://{acrName}.azurecr.io"</span><span class="p">);</span><span class="w">                      </span><span class="c1">// (2)</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ContainerRegistryClient</span><span class="p">(</span>
+<span class="w">    </span><span class="n">endpoint</span><span class="p">,</span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="nf">DefaultAzureCredential</span><span class="p">(),</span><span class="w">                                             </span><span class="c1">// (3)</span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">ContainerRegistryClientOptions</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Audience</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ContainerRegistryAudience</span><span class="p">.</span><span class="n">AzureResourceManagerPublicCloud</span><span class="w">  </span><span class="c1">// (4)</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="n">repoName</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">GetRepositoryNamesAsync</span><span class="p">())</span><span class="w">           </span><span class="c1">// (5)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"repozytorium: {repoName}"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ContainerRepository</span><span class="w"> </span><span class="n">repo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">GetRepository</span><span class="p">(</span><span class="n">repoName</span><span class="p">);</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="n">ArtifactManifestProperties</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">repo</span><span class="p">.</span><span class="n">GetAllManifestPropertiesAsync</span><span class="p">())</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  digest: {m.Digest}"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  tagi: {string.Join("</span><span class="p">,</span><span class="w"> </span><span class="s">", m.Tags)}  canWrite: {m.CanWrite}"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">RegistryArtifact</span><span class="w"> </span><span class="n">image</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="n">GetArtifact</span><span class="p">(</span><span class="s">"inference-api"</span><span class="p">,</span><span class="w"> </span><span class="s">"v1.1.0"</span><span class="p">);</span><span class="w">      </span><span class="c1">// (6)</span>
+<span class="k">await</span><span class="w"> </span><span class="n">image</span><span class="p">.</span><span class="n">UpdateManifestPropertiesAsync</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">ArtifactManifestProperties</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">CanWrite</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="w"> </span><span class="p">});</span><span class="w"> </span><span class="c1">// (7)</span>
+<span class="n">ArtifactManifestProperties</span><span class="w"> </span><span class="n">after</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">image</span><span class="p">.</span><span class="n">GetManifestPropertiesAsync</span><span class="p">();</span>
+<span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"po blokadzie: canWrite = {after.CanWrite}"</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1)-(2) endpoint rejestru; (3) <code>DefaultAzureCredential</code> jak w Pythonie; (4) odpowiednik <code>audience</code>; (5) <code>await foreach</code> iteruje stronicowane wyniki asynchronicznie (w Pythonie wersja synchroniczna); (6) obiekt <code>RegistryArtifact</code> wskazuje obraz po tagu lub digeście; (7) blokada zapisu. Różnice względem Pythona: API asynchroniczne i typowane obiekty (<code>RegistryArtifact</code>, <code>ContainerRepository</code>), a nie jedna klasa klienta z metodami <code>*_properties</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>acr-lab/sdk/AcrInspect<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>dotnet<span class="w"> </span>run
+</code></pre></div>
+
+<p><strong>Koszt:</strong> brak nowych zasobów; wywołania SDK są darmowe, ale rejestr z I1 nadal jest płatny do czasu Sprzątania.</p>
+<p><strong>Zadania:</strong> (a) uruchom skrypt Pythona i zapisz listę repozytoriów, digestów i tagów; (b) potwierdź w CLI, że obraz <code>v1.1.0</code> jest zablokowany; (c) uruchom wersję C# i porównaj wynik; (d) <strong>zepsuj to:</strong> uruchom skrypt bez <code>audience</code> (usuń argument <code>audience=...</code>) albo usuń rolę z kroku 0 i przeczytaj błąd.</p>
+<p><strong>Sprawdź:</strong> (a) widoczne repozytoria <code>inference-api</code> (i <code>inference-api-dotnet</code>, jeśli zrobiłeś I2), a przy każdym manifeście digest i tagi; (b) <code>az acr repository show --name $ACR_NAME --image inference-api:v1.1.0</code> pokazuje <code>writeEnabled: false</code>; (c) wynik zgodny z Pythonem, <code>canWrite = False</code>; (d) bez właściwej roli lub z niezgodnym audience uwierzytelnienie lub operacja kończy się błędem autoryzacji (kod 401/403; dokładny komunikat - [autor: niezweryfikowane]).</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>deactivate<span class="w"> </span><span class="m">2</span>&gt;/dev/null<span class="p">;</span><span class="w"> </span>rm<span class="w"> </span>-rf<span class="w"> </span>.venv<span class="w"> </span>acr-lab/sdk/AcrInspect/bin<span class="w"> </span>acr-lab/sdk/AcrInspect/obj
+az<span class="w"> </span>role<span class="w"> </span>assignment<span class="w"> </span>delete<span class="w"> </span>--assignee<span class="w"> </span><span class="nv">$ME</span><span class="w"> </span>--role<span class="w"> </span><span class="s2">"Container Registry Repository Writer"</span><span class="w"> </span>--scope<span class="w"> </span><span class="nv">$ACR_ID</span>
+az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span>rg-acr-i1<span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span>rg-acr-i1<span class="w">     </span><span class="c1"># po kilku minutach: false</span>
+</code></pre></div>
+
+<hr />
+<h1 id="czesc-e-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ E - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<p>Learn pokazuje pytania, ale nie pokazuje poprawnych odpowiedzi, więc każda odpowiedź poniżej jest <strong>wnioskowana</strong> z treści jednostek.</p>
+<h2 id="e1-spojne-buildy-zespo-buduje-obrazy-na-laptopach">E1. Spójne buildy (zespół buduje obrazy na laptopach)</h2>
+<p>-&gt; <em>ACR Tasks quick build.</em> Buduje obrazy w kontrolowanym środowisku Azure (B1, B2). Pułapki: geo-replikacja rozprowadza obrazy do regionów, nie ujednolica buildów; przestrzenie nazw repozytoriów organizują obrazy i dostęp.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcje "Understand ACR Tasks" i "Quick tasks")</em></p>
+<h2 id="e2-ten-sam-obraz-na-kazdym-wezle-nawet-po-wypchnieciu-nowego-z-tym-samym-tagiem">E2. Ten sam obraz na każdym węźle, nawet po wypchnięciu nowego z tym samym tagiem</h2>
+<p>-&gt; <em>Po manifest digest.</em> Digest jest niemutowalny (A3, A4). Pułapki: <code>latest</code> i tag semantyczny (jeśli nie jest unikalny) mogą wskazać inny obraz po ponownym wypchnięciu.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 2, sekcje "Manifests" i "By digest")</em></p>
+<h2 id="e3-automatyczny-rebuild-po-atce-w-obrazie-bazowym-pytorch">E3. Automatyczny rebuild po łatce w obrazie bazowym PyTorch</h2>
+<p>-&gt; <em>Base image update trigger.</em> Wykrywa zmianę obrazu z <code>FROM</code> i przebudowuje zależne obrazy (B3). Pułapki: trigger kodu reaguje na commity, czasowy na harmonogram, a nie na aktualizację bazy.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Base image triggers")</em></p>
+<h2 id="e4-tagowanie-produkcyjne-ze-sledzeniem-do-commitu-i-rollbackiem">E4. Tagowanie produkcyjne ze śledzeniem do commitu i rollbackiem</h2>
+<p>-&gt; <em>Unikalne tagi z commit SHA Git.</em> Dają połączenie z kodem źródłowym i możliwość cofnięcia do dowolnej wersji (C1, C3). Pułapki: stabilne tagi <code>v1</code>, <code>v2</code> się przesuwają, a samo <code>latest</code> nie daje ani śledzenia, ani rollbacku.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcje "Unique tags" i "Git commit SHA tags")</em></p>
+<h2 id="e5-ochrona-obrazu-produkcyjnego-przed-przypadkowym-usunieciem">E5. Ochrona obrazu produkcyjnego przed przypadkowym usunięciem</h2>
+<p>-&gt; <em>Blokada obrazu przez <code>write-enabled false</code>.</em> (C5). Pułapki: przestrzenie nazw i geo-replikacja nie chronią przed usunięciem.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcja "Lock deployed images")</em></p>
+<hr />
+<h1 id="czesc-f-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ F - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="f1-wymien-trzy-poziomy-hierarchii-w-acr-i-podaj-format-login-servera">F1. Wymień trzy poziomy hierarchii w ACR i podaj format login servera.</h2>
+<details><summary>Odpowiedź</summary>
+
+Rejestr (login server `<nazwa>.azurecr.io`), repozytorium (kolekcja obrazów o tej samej nazwie z różnymi tagami, z możliwością przestrzeni nazw przez `/`) i artefakt (obraz, wykres Helm lub inna zawartość OCI z tagami, warstwami i manifestem).
+</details>
+
+<h2 id="f2-czym-rozni-sie-tag-od-digestu-i-kiedy-uzywac-ktorego">F2. Czym różni się tag od digestu i kiedy używać którego?</h2>
+<details><summary>Odpowiedź</summary>
+
+Tag jest czytelną, mutowalną etykietą (można go przesunąć na nowy obraz); digest (`sha256:...`) jest niemutowalnym skrótem manifestu. Tag wygodny w rozwoju, digest (lub unikalny tag) tam, gdzie liczy się powtarzalność, np. produkcja.
+</details>
+
+<h2 id="f3-jakie-sa-trzy-rodzaje-triggerow-acr-tasks-i-co-uruchamia-kazdy">F3. Jakie są trzy rodzaje triggerów ACR Tasks i co uruchamia każdy?</h2>
+<details><summary>Odpowiedź</summary>
+
+Source code (commit lub pull request w GitHub/Azure DevOps), base image (aktualizacja obrazu z `FROM`) i scheduled (harmonogram cron).
+</details>
+
+<h2 id="f4-do-czego-suzy-az-acr-build-a-do-czego-az-acr-run">F4. Do czego służy <code>az acr build</code>, a do czego <code>az acr run</code>?</h2>
+<details><summary>Odpowiedź</summary>
+
+`az acr build` to quick task: wysyła kontekst, buduje obraz w chmurze i wypycha do rejestru (bez lokalnego Dockera). `az acr run` uruchamia polecenie w kontenerze z obrazu (np. test dymny) lub plik YAML zadania; obraz w `--cmd` podawaj z pełnym adresem rejestru.
+</details>
+
+<h2 id="f5-czym-roznia-sie-tagi-stabilne-i-unikalne-i-ktore-stosowac-na-produkcji">F5. Czym różnią się tagi stabilne i unikalne i które stosować na produkcji?</h2>
+<details><summary>Odpowiedź</summary>
+
+Stabilne (`v1`, `latest`) są ponownie używane i przesuwają się na nowy obraz; unikalne (np. `v1.2.0-build456`, commit SHA) nigdy nie są używane drugi raz. Na produkcji unikalne, bo dają spójność, audyt i rollback; stabilne dla obrazów bazowych i środowisk dev.
+</details>
+
+<h2 id="f6-jak-zablokowac-obraz-w-acr-i-co-to-blokuje">F6. Jak zablokować obraz w ACR i co to blokuje?</h2>
+<details><summary>Odpowiedź</summary>
+
+`az acr repository update --name <rejestr> --image <repo:tag> --write-enabled false`. Obraz nie może być usunięty ani nadpisany, `acr purge` go pomija (bez `--include-locked`) i polityka retencji go nie usuwa. Odblokowanie: `--write-enabled true`.
+</details>
+
+<h2 id="f7-co-robi-acr-purge-filter-repo-untagged-ago-30d-puapka">F7. Co robi <code>acr purge --filter 'repo:.*' --untagged --ago 30d</code>? (pułapka)</h2>
+<details><summary>Odpowiedź</summary>
+
+Usuwa tagi pasujące do filtra (wszystkie tagi repozytorium `repo`) starsze niż 30 dni oraz dodatkowo manifesty bez tagów. Nie usuwa zablokowanych (bez `--include-locked`). Do samych untagged użyj `--untagged-only`. Przed realnym uruchomieniem użyj `--dry-run`; usunięte dane są nieodwracalne.
+</details>
+
+<h2 id="f8-na-jakim-poziomie-acr-dziaa-retention-policy-dla-untagged-manifests-i-jakie-ma-ograniczenia">F8. Na jakim poziomie ACR działa retention policy dla untagged manifests i jakie ma ograniczenia?</h2>
+<details><summary>Odpowiedź</summary>
+
+Tylko na poziomie Premium. Według dokumentacji jest w wersji preview, domyślnie 7 dni (zakres 0-365), dotyczy manifestów odtagowanych po włączeniu polityki i tylko manifestów Dockera (nie OCI). Nie używaj jej, gdy systemy pobierają obrazy po digeście.
+</details>
+
+<h2 id="f9-ktore-poziomy-acr-obsuguja-geo-replikacje-i-private-endpoints">F9. Które poziomy ACR obsługują geo-replikację i private endpoints?</h2>
+<details><summary>Odpowiedź</summary>
+
+Tylko Premium (geo-replikacja, prywatne punkty końcowe, content trust). Basic i Standard ich nie mają; różnią się wliczonym magazynem (10 GiB i 100 GiB).
+</details>
+
+<hr />
+<h1 id="czesc-g-co-dalej">CZĘŚĆ G - CO DALEJ</h1>
+<h2 id="g1-podsumowanie-nastepny-krok-i-pokrycie-egzaminu">G1. Podsumowanie, następny krok i pokrycie egzaminu</h2>
+<p><em>Źródło: [unit 7] + [docs: https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200]</em></p>
+<p><strong>Podsumowanie modułu.</strong> ACR organizuje obrazy w hierarchii rejestr - repozytorium - artefakt; manifesty, warstwy i digesty dają wydajne przechowywanie i precyzyjną identyfikację. Tagi to czytelne referencje, digesty to niemutowalne identyfikatory. ACR Tasks buduje obrazy w chmurze bez lokalnego Dockera: quick tasks na żądanie, triggery (commit, obraz bazowy, harmonogram) i zadania wieloetapowe build - test - push. Wersjonowanie semantyczne mówi o charakterze zmian, unikalne tagi dają spójność wdrożeń, a blokada chroni obrazy produkcyjne. [unit 7]</p>
+<p><strong>Co dalej:</strong> moduł 02 - <code>deploy-containers-azure-app-service</code> (https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-app-service/): wdrażanie obrazów z ACR do Azure App Service (porty, polecenia startowe, ustawienia aplikacji i sekrety, diagnostyka). Wróć do A4 i C4 przy wyborze tagu w konfiguracji App Service oraz do B5, gdy chcesz sprawdzić obraz przed wdrożeniem.</p>
+<p><strong>Pokrycie egzaminu</strong> - lista umiejętności AI-200 (stan study guide z 2026-10-30), domena 1, część "Implement container application hosting":</p>
+<table>
+<thead>
+<tr>
+<th>Umiejętność (study guide)</th>
+<th>Domena</th>
+<th>Status</th>
+<th>Gdzie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build, store, version, and manage container images by using Azure Container Registry</td>
+<td>1</td>
+<td>uczone tutaj</td>
+<td><code>01-store-manage-containers-azure-container-registry.md</code> §A1-A5, §C1-C8, §I1-I2</td>
+</tr>
+<tr>
+<td>Build and run images by using Azure Container Registry Tasks</td>
+<td>1</td>
+<td>uczone tutaj</td>
+<td><code>01-store-manage-containers-azure-container-registry.md</code> §B1-B6, §I1, §I3</td>
+</tr>
+<tr>
+<td>Deploy containers to Azure App Service, including configuring App Service to supply environment variables and secrets</td>
+<td>1</td>
+<td>uczone w module 02</td>
+<td>https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-app-service/ (plik 02 jeszcze nie istnieje)</td>
+</tr>
+</tbody>
+</table>
+<p>Pozostałe umiejętności egzaminu (m.in. Container Apps, AKS i domeny 2-4) należą do innych modułów kursu; pełny przydział jest w <code>sources/_exam/skill-map.md</code>. Żaden punkt study guide nie jest orphanem, więc plik luk egzaminu nie jest potrzebny.</p>
+<h2 id="g2-uczciwie-o-egzaminie">G2. Uczciwie o egzaminie</h2>
+<p><em>Źródło: [autor]</em></p>
+<p>Ten moduł pokrywa dwie z trzech umiejętności tzw. "Implement container application hosting": zarządzanie obrazami w ACR i ACR Tasks. Trzecia (App Service ze zmiennymi środowiskowymi i sekretami) jest w module 02. Na egzaminie spodziewaj się pytań o: wybór triggera, tagi stabilne czy unikalne, pobieranie po digeście, blokadę obrazu, poziomy ACR (co jest tylko w Premium) oraz o składnię <code>az acr build</code>/<code>run</code>/<code>task create</code>. Moduł uczy głównie przez Azure CLI; ponieważ egzamin dotyczy Azure SDK i Pythona, przećwicz też I4. Błędy w materiale Microsoftu opisane w tym pliku (B5, C6) sprawdź w dokumentacji, zanim zaufasz przykładom z modułu. Nie przerobiłeś jeszcze: App Service (moduł 02), sidecarów (moduł 03) oraz modułów Container Apps i AKS.</p></main></body></html>

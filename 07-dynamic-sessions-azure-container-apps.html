@@ -1,0 +1,1122 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moduł 07: Bezpieczne uruchamianie kodu generowanego przez AI w sesjach dynamicznych Azure Container Apps (pule sesji, interpreter kodu, identyfikatory sesji, błędy wykonania)</title><style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#59636e;--bd:#d1d9e0;--code:#f6f8fa;--ac:#0969da;--qb:#f6f8fa}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--bd:#3d444d;--code:#151b23;--ac:#4493f8;--qb:#151b23}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+nav.top{font-size:14px;color:var(--mut);margin-bottom:16px}
+a{color:var(--ac)}
+h1,h2,h3,h4{line-height:1.25;margin:1.6em 0 .6em}
+h1{font-size:2em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h3{font-size:1.2em}
+pre{background:var(--code);border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;font-size:14px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--code);padding:.15em .35em;border-radius:4px}
+pre code{background:none;padding:0}
+.codehilite{background:var(--code)!important}
+.codehilite pre{margin:0;border:0;padding:0;background:none}
+.codehilite{border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;margin:1em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--bd);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+blockquote{margin:1em 0;padding:.2em 1em;border-left:4px solid var(--bd);color:var(--mut);background:var(--qb)}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--bd);margin:2em 0}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+@media (prefers-color-scheme:dark){pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */}
+
+@page{size:A4;margin:16mm 14mm}
+@media print{
+:root{--bg:#fff;--fg:#000;--mut:#333;--bd:#999;--code:#f3f3f3;--ac:#000;--qb:#f3f3f3}
+body{font-size:10.5pt;line-height:1.45}
+main{max-width:none;padding:0}
+nav.top{display:none}
+h1,h2,h3,h4{break-after:avoid}
+h2{break-before:auto}
+pre,.codehilite,table,blockquote,tr{break-inside:avoid}
+pre,.codehilite pre,code{white-space:pre-wrap;word-break:break-word;font-size:8.5pt}
+.codehilite{overflow:visible}
+table{display:table;font-size:9pt;width:100%}
+a{text-decoration:none}
+a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
+}
+</style></head>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-07-bezpieczne-uruchamianie-kodu-generowanego-przez-ai-w-sesjach-dynamicznych-azure-container-apps-pule-sesji-interpreter-kodu-identyfikatory-sesji-bedy-wykonania">Moduł 07: Bezpieczne uruchamianie kodu generowanego przez AI w sesjach dynamicznych Azure Container Apps (pule sesji, interpreter kodu, identyfikatory sesji, błędy wykonania)</h1>
+<p>Moduł Microsoft Learn: <strong>Run AI-generated code securely in Azure Container Apps dynamic sessions</strong> - https://learn.microsoft.com/en-us/training/modules/dynamic-sessions-azure-container-apps/
+Cel: po tym module rozumiesz, po co izoluje się kod generowany przez model AI, umiesz wybrać między wbudowanym interpreterem kodu a pulą z własnym kontenerem, skonfigurować pulę (pojemność, cooldown, ruch wychodzący), wykonać kod i wymienić pliki przez REST z identyfikatorem sesji oraz obsłużyć wygaśnięcie sesji, limity czasu i błędy wykonania.
+Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 84 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą eksperymenty i ćwiczenie z SDK zarządzania). Wymagania: Azure CLI, Python 3.12, konto z prawem tworzenia puli sesji i przypisywania ról, region obsługujący sesje dynamiczne. Koszt: ćwiczenia I1-I2 tworzą pulę sesji (płatną za czas trwania sesji) - szczegóły w polach <strong>Koszt</strong>.</p>
+<p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
+<blockquote>
+<p>Uwaga o zakresie egzaminu: study guide AI-200 (stan z 2026-10-30) nie ma osobnej umiejętności o sesjach dynamicznych, ale moduł należy do kursu AI-200T00 i sąsiaduje z umiejętnościami domeny 1 (Container Apps). Traktuj go jako wiedzę pokrewną i uzupełniającą.</p>
+</blockquote>
+<hr />
+<h1 id="czesc-a-granica-wykonania-i-wybor-puli">CZĘŚĆ A - GRANICA WYKONANIA I WYBÓR PULI</h1>
+<h2 id="a1-po-co-granica-wykonania-i-jak-dziaa-pula-sesji">A1. Po co granica wykonania i jak działa pula sesji</h2>
+<p><em>Źródło: [unit 1] + [unit 2]</em></p>
+<p>Aplikacje AI często generują kod (analiza danych, obliczenia, pliki). <strong>Kodu wygenerowanego przez model nie można z góry uznać za bezpieczny</strong>: uruchomiony w kontenerze aplikacji mógłby wykraść poświadczenia, zużyć wspólne zasoby albo wpłynąć na innych użytkowników. Rozwiązanie z modułu to <strong>sesje dynamiczne</strong> (dynamic sessions) w Azure Container Apps: gotowe, izolowane i <strong>efemeryczne</strong> (krótkotrwałe) środowiska do wykonywania takiego kodu.</p>
+<p><strong>Pula sesji</strong> (session pool) zawiera wstępnie rozgrzane środowiska, które platforma przydziela w milisekundach. Każda przydzielona sesja działa we własnej piaskownicy izolowanej przez <strong>Hyper-V</strong> (wirtualizacja sprzętowa), która oddziela procesy i system plików od hosta i od innych sesji. Dzięki temu backend wykonuje kod, nie uruchamiając go we własnym procesie. [unit 2]</p>
+<div class="codehilite"><pre><span></span><code>User request
+    |
+    v
+AI application ---- model or orchestration layer
+    |
+    | validated code, files, and application-generated identifier
+    v
+Dynamic session pool
+    |
+    v
+Isolated session ---- execution result and generated files
+</code></pre></div>
+
+<p>Backend uwierzytelnia się do puli i zleca pracę w imieniu użytkownika; użytkownik końcowy <strong>nigdy</strong> nie dostaje tokenów dostępu do puli ani nie wybiera identyfikatorów mogących wskazać cudzą sesję. Sesja trzyma stan tymczasowy; trwałe dane wejściowe i wyniki aplikacja zapisuje poza pulą. Długo działający kontener aplikacji nie jest równoważną granicą (kod obok API konkuruje o CPU i pamięć i może sięgnąć do plików, zmiennych środowiskowych i poświadczeń), a osobna aplikacja kontenerowa na każde żądanie dodaje opóźnienia startu i zarządzanie cyklem życia, które pula już zapewnia. [unit 2]</p>
+<p>Po module potrafisz: wyjaśnić izolację kodu AI, wybrać wbudowany interpreter lub pulę z własnym kontenerem, skonfigurować pojemność, cykl życia i ruch wychodzący, użyć identyfikatorów sesji do wykonywania kodu i wymiany plików oraz obsłużyć wygaśnięcie, limity i błędy. [unit 1]</p>
+<p>(egzamin je lubi: sesje = izolacja Hyper-V + efemeryczność; backend steruje dostępem)</p>
+<h2 id="a2-wbudowany-interpreter-kodu-code-interpreter">A2. Wbudowany interpreter kodu (code interpreter)</h2>
+<p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p><strong>Interpreter kodu</strong> to zarządzane przez platformę środowisko uruchomieniowe z gotowym API: nie budujesz obrazu ani usługi wykonującej kod. Aplikacja może przesyłać kod, wgrywać pliki wejściowe i pobierać pliki wynikowe przez API zarządzania puli. Wybierz go, gdy obsługiwany runtime wykona zadanie bez własnych zależności systemowych: analiza CSV, obliczenia, wizualizacje, krótkie skrypty proponowane przez agenta.</p>
+<div class="codehilite"><pre><span></span><code><span class="err">POST &lt;POOL_MANAGEMENT_ENDPOINT&gt;/executions?api-version=&lt;API_VERSION&gt;&amp;identifier=&lt;SESSION_ID&gt;</span>
+<span class="err">POST &lt;POOL_MANAGEMENT_ENDPOINT&gt;/files?api-version=&lt;API_VERSION&gt;&amp;identifier=&lt;SESSION_ID&gt;</span>
+<span class="err">GET &lt;POOL_MANAGEMENT_ENDPOINT&gt;/files/&lt;FILE_NAME&gt;/content?api-version=&lt;API_VERSION&gt;&amp;identifier=&lt;SESSION_ID&gt;</span>
+</code></pre></div>
+
+<p>API jest celowo ograniczone: gdy potrzebujesz nieobsługiwanego języka, natywnego programu wykonywalnego, zastrzeżonej biblioteki lub własnego protokołu, wbudowany interpreter nie jest właściwym wyborem. [unit 2] Dokumentacja dodaje: wersja Pythona zawiera popularne pakiety (m.in. NumPy, pandas, scikit-learn); typy puli interpretera to <code>PythonLTS</code>, <code>NodeLTS</code> i <code>Shell</code>. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter] [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
+<h2 id="a3-integracja-rest-bezposrednio-czy-adapter-frameworka">A3. Integracja: REST bezpośrednio czy adapter frameworka</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Po wyborze interpretera zdecyduj, czy aplikacja woła REST bezpośrednio, czy używa adaptera frameworka orkiestracji AI. Bezpośrednie API daje jawną kontrolę nad uwierzytelnianiem, identyfikatorami sesji, żądaniami wykonania i plikami. Adapter zmniejsza ilość kodu, gdy model narzędzi frameworka pasuje do projektu. Dla agenta <strong>LangChain</strong> pakiet <code>langchain-azure-dynamic-sessions</code> dostarcza <code>SessionsPythonREPLTool</code>, czyli narzędzie wykonujące Python w sesji interpretera bez własnego kodu REST. Adapter <strong>nie tworzy innego typu puli ani innej granicy bezpieczeństwa</strong>: używa tych samych sesji, więc nadal potrzebna jest tożsamość z dostępem do puli i strategia instancji narzędzia oraz stanu na użytkownika. REST wybierz, gdy backend potrzebuje pełnej kontroli nad wymianą plików, odpowiedziami i mapowaniem identyfikatorów; LangChain, gdy istniejący agent potrzebuje głównie narzędzia do Pythona. Znajomość kontraktu REST przydaje się też do diagnozowania błędów, które raportuje adapter.</p>
+<h2 id="a4-pula-z-wasnym-kontenerem-custom-container">A4. Pula z własnym kontenerem (custom container)</h2>
+<p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
+<p>W puli <strong>custom container</strong> dostarczasz własny obraz. Platforma nadal daje pulę, szybki przydział, izolację Hyper-V i automatyczne sprzątanie, ale to <strong>Twój obraz definiuje runtime i API</strong> przyjmujące żądania. Wybierz ją dla specjalnych pakietów systemowych, zastrzeżonych narzędzi do dokumentów, języka niedostępnego w interpreterze albo usługi z własnym protokołem. Wymaga środowiska Container Apps z <strong>profilami obciążeń</strong> (workload profiles). Odpowiadasz za: <strong>konserwację obrazu</strong>, <strong>ingress</strong> aplikacji na skonfigurowanym porcie docelowym, <strong>logowanie</strong> na standardowe wyjście lub błędów oraz <strong>sprawdzenia zdrowia</strong> (sondy). [unit 2]</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"customContainerTemplate"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"containers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"document-executor"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"image"</span><span class="p">:</span><span class="w"> </span><span class="s2">"contoso.azurecr.io/document-executor:1.0"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"probes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Startup"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"httpGet"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/ready"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"port"</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nt">"periodSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"failureThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Liveness"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"httpGet"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/health"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"port"</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nt">"periodSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"failureThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">          </span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"ingress"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"targetPort"</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Sonda <strong>Startup</strong> pozwala runtime'owi z dłuższą inicjalizacją stać się gotowym; <strong>Liveness</strong> usuwa środowisko, które stało się niezdrowe po starcie. Żądania trafiają przez punkt końcowy zarządzania puli: ścieżka po punkcie końcowym (np. <code>/api/convert</code>) jest przekazywana na port docelowy kontenera. [unit 2]</p>
+<p>Dokumentacja dodaje: pula custom container wspiera sondy <strong>Liveness i Startup</strong>; punkt końcowy zarządzania ma postać <code>https://&lt;POOL&gt;.&lt;ENV_ID&gt;.&lt;REGION&gt;.azurecontainerapps.io</code> i oprócz własnych ścieżek obsługuje <code>.management/getSession</code>, <code>.management/listSessions</code>, <code>.management/stopSession</code>; po zmianie obrazu zaktualizuj pulę <strong>z nowym, unikalnym tagiem</strong>, bo obraz jest buforowany w puli. [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
+<h2 id="a5-dopasowanie-puli-do-zadania">A5. Dopasowanie puli do zadania</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Najlepsza pula to najmniej skomplikowana, która spełnia kontrakt wykonania. <strong>Izolacja sama nie wymaga własnego obrazu</strong>, bo oba typy dają izolowane sesje; o wyborze decydują zwykle wymagania runtime i protokołu.</p>
+<table>
+<thead>
+<tr>
+<th>Scenariusz</th>
+<th>Wybór</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Analiza wgranego CSV</td>
+<td>wbudowany interpreter Pythona (gdy pakiety wystarczą do analizy i wykresów)</td>
+</tr>
+<tr>
+<td>Zastrzeżony konwerter z binariami natywnymi lub licencjonowanymi zależnościami</td>
+<td>custom container</td>
+</tr>
+<tr>
+<td>Izolowana przestrzeń robocza najemcy z własną aplikacją lub środowiskiem deweloperskim</td>
+<td>custom container</td>
+</tr>
+<tr>
+<td>Obliczenia z kodu agenta (krótkie fragmenty)</td>
+<td>wbudowany interpreter (potrzebne tylko wyniki i pliki)</td>
+</tr>
+</tbody>
+</table>
+<p>Niezależnie od typu traktuj sesję jako <strong>efemeryczną</strong>: może zachować pliki i stan procesu dla powiązanych wywołań, ale cooldown w końcu usunie środowisko. Dokumenty źródłowe, zaakceptowane wyniki i zapisy audytowe trzymaj w trwałym magazynie aplikacji.</p>
+<hr />
+<h1 id="czesc-b-bezpieczna-konfiguracja-puli">CZĘŚĆ B - BEZPIECZNA KONFIGURACJA PULI</h1>
+<h2 id="b1-pojemnosc-puli-i-gotowe-instancje">B1. Pojemność puli i gotowe instancje</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
+<p>Ustawienie <strong>maksymalnej liczby równoległych sesji</strong> (max concurrent sessions) ogranicza, ile przydzielonych sesji może działać naraz. Zależy od przewidywanej współbieżności, nie od liczby zarejestrowanych użytkowników; to też granica bezpieczeństwa dla kosztów i zasobów zależnych. Przykład: jeśli 50 osób jest online, ale 10 naraz analizuje dokumenty, sensowny start to około 10. Test obciążeniowy pokaże, czy żądania czekają lub zawodzą po osiągnięciu limitu. W CLI parametr to <code>--max-sessions</code>, a <strong>maksimum wynosi 600</strong>. [unit 3] [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
+<p>Pula z własnym kontenerem może też utrzymywać <strong>gotowe instancje sesji</strong> (<code>readySessionInstances</code>, w CLI <code>--ready-sessions</code>). Skracają opóźnienie przydziału, bo obraz i aplikacja już działają, ale utrzymują obliczenia także przy małym ruchu, więc najpierw zmierz czas startu i opóźnienie interaktywne. Fragment: dwie gotowe instancje i do 20 równoległych sesji; sondy pomagają zliczać jako gotowe tylko zdrowe środowiska. [unit 3]</p>
+<div class="codehilite"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"scaleConfiguration"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"maxConcurrentSessions"</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"readySessionInstances"</span><span class="p">:</span><span class="w"> </span><span class="mi">2</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nt">"customContainerTemplate"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"containers"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"document-executor"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"image"</span><span class="p">:</span><span class="w"> </span><span class="s2">"contoso.azurecr.io/document-executor:1.0"</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">"probes"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Startup"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"httpGet"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/ready"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"port"</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nt">"periodSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"failureThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mi">30</span>
+<span class="w">            </span><span class="p">},</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">              </span><span class="nt">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Liveness"</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"httpGet"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="nt">"path"</span><span class="p">:</span><span class="w"> </span><span class="s2">"/health"</span><span class="p">,</span>
+<span class="w">                </span><span class="nt">"port"</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span>
+<span class="w">              </span><span class="p">},</span>
+<span class="w">              </span><span class="nt">"periodSeconds"</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span>
+<span class="w">              </span><span class="nt">"failureThreshold"</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">          </span><span class="p">]</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">],</span>
+<span class="w">      </span><span class="nt">"ingress"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"targetPort"</span><span class="p">:</span><span class="w"> </span><span class="mi">8080</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h2 id="b2-cooldown-okres-bezczynnosci-i-cykl-zycia">B2. Cooldown (okres bezczynności) i cykl życia</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
+<p>Cykl życia <strong>timed</strong> usuwa sesję po skonfigurowanym okresie bez żądań (<strong>cooldown</strong>); <strong>każde żądanie zeruje licznik bezczynności</strong>. Dłuższy cooldown daje wieloetapowej interakcji AI więcej czasu na ponowne użycie plików i stanu; krótszy szybciej zwalnia pojemność i usuwa dane tymczasowe. Dobierz go do przewidywanej przerwy między powiązanymi operacjami (analiza dokumentu może wymagać kilku minut na obejrzenie wyniku i prośbę o kolejny wykres). Nie traktuj cooldownu jako trwałej retencji: sesja może zniknąć po bezczynności albo po awarii. Dla niezaufanego kodu krótsza retencja zwykle zmniejsza ryzyko; źródło dokumentu i zaakceptowane wyniki zapisuj w magazynie aplikacji, żeby po nowej, pustej sesji odtworzyć dane wejściowe. [unit 3]</p>
+<p>Wartości z dokumentacji (egzamin je lubi): <code>--cooldown-period</code> <strong>300-3600 s</strong>, domyślnie <strong>300</strong>; typ cyklu życia <code>Timed</code> (domyślny) lub <code>OnContainerExit</code> (dla własnego kontenera: sesja działa, aż kontener zakończy działanie lub minie <code>--max-alive-period</code>, domyślnie 3600 s; <code>cooldownPeriodInSeconds</code> nie jest wtedy wspierany). [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
+<h2 id="b3-ruch-wychodzacy-egress-i-tworzenie-puli">B3. Ruch wychodzący (egress) i tworzenie puli</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
+<p>Sesje <strong>domyślnie blokują ruch wychodzący</strong>. To uniemożliwia wygenerowanemu kodowi pobieranie dodatkowych programów, wysyłanie wgranej treści na zewnętrzny adres lub użycie sesji do ataku typu DoS. Zostaw egress wyłączony, jeśli zadanie działa tylko na dostarczonym kodzie i plikach. Włączaj tylko przy konkretnej zależności zewnętrznej i akceptowalnym ryzyku. <strong>Egress to ustawienie całej puli</strong>, więc dotyczy każdej sesji w niej; lepiej rozdzielić obciążenia zaufane (z dostępem do sieci) od niezaufanych, niż osłabiać wspólną pulę.</p>
+<div class="codehilite"><pre><span></span><code>az containerapp sessionpool create \
+    --name ai-document-sessions \
+    --resource-group &lt;RESOURCE_GROUP&gt; \
+    --location &lt;LOCATION&gt; \
+    --container-type PythonLTS \
+    --max-sessions 20 \
+    --cooldown-period 300 \
+    --network-status EgressDisabled
+</code></pre></div>
+
+<p>Punkt końcowy zarządzania puli odczytasz po utworzeniu; aplikacja używa go do wykonywania kodu i pracy z plikami:</p>
+<div class="codehilite"><pre><span></span><code>az containerapp sessionpool show \
+    --name ai-document-sessions \
+    --resource-group &lt;RESOURCE_GROUP&gt; \
+    --query "properties.poolManagementEndpoint" \
+    --output tsv
+</code></pre></div>
+
+<p>Dla puli interpretera punkt końcowy ma postać <code>https://&lt;REGION&gt;.dynamicsessions.io/subscriptions/&lt;SUBSCRIPTION_ID&gt;/resourceGroups/&lt;RESOURCE_GROUP&gt;/sessionPools/&lt;POOL&gt;</code>. Parametry <code>--container-type</code>: <code>PythonLTS</code> (domyślny), <code>NodeLTS</code>, <code>Shell</code>, <code>CustomContainer</code>; <code>--network-status</code>: <code>EgressDisabled</code> (domyślny) lub <code>EgressEnabled</code>. [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: strony session-pool i sessions-code-interpreter w docs, <code>az containerapp sessionpool -h</code>): komendy <code>az containerapp sessionpool create|show|update|list|delete</code> istnieją w rozszerzeniu <code>containerapp</code> (1.3.0b6); w lab Microsoftu rozszerzenie instalowane jest z <code>--allow-preview true</code>; parametr <code>--probe-yaml</code> jest oznaczony jako Preview. Przed użyciem sprawdź https://learn.microsoft.com/azure/container-apps/session-pool.</p>
+</blockquote>
+<h2 id="b4-tozsamosci-i-dane-w-sesji">B4. Tożsamości i dane w sesji</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p><strong>Izolacja Hyper-V oddziela sesje od siebie, ale kod w jednej sesji ma dostęp do plików, zmiennych środowiskowych i dostępnych w niej poświadczeń.</strong> Umieszczaj sekret lub dokument w sesji tylko wtedy, gdy zezwalasz kodowi sesji na dostęp do tych danych: izolacja między sesjami nie czyni danych bezpiecznymi przed kodem, który sam wykonujesz.</p>
+<p>Tożsamość backendu i tożsamość sesji mają inne cele. Backend używa roli <strong>Azure ContainerApps Session Executor</strong>, by wołać API zarządzania puli; użytkownicy końcowi nigdy nie dostają tokenu tej tożsamości, a wygenerowany kod jej nie potrzebuje. Pula z własnym kontenerem może mieć <strong>tożsamość zarządzaną</strong> do pobierania obrazu lub dostępu do zasobów chronionych przez Entra. Dostęp w czasie działania jest ryzykowniejszy, bo niezaufany kod w sesji może zażądać tokenów tej tożsamości; jeśli jest nieunikniony, użyj osobnej tożsamości o najmniejszym zakresie, nie szerszej tożsamości backendu.</p>
+<h2 id="b5-praktyki-dla-produkcyjnych-pul">B5. Praktyki dla produkcyjnych pul</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<ul>
+<li><strong>Rozdzielaj poziomy zaufania:</strong> inne pule dla kodu o różnym egress, tożsamości lub dostępie do danych.</li>
+<li><strong>Minimalizuj dane w sesji:</strong> wgrywaj tylko pliki potrzebne do bieżącego zadania, a zatwierdzone wyniki zapisuj gdzie indziej.</li>
+<li><strong>Ograniczaj współbieżność:</strong> maksimum chroni koszt i systemy zależne przy skokach ruchu.</li>
+<li><strong>Preferuj wyłączony egress:</strong> zezwalaj na ruch wychodzący tylko dla ocenionego, uzasadnionego obciążenia.</li>
+<li><strong>Używaj wąskich tożsamości:</strong> tylko role i zakresy, których sesja lub backend potrzebuje.</li>
+<li><strong>Monitoruj wykorzystanie:</strong> dla pul custom śledź liczbę sesji wykonywanych, tworzonych i gotowych.</li>
+</ul>
+<hr />
+<h1 id="czesc-c-wykonywanie-kodu-i-wymiana-plikow">CZĘŚĆ C - WYKONYWANIE KODU I WYMIANA PLIKÓW</h1>
+<h2 id="c1-uwierzytelnianie-backendu">C1. Uwierzytelnianie backendu</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p>Każde żądanie do API zarządzania wymaga tokenu nośnika (bearer) Microsoft Entra. Tożsamość wywołująca potrzebuje roli <strong>Azure ContainerApps Session Executor</strong> na puli sesji, a <strong>odbiorca tokenu (audience) musi mieć wartość <code>https://dynamicsessions.io</code></strong>. Tożsamość zarządzana daje uwierzytelnianie bez haseł, gdy backend działa w Azure. Rolę przypisz na zakresie puli, żeby tożsamość nie mogła wykonywać kodu w obcych pulach. [unit 4]</p>
+<div class="codehilite"><pre><span></span><code>az role assignment create \
+    --role "Azure ContainerApps Session Executor" \
+    --assignee &lt;BACKEND_PRINCIPAL_ID&gt; \
+    --scope &lt;SESSION_POOL_RESOURCE_ID&gt;
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+<span class="n">credential</span> <span class="o">=</span> <span class="n">DefaultAzureCredential</span><span class="p">()</span>
+<span class="n">access_token</span> <span class="o">=</span> <span class="n">credential</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span>
+    <span class="s2">"https://dynamicsessions.io/.default"</span>
+<span class="p">)</span><span class="o">.</span><span class="n">token</span>
+</code></pre></div>
+
+<p><code>DefaultAzureCredential</code> wybiera poświadczenia deweloperskie lokalnie (np. po <code>az login</code>) i tożsamość zarządzaną w Azure, bez sekretu w kodzie; token pobieraj przy przygotowaniu wywołania, a nie cache'uj w nieskończoność (credential sam buforuje i odnawia). Dokumentacja dodaje, że tokeny generuje tożsamość z rolą Session Executor <strong>lub Contributor</strong> na puli. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
+<h2 id="c2-bezpieczne-identyfikatory-sesji">C2. Bezpieczne identyfikatory sesji</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p><strong>Identyfikator sesji</strong> kieruje żądanie do istniejącej sesji albo powoduje przydział nowej. Ponowne użycie identyfikatora zachowuje pliki i stan między powiązanymi wywołaniami. Skoro w połączeniu z autoryzowanym tokenem daje dostęp do tego stanu, backend traktuje go jako <strong>wrażliwy</strong>. Generuj nieprzewidywalny identyfikator <strong>po stronie serwera</strong> dla każdego uwierzytelnionego użytkownika lub rozmowy z agentem, trzymaj powiązanie w stanie serwera i <strong>nie przyjmuj dowolnego identyfikatora od klienta</strong>. Losowy UUID się nadaje (jego postać z myślnikami spełnia format identyfikatora).</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">create_session_identifier</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid4</span><span class="p">())</span>
+</code></pre></div>
+
+<p>Sam identyfikator nie uwierzytelnia wywołującego: backend nadal autoryzuje użytkownika przed użyciem zapisanego powiązania i uwierzytelnia każde żądanie do puli własnym tokenem; użytkownik nie może zmienić parametru żądania, by wskazać cudzą rozmowę. Dokumentacja opisuje identyfikator jako dowolny ciąg unikalny w puli (np. identyfikator użytkownika lub rozmowy) i podkreśla, że jest to informacja wrażliwa, a aplikacja musi dopilnować dostępu użytkowników tylko do własnych sesji. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
+<h2 id="c3-wysanie-kodu-do-wykonania">C3. Wysłanie kodu do wykonania</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Punkt końcowy <code>executions</code> przyjmuje kod inline i zwraca odpowiedź wykonania. W produkcyjnej aplikacji AI kod może dostarczyć warstwa orkiestracji, ale backend <strong>waliduje żądanie względem własnej polityki</strong> przed wysłaniem: izolacja zmniejsza skutki niezaufanego kodu, ale nie rozstrzyga, czy żądana akcja jest właściwa.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+<span class="n">API_VERSION</span> <span class="o">=</span> <span class="s2">"2025-10-02-preview"</span>
+<span class="n">TOKEN_SCOPE</span> <span class="o">=</span> <span class="s2">"https://dynamicsessions.io/.default"</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DynamicSessionClient</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pool_management_endpoint</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">session_identifier</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="n">pool_management_endpoint</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="o">=</span> <span class="n">session_identifier</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">credential</span> <span class="o">=</span> <span class="n">DefaultAzureCredential</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credential</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span><span class="n">TOKEN_SCOPE</span><span class="p">)</span><span class="o">.</span><span class="n">token</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"Authorization"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"api-version"</span><span class="p">:</span> <span class="n">API_VERSION</span><span class="p">,</span>
+            <span class="s2">"identifier"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span>
+        <span class="p">}</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">execute_python</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">DynamicSessionClient</span><span class="p">,</span>
+    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">/executions"</span><span class="p">,</span>
+        <span class="n">headers</span><span class="o">=</span><span class="p">{</span>
+            <span class="o">**</span><span class="n">client</span><span class="o">.</span><span class="n">_headers</span><span class="p">(),</span>
+            <span class="s2">"Content-Type"</span><span class="p">:</span> <span class="s2">"application/json"</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="n">params</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_params</span><span class="p">(),</span>
+        <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"codeInputType"</span><span class="p">:</span> <span class="s2">"inline"</span><span class="p">,</span>
+                <span class="s2">"executionType"</span><span class="p">:</span> <span class="s2">"synchronous"</span><span class="p">,</span>
+                <span class="s2">"code"</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</code></pre></div>
+
+<p><code>raise_for_status()</code> sprawia, że błędy uwierzytelniania, walidacji, pojemności i usługi nie wyglądają na udane wykonania, ale <strong>wywołujący musi jeszcze sprawdzić dane wykonania</strong>, czy kod Pythona nie zgłosił błędu. Wersję API trzymaj w konfiguracji, nie rozproszoną po metodach, i testuj kontrakt odpowiedzi przy jej zmianie. Ciało żądania z <code>properties</code> odpowiada przykładowi w dokumentacji (<code>api-version=2025-10-02-preview</code>). [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
+<h2 id="c4-wymiana-plikow-z-sesja">C4. Wymiana plików z sesją</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p>Operacje na plikach pozwalają kodowi przetwarzać pliki użytkownika i tworzyć artefakty (wykresy, przekształcone dokumenty). Backend wgrywa <strong>tylko pliki autoryzowane dla bieżącego zadania</strong>. Sesje interpretera zapisują wgrane pliki w <strong><code>/mnt/data</code></strong>, gdzie kolejne wykonania z tym samym identyfikatorem mogą po nie sięgnąć.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">upload_file</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">DynamicSessionClient</span><span class="p">,</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">file_path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">/files"</span><span class="p">,</span>
+            <span class="n">headers</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_headers</span><span class="p">(),</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_params</span><span class="p">(),</span>
+            <span class="n">files</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"file"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">file_path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">source</span><span class="p">,</span>
+                    <span class="s2">"application/octet-stream"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">},</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+</code></pre></div>
+
+<p>Po utworzeniu pliku przez kod backend może wylistować pliki sesji i pobrać wybrany artefakt. Nazwę pliku <strong>koduj jako jeden segment ścieżki URL</strong> (nazwy mogą zawierać znaki zarezerwowane) i <strong>nigdy nie buduj lokalnej ścieżki docelowej z niezwalidowanej nazwy</strong> (path traversal mógłby nadpisać niezamierzony plik).</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">list_files</span><span class="p">(</span><span class="n">client</span><span class="p">:</span> <span class="n">DynamicSessionClient</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">/files"</span><span class="p">,</span>
+        <span class="n">headers</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_headers</span><span class="p">(),</span>
+        <span class="n">params</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_params</span><span class="p">(),</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span>
+    <span class="n">client</span><span class="p">:</span> <span class="n">DynamicSessionClient</span><span class="p">,</span>
+    <span class="n">file_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">destination</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">encoded_file_name</span> <span class="o">=</span> <span class="n">quote</span><span class="p">(</span><span class="n">file_name</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">client</span><span class="o">.</span><span class="n">endpoint</span><span class="si">}</span><span class="s2">/files/</span><span class="si">{</span><span class="n">encoded_file_name</span><span class="si">}</span><span class="s2">/content"</span><span class="p">,</span>
+        <span class="n">headers</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_headers</span><span class="p">(),</span>
+        <span class="n">params</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">_params</span><span class="p">(),</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+    <span class="n">destination</span><span class="o">.</span><span class="n">write_bytes</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Limit wgrywania pliku w interpreterze: 128 MB</strong> (przy przekroczeniu możliwy HTTP 413); dla większych danych zmień zadanie tak, by sesja dostawała mniejszy, zatwierdzony zestaw. [unit 4] [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter] Lista plików w odpowiedzi ma postać <code>value[].properties.filename</code> (wraz z <code>size</code> i <code>lastModifiedTime</code>); dozwolone znaki nazw to m.in. litery, cyfry, <code>- _ . @ $ &amp; = ; , # % ^ ( )</code> i znaki Unicode. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
+<h2 id="c5-ponowne-uzycie-sesji-w-wielu-operacjach">C5. Ponowne użycie sesji w wielu operacjach</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Powiązane wywołania z tym samym identyfikatorem trafiają do tego samego środowiska, dopóki sesja nie wygaśnie: wgrywasz dokument raz, wykonujesz analizę i tworzysz kolejną wizualizację bez ponownego wgrywania. Inny identyfikator tworzy lub adresuje osobne środowisko.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">session_id</span> <span class="o">=</span> <span class="n">create_session_identifier</span><span class="p">()</span>
+<span class="n">client</span> <span class="o">=</span> <span class="n">DynamicSessionClient</span><span class="p">(</span><span class="n">pool_endpoint</span><span class="p">,</span> <span class="n">session_id</span><span class="p">)</span>
+
+<span class="n">upload_file</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"operational-data.csv"</span><span class="p">))</span>
+<span class="n">execution</span> <span class="o">=</span> <span class="n">execute_python</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="n">supplied_python_payload</span><span class="p">)</span>
+<span class="n">available_files</span> <span class="o">=</span> <span class="n">list_files</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+<span class="n">download_file</span><span class="p">(</span><span class="n">client</span><span class="p">,</span> <span class="s2">"trend.png"</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="s2">"trend.png"</span><span class="p">))</span>
+</code></pre></div>
+
+<p>Ponowne użycie sesji to chwilowa wygoda, <strong>nie gwarancja trwałego przechowywania</strong>: zapisuj zaakceptowane wyniki i dane źródłowe w magazynie aplikacji, by odtworzyć stan po usunięciu sesji przez cooldown.</p>
+<h2 id="c6-integracja-z-agentem-langchain">C6. Integracja z agentem LangChain</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Gdy aplikacja już używa LangChain, <code>langchain-azure-dynamic-sessions</code> dostarcza <code>SessionsPythonREPLTool</code> jako wyższy poziom integracji z tą samą pulą interpretera. Narzędzie losuje identyfikator sesji przy tworzeniu instancji, a wywołania przez tę instancję używają tej samej sesji, dopóki nie wygaśnie.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on creating the LangChain tool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">langchain_azure_dynamic_sessions</span><span class="w"> </span><span class="kn">import</span> <span class="n">SessionsPythonREPLTool</span>
+
+<span class="n">python_repl</span> <span class="o">=</span> <span class="n">SessionsPythonREPLTool</span><span class="p">(</span>
+    <span class="n">pool_management_endpoint</span><span class="o">=</span><span class="n">pool_management_endpoint</span>
+<span class="p">)</span>
+<span class="n">agent_tools</span> <span class="o">=</span> <span class="p">[</span><span class="n">python_repl</span><span class="p">]</span>
+</code></pre></div>
+
+<p><strong>Nie rejestruj jednej długo żyjącej instancji narzędzia jako singletona dla wszystkich użytkowników</strong>: twórz osobne narzędzie i kontekst agenta na uwierzytelnionego użytkownika lub rozmowę, żeby niepowiązane żądania nie dzieliły plików ani stanu Pythona. Aplikacja nadal autoryzuje użytkowników, waliduje żądania agenta, przypisuje swojej tożsamości rolę Session Executor i przechowuje trwałe artefakty poza sesją. Adapter pasuje, gdy agent głównie potrzebuje Pythona jako narzędzia; bezpośrednie API daje więcej kontroli, gdy backend musi wgrać pliki przed wykonaniem, pobrać konkretne artefakty, zarządzać mapowaniem identyfikatorów lub interpretować pełną odpowiedź usługi.</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org): <code>langchain-azure-dynamic-sessions</code> 1.0.4 (2026-09-24, wymaga Pythona &gt;= 3.11), <code>requests</code> 2.34.2, <code>azure-identity</code> 1.27.0; API danych: <code>executions</code> i <code>files</code> z <code>api-version=2025-10-02-preview</code>, <code>session</code> (get/delete) z <code>2025-02-02-preview</code> (jak w dokumentacji code interpreter). Wersje API zmieniają się; przed użyciem sprawdź https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter.</p>
+</blockquote>
+<hr />
+<h1 id="czesc-d-cykl-zycia-i-bedy-wykonania">CZĘŚĆ D - CYKL ŻYCIA I BŁĘDY WYKONANIA</h1>
+<h2 id="d1-efemeryczny-stan-sesji">D1. Efemeryczny stan sesji</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p>Sesja timed pozostaje przydzielona, dopóki otrzymuje żądania; każde żądanie zeruje licznik bezczynności. Po cooldownie bez aktywności Azure Container Apps <strong>niszczy sesję i jej pliki tymczasowe</strong>. Późniejsze żądanie z tym samym identyfikatorem może dostać <strong>nową, pustą sesję</strong>: identyfikator zachowuje routing tylko dopóki oryginalna sesja istnieje. Zaprojektuj przepływ tak, by rozpoznawał brak stanu tymczasowego: jeśli kod analizy zgłasza, że <code>/mnt/data/operational-data.csv</code> nie istnieje, backend pobiera autoryzowane źródło z trwałego magazynu, wgrywa je do nowej sesji i uruchamia ponownie idempotentny krok analizy.</p>
+<p>Backend może zapytać o sesję (czas utworzenia, ostatni dostęp, wygaśnięcie): przydatne do diagnostyki i komunikatów, ale sesja może zniknąć między sprawdzeniem a następną operacją.</p>
+<div class="codehilite"><pre><span></span><code><span class="err">GET &lt;POOL_MANAGEMENT_ENDPOINT&gt;/session?identifier=&lt;SESSION_ID&gt;&amp;api-version=2025-02-02-preview</span>
+<span class="err">Authorization: Bearer &lt;ACCESS_TOKEN&gt;</span>
+</code></pre></div>
+
+<p>Odpowiedź (<code>SessionView</code>) zawiera <code>identifier</code>, <code>etag</code>, <code>expiresAt</code>, <code>createdAt</code> i <code>lastAccessedAt</code>; <code>listSessions</code> listuje sesje stronami po 300 (paginacja <code>skip</code>). [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
+<h2 id="d2-kategorie-bedow">D2. Kategorie błędów</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p><strong>Sukces HTTP nie oznacza, że kod dał poprawny wynik biznesowy.</strong> Transport może się udać, a Python zgłosić wyjątek albo zwrócić dane niespełniające kontraktu. Backend waliduje obie warstwy, zanim przekaże wynik warstwie orkiestracji. Cztery kategorie:</p>
+<table>
+<thead>
+<tr>
+<th>Kategoria</th>
+<th>Znaczenie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Transport failure</strong></td>
+<td>uwierzytelnianie, autoryzacja, błędne żądanie, pojemność, sieć lub usługa uniemożliwiły wykonanie operacji API</td>
+</tr>
+<tr>
+<td><strong>Execution failure</strong></td>
+<td>sesja uruchomiła ładunek, ale kod zgłosił wyjątek, przekroczył limit lub zwrócił nieudany wynik</td>
+</tr>
+<tr>
+<td><strong>Validation failure</strong></td>
+<td>kod się zakończył, ale wynik ma zły schemat, brakuje wymaganego artefaktu albo narusza regułę aplikacji</td>
+</tr>
+<tr>
+<td><strong>Successful result</strong></td>
+<td>transport OK, wykonanie bez błędu, wynik przeszedł walidację</td>
+</tr>
+</tbody>
+</table>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ResultStatus</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+    <span class="n">SUCCEEDED</span> <span class="o">=</span> <span class="s2">"succeeded"</span>
+    <span class="n">TRANSPORT_ERROR</span> <span class="o">=</span> <span class="s2">"transport_error"</span>
+    <span class="n">EXECUTION_ERROR</span> <span class="o">=</span> <span class="s2">"execution_error"</span>
+    <span class="n">VALIDATION_ERROR</span> <span class="o">=</span> <span class="s2">"validation_error"</span>
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ExecutionResult</span><span class="p">:</span>
+    <span class="n">status</span><span class="p">:</span> <span class="n">ResultStatus</span>
+    <span class="n">output</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">trace_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+</code></pre></div>
+
+<p>Nie pokazuj użytkownikowi surowych stack trace'ów, tokenów ani wrażliwej treści; zwracaj wartość korelacyjną, by operator dopasował kontrolowaną odpowiedź do chronionych logów.</p>
+<h2 id="d3-terminy-wykonania-deadlines">D3. Terminy wykonania (deadlines)</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p>Wykonania w interpreterze mają platformowy maksymalny czas działania: dokumentacja podaje <strong>220 sekund</strong> na jedno wykonanie (w CLI <code>--timeout-in-seconds</code> 1-220, domyślnie 60). Backend powinien jednak ustawiać <strong>własny limit HTTP</strong>, krótszy niż czas oczekiwania wołającego, żeby zdążyć zwalidować wynik i odpowiedzieć kontrolowanie; różne operacje mają różne limity (lista plików krócej niż analiza). <strong>Limit klienta HTTP nie gwarantuje, że zdalne wykonanie zatrzyma się w tej samej chwili</strong>, więc nie zakładaj, że operacja po timeoucie nie miała skutków; limit platformy i cykl życia sesji to osobne granice. Obsługuj <code>Timeout</code> osobno od błędów statusu HTTP, by telemetria odróżniała "przestałem czekać" od "usługa odrzuciła żądanie". Usługa zwraca identyfikator śledzenia (trace ID) w ciele błędu strukturalnego. [unit 5] [docs: https://learn.microsoft.com/cli/azure/containerapp/session/code-interpreter?view=azure-cli-latest]</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on explicit timeout and error categories</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
+        <span class="n">execution_url</span><span class="p">,</span>
+        <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span>
+        <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+        <span class="n">json</span><span class="o">=</span><span class="n">payload</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">Timeout</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="n">SessionExecutionTimeout</span><span class="p">(</span>
+        <span class="s2">"The session didn't return a result before the application deadline."</span>
+    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+<span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">error_body</span> <span class="o">=</span> <span class="n">error</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">:</span>
+        <span class="n">trace_id</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">error_details</span> <span class="o">=</span> <span class="n">error_body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"error"</span><span class="p">)</span>
+        <span class="n">trace_id</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">error_details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"traceId"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">error_details</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+    <span class="k">raise</span> <span class="n">SessionTransportError</span><span class="p">(</span>
+        <span class="n">status_code</span><span class="o">=</span><span class="n">error</span><span class="o">.</span><span class="n">response</span><span class="o">.</span><span class="n">status_code</span><span class="p">,</span>
+        <span class="n">trace_id</span><span class="o">=</span><span class="n">trace_id</span><span class="p">,</span>
+    <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+</code></pre></div>
+
+<p>Wyjątki <code>SessionExecutionTimeout</code> i <code>SessionTransportError</code> to typy aplikacyjne zdefiniowane gdzie indziej; produkcyjna implementacja obsłuży też błędy połączenia i zmapuje każdą awarię na standardową telemetrię i odpowiedzi.</p>
+<h2 id="d4-bezpieczne-ponawianie-retry">D4. Bezpieczne ponawianie (retry)</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Ponawianie może pomóc przy przejściowych błędach sieci i usługi, ale <strong>powtórzenie dowolnego wygenerowanego kodu może zdublować skutki uboczne</strong>. Timeout odpowiedzi jest niejednoznaczny (wykonanie mogło się skończyć po tym, jak przestałeś czekać). Ponawiaj automatycznie tylko operacje <strong>idempotentne</strong>, gdy aplikacja potrafi zweryfikować wynik. Naturalni kandydaci: odczyty metadanych plików i zapytania o status sesji; deterministyczna analiza czytająca wejście i nadpisująca znany plik wyjściowy (po potwierdzeniu stanu). Nie powtarzaj automatycznie kodu wysyłającego wiadomości, zapisującego do systemów zewnętrznych lub tworzącego pliki o unikalnych nazwach.</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on retry eligibility</span>
+<span class="n">TRANSIENT_STATUS_CODES</span> <span class="o">=</span> <span class="p">{</span><span class="mi">429</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">502</span><span class="p">,</span> <span class="mi">503</span><span class="p">,</span> <span class="mi">504</span><span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">can_retry</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">status_code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">operation_is_idempotent</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="n">safe_method</span> <span class="o">=</span> <span class="n">method</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"HEAD"</span><span class="p">}</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">status_code</span> <span class="ow">in</span> <span class="n">TRANSIENT_STATUS_CODES</span>
+        <span class="ow">and</span> <span class="p">(</span><span class="n">safe_method</span> <span class="ow">or</span> <span class="n">operation_is_idempotent</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<p>Stosuj ograniczone liczbą próby z rosnącymi opóźnieniami i jitterem (losowym rozrzutem). W telemetrii zachowuj trace ID usługi i identyfikator sesji aplikacji, ale <strong>nie loguj tokenów i nie ujawniaj identyfikatorów sesji użytkownikom końcowym</strong>.</p>
+<h2 id="d5-zwalnianie-zakonczonych-sesji">D5. Zwalnianie zakończonych sesji</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
+<p>Cooldown sprząta nieaktywne sesje automatycznie, ale backend może usunąć sesję interpretera wcześniej: to zwalnia pojemność i usuwa dane tymczasowe, gdy przepływ się kończy lub użytkownik kończy rozmowę. <strong>Nie usuwaj sesji, gdy inne żądanie tej rozmowy jeszcze trwa.</strong> Usuwanie to uwierzytelnione <code>DELETE</code>; odpowiedź <strong><code>204 No Content</code></strong> potwierdza, że środowiska już nie ma.</p>
+<div class="codehilite"><pre><span></span><code><span class="err">DELETE &lt;POOL_MANAGEMENT_ENDPOINT&gt;/session?api-version=2025-02-02-preview&amp;identifier=&lt;SESSION_ID&gt;</span>
+<span class="err">Authorization: Bearer &lt;ACCESS_TOKEN&gt;</span>
+</code></pre></div>
+
+<p>Jeśli usunięcie się nie powiedzie, zgłoś to w telemetrii zamiast twierdzić, że sprzątanie się udało; cooldown pozostaje zabezpieczeniem, ale pojemność lub wrażliwe dane tymczasowe mogą pozostać do jego upływu. [unit 5]</p>
+<blockquote>
+<p>Uwaga o dokumentacji: strona "Use session pools" w tabeli punktów końcowych interpretera nadal wymienia starsze ścieżki (<code>code/execute</code>, <code>files/upload</code>) i <code>api-version=2024-02-02-preview</code>, podczas gdy strona "code interpreter" (i moduł) używa <code>/executions</code> i <code>/files</code> z <code>2025-10-02-preview</code>; trzymaj się wersji ze strony code interpreter i sprawdzaj aktualne API. [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
+</blockquote>
+<h2 id="d6-niezawodne-operowanie-przepywami-sesji">D6. Niezawodne operowanie przepływami sesji</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Sandbox sesji ogranicza wpływ kodu, a walidacja, autoryzacja, limity czasu i sprawdzanie wyniku w backendzie decydują, co aplikacja akceptuje; <strong>żadna z warstw nie zastępuje drugiej</strong>.</p>
+<ul>
+<li><strong>Waliduj przed wykonaniem:</strong> rozmiar ładunku, język, żądaną operację i wymagane dane wejściowe.</li>
+<li><strong>Autoryzuj każdą operację:</strong> uwierzytelniony użytkownik jest właścicielem rozmowy i powiązania sesji po stronie serwera.</li>
+<li><strong>Dane trwałe trzymaj gdzie indziej:</strong> pliki sesji to robocze dane tymczasowe.</li>
+<li><strong>Klasyfikuj błędy:</strong> transport, wykonanie, walidacja i wygaśnięcie sesji osobno.</li>
+<li><strong>Ponawiaj z dowodem:</strong> tylko ograniczone, idempotentne operacje po sprawdzeniu stanu.</li>
+<li><strong>Sprzątaj świadomie:</strong> usuwaj zakończone sesje, gdy liczy się natychmiastowe usunięcie danych lub odzyskanie pojemności.</li>
+<li><strong>Loguj bezpiecznie:</strong> czasy, statusy i trace ID, bez tokenów, wrażliwego kodu i surowych dokumentów.</li>
+</ul>
+<hr />
+<h1 id="czesc-e-cwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
+<p>Przeczytaj części A-D. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatną pulę sesji (rozliczaną za czas trwania sesji): rób je w jednej grupie zasobów i wykonaj <strong>Sprzątanie</strong> po I2 (I2 kontynuuje I1). Kod klienta i SDK jest w Pythonie; odpowiedniki C# są w ćwiczeniach z kodem.</p>
+<blockquote>
+<p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, <code>az version</code>, testy lokalne): Python 3.12; requests 2.34.2; azure-identity 1.27.0; azure-mgmt-appcontainers 5.1.0; C#: .NET SDK 10.0, Azure.Identity 1.21.0, Azure.ResourceManager.AppContainers 1.6.0 (pule sesji: <code>SessionPoolResource</code>); Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6 (beta). Przed użyciem sprawdź PyPI i NuGet.</p>
+</blockquote>
+<h2 id="i1-pula-interpretera-rola-session-executor-i-klient-rest-w-pythonie-lab-moduu">I1. Pula interpretera, rola Session Executor i klient REST w Pythonie (lab modułu)</h2>
+<p>(rozwinięcie jednostki 6; scenariusz: [unit 6])</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) w pustym katalogu; pliki <code>sessions_client.py</code> i <code>demo.py</code>.</p>
+<blockquote>
+<p>Uwaga o labie: lab Microsoftu dostarcza paczkę startową (<code>azdeploy.py</code>, aplikację Flask w <code>client/</code> z pustymi sekcjami BEGIN/END do uzupełnienia) i pokazuje wyniki w przeglądarce; tutaj budujesz samodzielny klient konsolowy, który robi te same kroki (upload, wykonanie, lista plików, pobranie, błąd wykonania, usunięcie). Treść ciała <code>executions</code> w labie jest <strong>płaska</strong> (<code>"codeInputType": "Inline"</code>, <code>"executionType": "Synchronous"</code>, <code>timeoutInSeconds</code>, <code>outputStreamsMaxLength</code>), a w jednostce 4 i dokumentacji jest w obiekcie <code>properties</code> z małymi literami (<code>"inline"</code>, <code>"synchronous"</code>). Poniższy klient trzyma się formatu z dokumentacji i jednostki 4 oraz czyta odpowiedź z <code>properties</code> lub z korzenia (oba układy) [unit 6] [unit 4] [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter].</p>
+</blockquote>
+<p><code>sessions_client.py</code> (przetestowany lokalnie wobec serwera-atrapy odtwarzającego kontrakt z dokumentacji):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">urllib.parse</span><span class="w"> </span><span class="kn">import</span> <span class="n">quote</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">uuid</span><span class="w"> </span><span class="kn">import</span> <span class="n">uuid4</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+
+<span class="n">API_VERSION</span> <span class="o">=</span> <span class="s2">"2025-10-02-preview"</span>          <span class="c1"># executions i files</span>
+<span class="n">SESSION_API_VERSION</span> <span class="o">=</span> <span class="s2">"2025-02-02-preview"</span>  <span class="c1"># get i delete session</span>
+<span class="n">TOKEN_SCOPE</span> <span class="o">=</span> <span class="s2">"https://dynamicsessions.io/.default"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SessionTransportError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Blad warstwy HTTP: autoryzacja, pojemnosc, siec, usluga."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">CodeExecutionError</span><span class="p">(</span><span class="ne">RuntimeError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Usluga uruchomila kod, ale kod zakonczyl sie bledem."""</span>
+
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DynamicSessionClient</span><span class="p">:</span>
+    <span class="n">endpoint</span><span class="p">:</span> <span class="nb">str</span>                     <span class="c1"># poolManagementEndpoint</span>
+    <span class="n">credential</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">identifier</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">credential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credential</span> <span class="ow">or</span> <span class="n">DefaultAzureCredential</span><span class="p">()</span>   <span class="c1"># (1)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid4</span><span class="p">())</span>               <span class="c1"># (2)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_headers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="n">token</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">credential</span><span class="o">.</span><span class="n">get_token</span><span class="p">(</span><span class="n">TOKEN_SCOPE</span><span class="p">)</span><span class="o">.</span><span class="n">token</span>            <span class="c1"># (3)</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"Authorization"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"Bearer </span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">API_VERSION</span><span class="p">,</span>
+                 <span class="n">timeout</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">requests</span><span class="o">.</span><span class="n">Response</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"api-version"</span><span class="p">:</span> <span class="n">version</span><span class="p">,</span> <span class="s2">"identifier"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span><span class="p">}</span>  <span class="c1"># (4)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">request</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">endpoint</span><span class="si">}{</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+                                        <span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_headers</span><span class="p">(),</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+                                        <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">Timeout</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SessionTransportError</span><span class="p">(</span><span class="s2">"timeout: nie wiadomo, czy kod sie wykonal"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+        <span class="k">except</span> <span class="n">requests</span><span class="o">.</span><span class="n">RequestException</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SessionTransportError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">))</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span>
+        <span class="k">return</span> <span class="n">response</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">upload_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">with</span> <span class="n">path</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">"rb"</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>                                  <span class="c1"># (5)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s2">"POST"</span><span class="p">,</span> <span class="s2">"/files"</span><span class="p">,</span>
+                                     <span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s2">"file"</span><span class="p">:</span> <span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="s2">"application/octet-stream"</span><span class="p">)})</span>
+        <span class="k">return</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s2">"POST"</span><span class="p">,</span> <span class="s2">"/executions"</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">90</span><span class="p">),</span> <span class="n">json</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"properties"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"codeInputType"</span><span class="p">:</span> <span class="s2">"inline"</span><span class="p">,</span> <span class="s2">"executionType"</span><span class="p">:</span> <span class="s2">"synchronous"</span><span class="p">,</span>
+                           <span class="s2">"code"</span><span class="p">:</span> <span class="n">code</span><span class="p">,</span> <span class="s2">"timeoutInSeconds"</span><span class="p">:</span> <span class="mi">60</span><span class="p">}})</span>      <span class="c1"># (6)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">body</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"properties"</span><span class="p">,</span> <span class="n">body</span><span class="p">)</span>                              <span class="c1"># (7)</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"status"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"Succeeded"</span><span class="p">:</span>                            <span class="c1"># (8)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"result"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="k">raise</span> <span class="n">CodeExecutionError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stderr"</span><span class="p">)</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"error"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"execution failed"</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"/files"</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span><span class="o">.</span><span class="n">json</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">,</span> <span class="p">[])</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">Path</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">name</span><span class="p">:</span>                                      <span class="c1"># (9)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"nazwa pliku bez katalogu"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"/files/</span><span class="si">{</span><span class="n">quote</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">safe</span><span class="o">=</span><span class="s1">''</span><span class="p">)</span><span class="si">}</span><span class="s2">/content"</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_session</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s2">"GET"</span><span class="p">,</span> <span class="s2">"/session"</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">SESSION_API_VERSION</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_session</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request</span><span class="p">(</span><span class="s2">"DELETE"</span><span class="p">,</span> <span class="s2">"/session"</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">SESSION_API_VERSION</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span><span class="o">.</span><span class="n">status_code</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) <code>DefaultAzureCredential</code>: lokalnie bierze Twoje logowanie z <code>az login</code>, w Azure tożsamość zarządzaną; (2) identyfikator tworzy <strong>backend</strong> (UUID), nie klient; (3) token dla odbiorcy <code>https://dynamicsessions.io</code> przy każdej operacji; (4) każde żądanie niesie <code>api-version</code> i ten sam <code>identifier</code>, więc trafia do tej samej sesji; (5) plik zamykany także przy błędzie; (6) ciało zgodne z dokumentacją, <code>timeoutInSeconds</code> 60 (limit platformy to 220); (7) odpowiedź może być w <code>properties</code> lub w korzeniu: schemat odpowiedzi nie jest opisany w jednostce, więc obsługujemy oba układy [autor: niezweryfikowane]; (8) <strong>HTTP 200 nie wystarcza</strong>: sprawdzamy <code>status</code> wykonania, a błąd kodu zgłaszamy jako <code>CodeExecutionError</code> (inny niż błąd transportu); (9) odrzucenie nazwy z katalogiem (path traversal). Wersje API jak w D3 i D5.</p>
+<p><code>demo.py</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sessions_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeExecutionError</span><span class="p">,</span> <span class="n">DynamicSessionClient</span>
+
+<span class="n">ANALYSIS</span> <span class="o">=</span> <span class="s2">"""</span>
+<span class="s2">import csv, json</span>
+<span class="s2">rows = list(csv.DictReader(open('/mnt/data/operational-data.csv')))</span>
+<span class="s2">total = sum(int(r['requests']) for r in rows)</span>
+<span class="s2">summary = {'months': len(rows), 'total': total, 'average': total / len(rows)}</span>
+<span class="s2">json.dump(summary, open('/mnt/data/summary.json', 'w'))</span>
+<span class="s2">print(json.dumps(summary))</span>
+<span class="s2">"""</span>
+
+<span class="n">Path</span><span class="p">(</span><span class="s2">"operational-data.csv"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+    <span class="s2">"month,requests</span><span class="se">\n</span><span class="s2">Jan,100</span><span class="se">\n</span><span class="s2">Feb,200</span><span class="se">\n</span><span class="s2">Mar,300</span><span class="se">\n</span><span class="s2">Apr,400</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">DynamicSessionClient</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SESSION_POOL_ENDPOINT"</span><span class="p">])</span>        <span class="c1"># identyfikator tworzy backend</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"1 upload      :"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">upload_file</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"operational-data.csv"</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"2 execute     :"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">execute_code</span><span class="p">(</span><span class="n">ANALYSIS</span><span class="p">)[</span><span class="s2">"result"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"3 files       :"</span><span class="p">,</span> <span class="p">[</span><span class="n">f</span><span class="p">[</span><span class="s2">"properties"</span><span class="p">][</span><span class="s2">"filename"</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">list_files</span><span class="p">()])</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"4 download    :"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span><span class="s2">"summary.json"</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">execute_code</span><span class="p">(</span><span class="s2">"raise RuntimeError('celowy blad')"</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">CodeExecutionError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"5 execution error (HTTP OK, kod padl):"</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"6 get session :"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">get_session</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"7 delete      :"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">delete_session</span><span class="p">())</span>
+</code></pre></div>
+
+<p>Skrypt analizy (czyta CSV z <code>/mnt/data</code>) sprawdzono lokalnie: wynik <code>{"months": 4, "total": 1000, "average": 250.0}</code>, czyli cztery miesiące, 1000 żądań łącznie i średnia 250, tak jak w labie [unit 6] [autor: test 2026-11-22].</p>
+<p>Polecenia:</p>
+<div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-sessions-i1<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westus2<span class="p">;</span><span class="w"> </span><span class="nv">POOL</span><span class="o">=</span>ai-document-sessions
+az<span class="w"> </span>extension<span class="w"> </span>add<span class="w"> </span>--name<span class="w"> </span>containerapp<span class="w"> </span>--upgrade<span class="w"> </span>--allow-preview<span class="w"> </span><span class="nb">true</span><span class="w"> </span>--yes
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.App
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>sessionpool<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$POOL</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span><span class="nv">$LOC</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-type<span class="w"> </span>PythonLTS<span class="w"> </span>--max-sessions<span class="w"> </span><span class="m">5</span><span class="w"> </span>--cooldown-period<span class="w"> </span><span class="m">300</span><span class="w"> </span>--network-status<span class="w"> </span>EgressDisabled<span class="w">   </span><span class="c1"># (1)</span>
+<span class="nv">POOL_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>sessionpool<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$POOL</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">SESSION_POOL_ENDPOINT</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>containerapp<span class="w"> </span>sessionpool<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$POOL</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s2">"properties.poolManagementEndpoint"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span><span class="w">                                                  </span><span class="c1"># (2)</span>
+<span class="nv">ME</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>ad<span class="w"> </span>signed-in-user<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+az<span class="w"> </span>role<span class="w"> </span>assignment<span class="w"> </span>create<span class="w"> </span>--role<span class="w"> </span><span class="s2">"Azure ContainerApps Session Executor"</span><span class="w"> </span>--assignee<span class="w"> </span><span class="nv">$ME</span><span class="w"> </span>--scope<span class="w"> </span><span class="nv">$POOL_ID</span><span class="w">  </span><span class="c1"># (3)</span>
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">requests</span><span class="o">==</span><span class="m">2</span>.34.2<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
+python<span class="w"> </span>demo.py<span class="w">                                                                                           </span><span class="c1"># (4)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) pula interpretera Pythona z pięcioma sesjami, cooldownem 300 s (minimum dopuszczalne) i wyłączonym egress (jak w labie: pięć sesji, 300 s, egress wyłączony [unit 6]); (2) punkt końcowy zarządzania; (3) rola na zakresie puli dla Twojego konta (propagacja ról może potrwać kilka minut); (4) klient wykonuje kroki 1-7. Region musi obsługiwać sesje dynamiczne (przykład z dokumentacji używa <code>westus2</code>); w razie błędu wdrożenia zmień region [unit 6] [docs: https://learn.microsoft.com/azure/container-apps/session-pool].</p>
+<p>Typowe problemy z labu [unit 6]: błąd autoryzacji tuż po przypisaniu roli - odczekaj kilka minut; potwierdź, że rola Session Executor jest na zakresie puli; po długiej przerwie <code>operational-data.csv</code> znika z sesji (cooldown 300 s), więc wgraj plik ponownie; nowa konsola wymaga ponownego załadowania zmiennych środowiskowych.</p>
+<p><strong>Odpowiednik C# (.NET)</strong></p>
+<p>Różnice: zamiast <code>requests</code> używasz <code>HttpClient</code> i <code>MultipartFormDataContent</code> (plik) oraz <code>JsonContent</code> (ciało JSON), a token bierzesz z <code>DefaultAzureCredential.GetTokenAsync(new TokenRequestContext(...))</code>. Błąd HTTP zamieniasz na wyjątek metodą <code>EnsureSuccessStatusCode()</code>, a <strong>błąd wykonania kodu</strong> sprawdzasz osobno po polu <code>status</code> (to samo rozróżnienie co w Pythonie). Projekt: <code>dotnet new console -f net10.0</code>, <code>dotnet add package Azure.Identity --version 1.21.0</code>; zmienna <code>SESSION_POOL_ENDPOINT</code> i plik <code>operational-data.csv</code> jak wyżej.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">using</span><span class="w"> </span><span class="nn">System.Net.Http.Headers</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">System.Net.Http.Json</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">System.Text.Json</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.Core</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.Identity</span><span class="p">;</span>
+
+<span class="k">const</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">ApiVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"2025-10-02-preview"</span><span class="p">;</span><span class="w">          </span><span class="c1">// executions i files</span>
+<span class="k">const</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">SessionApiVersion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"2025-02-02-preview"</span><span class="p">;</span><span class="w">   </span><span class="c1">// get i delete session</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">endpoint</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"SESSION_POOL_ENDPOINT"</span><span class="p">)</span><span class="o">!</span><span class="p">.</span><span class="n">TrimEnd</span><span class="p">(</span><span class="sc">'/'</span><span class="p">);</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">identifier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Guid</span><span class="p">.</span><span class="n">NewGuid</span><span class="p">().</span><span class="n">ToString</span><span class="p">();</span><span class="w">            </span><span class="c1">// identyfikator tworzy backend</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">credential</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DefaultAzureCredential</span><span class="p">();</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">var</span><span class="w"> </span><span class="n">http</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HttpClient</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">Timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">TimeSpan</span><span class="p">.</span><span class="n">FromSeconds</span><span class="p">(</span><span class="mi">90</span><span class="p">)</span><span class="w"> </span><span class="p">};</span>
+
+<span class="k">async</span><span class="w"> </span><span class="n">Task</span><span class="o">&lt;</span><span class="n">HttpResponseMessage</span><span class="o">&gt;</span><span class="w"> </span><span class="n">SendAsync</span><span class="p">(</span><span class="n">HttpMethod</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="n">version</span><span class="p">,</span><span class="w"> </span><span class="n">HttpContent</span><span class="o">?</span><span class="w"> </span><span class="n">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">null</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">AccessToken</span><span class="w"> </span><span class="n">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">credential</span><span class="p">.</span><span class="n">GetTokenAsync</span><span class="p">(</span>
+<span class="w">        </span><span class="k">new</span><span class="w"> </span><span class="nf">TokenRequestContext</span><span class="p">(</span><span class="k">new</span><span class="p">[]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s">"https://dynamicsessions.io/.default"</span><span class="w"> </span><span class="p">}));</span>
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HttpRequestMessage</span><span class="p">(</span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="s">$"{endpoint}{path}?api-version={version}&amp;identifier={identifier}"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">content</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="w">    </span><span class="n">request</span><span class="p">.</span><span class="n">Headers</span><span class="p">.</span><span class="n">Authorization</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AuthenticationHeaderValue</span><span class="p">(</span><span class="s">"Bearer"</span><span class="p">,</span><span class="w"> </span><span class="n">token</span><span class="p">.</span><span class="n">Token</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">http</span><span class="p">.</span><span class="n">SendAsync</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+<span class="w">    </span><span class="n">response</span><span class="p">.</span><span class="n">EnsureSuccessStatusCode</span><span class="p">();</span><span class="w">                    </span><span class="c1">// blad transportu = wyjatek</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">response</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">async</span><span class="w"> </span><span class="n">Task</span><span class="o">&lt;</span><span class="n">JsonElement</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="n">code</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">codeInputType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"inline"</span><span class="p">,</span><span class="w"> </span><span class="n">executionType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"synchronous"</span><span class="p">,</span><span class="w"> </span><span class="n">code</span><span class="p">,</span><span class="w"> </span><span class="n">timeoutInSeconds</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">60</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">};</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="nn">var</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">SendAsync</span><span class="p">(</span><span class="n">HttpMethod</span><span class="p">.</span><span class="n">Post</span><span class="p">,</span><span class="w"> </span><span class="s">"/executions"</span><span class="p">,</span><span class="w"> </span><span class="n">ApiVersion</span><span class="p">,</span><span class="w"> </span><span class="n">JsonContent</span><span class="p">.</span><span class="n">Create</span><span class="p">(</span><span class="n">body</span><span class="p">));</span>
+<span class="w">    </span><span class="n">JsonElement</span><span class="w"> </span><span class="n">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="k">await</span><span class="w"> </span><span class="n">response</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">ReadFromJsonAsync</span><span class="o">&lt;</span><span class="n">JsonElement</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="w">    </span><span class="n">JsonElement</span><span class="w"> </span><span class="n">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">root</span><span class="p">.</span><span class="n">TryGetProperty</span><span class="p">(</span><span class="s">"properties"</span><span class="p">,</span><span class="w"> </span><span class="k">out</span><span class="w"> </span><span class="kt">var</span><span class="w"> </span><span class="n">p</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">root</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">data</span><span class="p">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">"status"</span><span class="p">).</span><span class="n">GetString</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s">"Succeeded"</span><span class="p">)</span><span class="w">   </span><span class="c1">// HTTP OK, ale kod padl</span>
+<span class="w">        </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nf">InvalidOperationException</span><span class="p">(</span><span class="s">"execution failed: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">data</span><span class="p">.</span><span class="n">GetRawText</span><span class="p">());</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">data</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 1. upload</span>
+<span class="k">await</span><span class="w"> </span><span class="nf">using</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">.</span><span class="n">OpenRead</span><span class="p">(</span><span class="s">"operational-data.csv"</span><span class="p">))</span>
+<span class="k">using</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">form</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">MultipartFormDataContent</span><span class="p">())</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">form</span><span class="p">.</span><span class="n">Add</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">StreamContent</span><span class="p">(</span><span class="n">stream</span><span class="p">),</span><span class="w"> </span><span class="s">"file"</span><span class="p">,</span><span class="w"> </span><span class="s">"operational-data.csv"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="nn">var</span><span class="w"> </span><span class="n">_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">SendAsync</span><span class="p">(</span><span class="n">HttpMethod</span><span class="p">.</span><span class="n">Post</span><span class="p">,</span><span class="w"> </span><span class="s">"/files"</span><span class="p">,</span><span class="w"> </span><span class="n">ApiVersion</span><span class="p">,</span><span class="w"> </span><span class="n">form</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// 2. execute</span>
+<span class="kt">var</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">ExecuteAsync</span><span class="p">(</span><span class="s">"print(sum(range(5)))"</span><span class="p">);</span>
+<span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="n">result</span><span class="p">.</span><span class="n">GetProperty</span><span class="p">(</span><span class="s">"result"</span><span class="p">).</span><span class="n">GetRawText</span><span class="p">());</span>
+
+<span class="c1">// 3. list files</span>
+<span class="k">using</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">list</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">SendAsync</span><span class="p">(</span><span class="n">HttpMethod</span><span class="p">.</span><span class="n">Get</span><span class="p">,</span><span class="w"> </span><span class="s">"/files"</span><span class="p">,</span><span class="w"> </span><span class="n">ApiVersion</span><span class="p">))</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="k">await</span><span class="w"> </span><span class="n">list</span><span class="p">.</span><span class="n">Content</span><span class="p">.</span><span class="n">ReadAsStringAsync</span><span class="p">());</span>
+
+<span class="c1">// 4. delete</span>
+<span class="k">using</span><span class="w"> </span><span class="p">(</span><span class="kt">var</span><span class="w"> </span><span class="n">del</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">SendAsync</span><span class="p">(</span><span class="n">HttpMethod</span><span class="p">.</span><span class="n">Delete</span><span class="p">,</span><span class="w"> </span><span class="s">"/session"</span><span class="p">,</span><span class="w"> </span><span class="n">SessionApiVersion</span><span class="p">))</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">((</span><span class="kt">int</span><span class="p">)</span><span class="n">del</span><span class="p">.</span><span class="n">StatusCode</span><span class="p">);</span>
+</code></pre></div>
+
+<p>[docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter] [autor: test 2026-11-22] (kod skompilowano na .NET SDK 10.0.401 z Azure.Identity 1.21.0; nie uruchamiano go na prawdziwej puli sesji; krok pobrania pliku i lista plików są analogiczne do Pythona).</p>
+<p><strong>Koszt:</strong> sesje interpretera są rozliczane według <strong>czasu trwania każdej sesji</strong> [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]; stawki i ewentualne darmowe progi: Niesprawdzone - zweryfikuj w https://learn.microsoft.com/azure/container-apps/billing. Ćwiczenie tworzy kilka krótkich sesji (pula nic nie kosztuje, dopóki nie przydzielasz sesji, o ile nie ma gotowych instancji; to założenie sprawdź w cenniku [autor: niezweryfikowane]). Wykonaj Sprzątanie.</p>
+<p><strong>Zadania:</strong> (a) uruchom <code>python demo.py</code> i potwierdź kroki 1-7; (b) <strong>zepsuj to - limit czasu:</strong> wykonaj kod <code>import time; time.sleep(120)</code> z <code>timeoutInSeconds</code> 60 (zmień wartość w <code>execute_code</code>) i zobacz, jak klient to klasyfikuje; (c) <strong>zepsuj to - wygaśnięcie sesji:</strong> po kroku 1 odczekaj ponad 300 s bez żądań, potem wylistuj pliki tym samym identyfikatorem (w osobnym skrypcie albo przez pozostawienie klienta w <code>python -i</code>); (d) <strong>zepsuj to - zła rola:</strong> w osobnym koncie (bez roli Session Executor na puli) wykonaj upload i przeczytaj błąd.</p>
+<p><strong>Sprawdź:</strong> (a) kroki wypisują: odpowiedź uploadu, wynik z <code>stdout</code> równy <code>{"months": 4, "total": 1000, "average": 250.0}</code>, listę plików <code>operational-data.csv</code> i <code>summary.json</code>, treść <code>summary.json</code>, komunikat <code>RuntimeError</code>/"celowy blad", metadane sesji i <code>204</code> [unit 6]; (b) wykonanie nie kończy się statusem <code>Succeeded</code>, więc klient zgłasza <code>CodeExecutionError</code> albo timeout transportu (dokładny status zależy od usługi) [autor: niezweryfikowane]; (c) po wygaśnięciu sesji lista plików jest pusta, bo identyfikator wskazuje już nową, pustą sesję [unit 5]; (d) błąd HTTP 401/403 (brak uprawnień), zgłoszony jako <code>SessionTransportError</code> [autor: niezweryfikowane].</p>
+<p><strong>Sprzątanie:</strong> pula jest potrzebna jeszcze w I2 i I3, więc usuń ją po nich (Sprzątanie z I2). Jeśli kończysz na I1: <code>az group delete --name $RG --yes --no-wait</code>, a potem <code>az group exists --name $RG</code> (po kilku minutach powinno wypisać <code>false</code>).</p>
+<h2 id="i2-egress-i-cooldown-eksperymenty-z-konfiguracja-puli">I2. Egress i cooldown: eksperymenty z konfiguracją puli</h2>
+<p>(rozwinięcie sekcji B2-B3, D1; kontynuacja I1: ta sama grupa <code>rg-aca-sessions-i1</code>, pula <code>ai-document-sessions</code>, plik <code>sessions_client.py</code> i zmienne z I1)</p>
+<p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) i Python w katalogu z I1; plik <code>egress_test.py</code>.</p>
+<p><code>egress_test.py</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">sessions_client</span><span class="w"> </span><span class="kn">import</span> <span class="n">CodeExecutionError</span><span class="p">,</span> <span class="n">DynamicSessionClient</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">DynamicSessionClient</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"SESSION_POOL_ENDPOINT"</span><span class="p">])</span>
+<span class="n">CODE</span> <span class="o">=</span> <span class="s2">"import urllib.request; print(urllib.request.urlopen('https://example.com', timeout=10).status)"</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"wynik:"</span><span class="p">,</span> <span class="n">client</span><span class="o">.</span><span class="n">execute_code</span><span class="p">(</span><span class="n">CODE</span><span class="p">)[</span><span class="s2">"result"</span><span class="p">])</span>
+<span class="k">except</span> <span class="n">CodeExecutionError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"kod padl:"</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+<span class="k">finally</span><span class="p">:</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">delete_session</span><span class="p">()</span>                 <span class="c1"># zwolnij pojemnosc</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>python<span class="w"> </span>egress_test.py<span class="w">                                                                            </span><span class="c1"># (1) egress wylaczony</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>sessionpool<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$POOL</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--network-status<span class="w"> </span>EgressEnabled<span class="w">                </span><span class="c1"># (2)</span>
+python<span class="w"> </span>egress_test.py<span class="w">                                                                            </span><span class="c1"># (3)</span>
+
+az<span class="w"> </span>containerapp<span class="w"> </span>sessionpool<span class="w"> </span>update<span class="w"> </span>-n<span class="w"> </span><span class="nv">$POOL</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--network-status<span class="w"> </span>EgressDisabled<span class="w">               </span><span class="c1"># (4)</span>
+az<span class="w"> </span>containerapp<span class="w"> </span>sessionpool<span class="w"> </span>show<span class="w"> </span>-n<span class="w"> </span><span class="nv">$POOL</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s2">"{max:properties.scaleConfiguration.maxConcurrentSessions, egress:properties.sessionNetworkConfiguration.status}"</span><span class="w"> </span>-o<span class="w"> </span>table<span class="w">   </span><span class="c1"># (5)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) przy wyłączonym egress żądanie sieciowe z kodu nie może się powieść; (2) włączenie egress zmienia ustawienie <strong>całej puli</strong>; (3) ten sam kod powinien teraz dostać odpowiedź; (4) <strong>przywróć bezpieczne ustawienie</strong>; (5) odczyt ustawień puli (nazwy pól jak w modelu <code>SessionPoolProperties</code>).</p>
+<p><strong>Koszt:</strong> jak w I1 (te same zasoby; kilka krótkich sesji).</p>
+<p><strong>Zadania:</strong> (a) uruchom test przy wyłączonym egress i przeczytaj błąd; (b) włącz egress i powtórz; (c) <strong>zepsuj to:</strong> przywróć <code>EgressDisabled</code> i potwierdź, że kod znowu nie ma dostępu do sieci; (d) zmień <code>--max-sessions</code> na 1, uruchom dwa klienty równolegle (dwa terminale z <code>python demo.py</code>) i obserwuj, co się dzieje, gdy limit współbieżnych sesji zostanie przekroczony; potem przywróć 5.</p>
+<p><strong>Sprawdź:</strong> (a) kod kończy się błędem sieci (wykonanie ze statusem innym niż <code>Succeeded</code> i komunikatem o braku połączenia) [unit 3]; (b) po włączeniu egress odpowiedź to <code>200</code> [unit 3]; (c) błąd wraca [unit 3]; (d) drugi klient czeka lub dostaje błąd pojemności (zachowanie przy osiągnięciu limitu: sprawdź i zapisz obserwację) [unit 3] [autor: niezweryfikowane].</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w">      </span><span class="c1"># po kilku minutach powinno wypisać false</span>
+</code></pre></div>
+
+<p>Usuwa pulę z I1 i I2. Wykonaj dopiero po I3.</p>
+<h2 id="i3-odczyt-konfiguracji-pul-przez-sdk-zarzadzania-python-i-odpowiednik-c-net">I3. Odczyt konfiguracji pul przez SDK zarządzania: Python i odpowiednik C# (.NET)</h2>
+<p>(rozwinięcie sekcji B1-B3; wymaga puli z I1 przed jej Sprzątaniem w I2)</p>
+<p><strong>Gdzie / Plik:</strong> <code>list_pools.py</code> (Python) i <code>Program.cs</code> (C#); <code>az login</code>.</p>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>azure-mgmt-appcontainers<span class="o">==</span><span class="m">5</span>.1.0<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
+<span class="nb">export</span><span class="w"> </span><span class="nv">AZURE_SUBSCRIPTION_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>account<span class="w"> </span>show<span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">RESOURCE_GROUP</span><span class="o">=</span>rg-aca-sessions-i1
+</code></pre></div>
+
+<p><code>list_pools.py</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">azure.mgmt.appcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">ContainerAppsAPIClient</span>
+
+<span class="n">client</span> <span class="o">=</span> <span class="n">ContainerAppsAPIClient</span><span class="p">(</span><span class="n">DefaultAzureCredential</span><span class="p">(),</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"AZURE_SUBSCRIPTION_ID"</span><span class="p">])</span>  <span class="c1"># (1)</span>
+
+<span class="k">for</span> <span class="n">pool</span> <span class="ow">in</span> <span class="n">client</span><span class="o">.</span><span class="n">container_apps_session_pools</span><span class="o">.</span><span class="n">list_by_resource_group</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"RESOURCE_GROUP"</span><span class="p">]):</span>  <span class="c1"># (2)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">pool</span><span class="o">.</span><span class="n">properties</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">pool</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">container_type</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">provisioning_state</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  endpoint :"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">pool_management_endpoint</span><span class="p">)</span>                                  <span class="c1"># (3)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  max      :"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">scale_configuration</span><span class="o">.</span><span class="n">max_concurrent_sessions</span><span class="p">)</span>                <span class="c1"># (4)</span>
+    <span class="n">lifecycle</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">dynamic_pool_configuration</span><span class="o">.</span><span class="n">lifecycle_configuration</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  cooldown :"</span><span class="p">,</span> <span class="n">lifecycle</span><span class="o">.</span><span class="n">cooldown_period_in_seconds</span><span class="p">,</span> <span class="n">lifecycle</span><span class="o">.</span><span class="n">lifecycle_type</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"  egress   :"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">session_network_configuration</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) ten sam klient zarządzania co w modułach 04-06; (2) lista pul w grupie zasobów (<code>container_apps_session_pools</code>); (3) punkt końcowy zarządzania do wywołań REST; (4) pojemność, cooldown i status egress, czyli ustawienia z części B. Skrypt skompilowano (<code>py_compile</code>), a nazwy pól sprawdzono w modelach <code>SessionPoolProperties</code>, <code>ScaleConfiguration</code>, <code>LifecycleConfiguration</code> i <code>SessionNetworkConfiguration</code> w pakiecie 5.1.0; nie uruchamiano go na prawdziwej subskrypcji [autor: test 2026-11-22].</p>
+<p><strong>Odpowiednik C# (.NET)</strong></p>
+<p>Różnice: pule sesji pobierasz z <strong>zasobu grupy zasobów</strong> (<code>ResourceGroupResource.GetSessionPools()</code>), typ zasobu to <code>SessionPoolResource</code> (nie "ContainerApp...", jak w innych zasobach tego pakietu), a właściwości nazywają się inaczej niż w Pythonie: <code>PoolManagementEndpoint</code>, <code>ScaleConfiguration.MaxConcurrentSessions</code>, <code>DynamicPoolLifecycleConfiguration.CooldownPeriodInSeconds</code>, <code>SessionNetworkStatus</code>. Projekt: <code>dotnet add package Azure.ResourceManager.AppContainers --version 1.6.0</code> i <code>Azure.Identity --version 1.21.0</code>.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">using</span><span class="w"> </span><span class="nn">Azure.Identity</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager.AppContainers</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">Azure.ResourceManager.Resources</span><span class="p">;</span>
+
+<span class="kt">string</span><span class="w"> </span><span class="n">sub</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"AZURE_SUBSCRIPTION_ID"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">rg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"RESOURCE_GROUP"</span><span class="p">)</span><span class="o">!</span><span class="p">;</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">arm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArmClient</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">DefaultAzureCredential</span><span class="p">());</span>
+<span class="n">ResourceGroupResource</span><span class="w"> </span><span class="k">group</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">arm</span><span class="p">.</span><span class="n">GetResourceGroupResource</span><span class="p">(</span><span class="n">ResourceGroupResource</span><span class="p">.</span><span class="n">CreateResourceIdentifier</span><span class="p">(</span><span class="n">sub</span><span class="p">,</span><span class="w"> </span><span class="n">rg</span><span class="p">));</span>
+
+<span class="k">await</span><span class="w"> </span><span class="nf">foreach</span><span class="w"> </span><span class="p">(</span><span class="n">SessionPoolResource</span><span class="w"> </span><span class="n">pool</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">group</span><span class="p">.</span><span class="n">GetSessionPools</span><span class="p">().</span><span class="n">GetAllAsync</span><span class="p">())</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">var</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">pool</span><span class="p">.</span><span class="n">Data</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"{d.Name} {d.ContainerType} {d.ProvisioningState}"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  endpoint : {d.PoolManagementEndpoint}"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  max      : {d.ScaleConfiguration?.MaxConcurrentSessions}"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  cooldown : {d.DynamicPoolLifecycleConfiguration?.CooldownPeriodInSeconds} {d.DynamicPoolLifecycleConfiguration?.LifecycleType}"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Console</span><span class="p">.</span><span class="n">WriteLine</span><span class="p">(</span><span class="s">$"  egress   : {d.SessionNetworkStatus}"</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>[docs: https://learn.microsoft.com/dotnet/api/overview/azure/resourcemanager.appcontainers-readme?view=azure-dotnet] [autor: test 2026-11-22] (kod skompilowano na .NET SDK 10.0.401; nie uruchamiano go na prawdziwej subskrypcji).</p>
+<p><strong>Koszt:</strong> brak kosztu własnego (odczyt metadanych); koszt puli jak w I1.</p>
+<p><strong>Zadania:</strong> (a) uruchom <code>python list_pools.py</code> i porównaj wynik z <code>az containerapp sessionpool show</code>; (b) <strong>zepsuj to:</strong> ustaw <code>RESOURCE_GROUP=nie-ma-takiej</code> i przeczytaj błąd; (c) uruchom wersję C# i porównaj pola.</p>
+<p><strong>Sprawdź:</strong> (a) te same wartości: typ <code>PythonLTS</code>, maksimum 5 (lub 1, jeśli nie przywróciłeś), cooldown 300, egress <code>EgressDisabled</code>; (b) błąd "grupa zasobów nie istnieje" (ResourceGroupNotFound); dokładny komunikat zależy od wersji SDK [autor: niezweryfikowane]; (c) te same wartości w formacie C#.</p>
+<p><strong>Sprzątanie:</strong> brak (odczyt metadanych); po I3 wykonaj Sprzątanie z I2.</p>
+<hr />
+<h1 id="czesc-g-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<p>Learn nie pokazuje poprawnych odpowiedzi w sprawdzianie wiedzy, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
+<h2 id="g1-zastrzezony-konwerter-z-natywnymi-binariami-jaka-pula">G1. Zastrzeżony konwerter z natywnymi binariami - jaka pula?</h2>
+<p>-&gt; <em>Pula z własnym kontenerem (custom container) z konwerterem w obrazie.</em> Wbudowany interpreter (przez REST lub <code>SessionsPythonREPLTool</code>) nie obsługuje natywnych programów ani własnych bibliotek. <em>(odpowiedź wnioskowana: unit 2, sekcje "Choose the built-in code interpreter" i "Choose a custom container")</em></p>
+<h2 id="g2-niezaufany-python-na-wgranych-plikach-jak-ograniczyc-ryzyko-wycieku-danych">G2. Niezaufany Python na wgranych plikach - jak ograniczyć ryzyko wycieku danych?</h2>
+<p>-&gt; <em>Ustawić <code>--network-status EgressDisabled</code> na puli.</em> <code>EgressEnabled</code> z ograniczeniem przez tożsamość backendu nie blokuje ruchu z sesji; dłuższy cooldown tylko wydłuża retencję plików. <em>(odpowiedź wnioskowana: unit 3, sekcja "Control outbound network access")</em></p>
+<h2 id="g3-wielodostepny-backend-jak-zarzadzac-identyfikatorami-sesji">G3. Wielodostępny backend - jak zarządzać identyfikatorami sesji?</h2>
+<p>-&gt; <em>Generować nieprzewidywalny identyfikator po stronie serwera i przechowywać jego powiązanie z użytkownikiem lub rozmową w stanie backendu.</em> E-mail jako identyfikator jest przewidywalny, a akceptowanie identyfikatora z klienta pozwala adresować cudzą sesję. <em>(odpowiedź wnioskowana: unit 4, sekcja "Create secure session identifiers")</em></p>
+<h2 id="g4-api-zwraca-sukces-http-ale-python-zgosi-wyjatek-jak-sklasyfikowac">G4. API zwraca sukces HTTP, ale Python zgłosił wyjątek - jak sklasyfikować?</h2>
+<p>-&gt; <em>Jako execution failure (błąd wykonania).</em> To nie jest błąd transportu (HTTP się udał) ani sukces. <em>(odpowiedź wnioskowana: unit 5, sekcja "Separate failure categories")</em></p>
+<h2 id="g5-timeout-po-stronie-backendu-nie-wiadomo-czy-kod-mia-skutki-uboczne-najbezpieczniejsza-polityka">G5. Timeout po stronie backendu, nie wiadomo, czy kod miał skutki uboczne - najbezpieczniejsza polityka</h2>
+<p>-&gt; <em>Ponawiać tylko wtedy, gdy operacja jest idempotentna, a backend potrafi ocenić wynikowy stan.</em> Natychmiastowe ponawianie każdego timeoutu z tym samym identyfikatorem może zdublować skutki, a nowy identyfikator nie rozwiązuje niejednoznaczności. <em>(odpowiedź wnioskowana: unit 5, sekcja "Apply retries safely")</em></p>
+<hr />
+<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-co-daje-pula-sesji-i-jaka-jest-granica-izolacji">H1. Co daje pula sesji i jaka jest granica izolacji?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Wstępnie rozgrzane środowiska przydzielane w milisekundach; każda sesja działa w osobnej piaskownicy izolowanej przez Hyper-V (procesy i system plików oddzielone od hosta i innych sesji). Sesja jest efemeryczna.</p>
+</details>
+<h2 id="h2-kiedy-wbudowany-interpreter-a-kiedy-wasny-kontener">H2. Kiedy wbudowany interpreter, a kiedy własny kontener?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Interpreter: analiza CSV, obliczenia, wizualizacje, krótkie skrypty agenta, gdy wystarczy obsługiwany runtime. Własny kontener: specjalne pakiety systemowe, binaria natywne, język spoza interpretera, własny protokół (wymaga środowiska z profilami obciążeń; odpowiadasz za obraz, ingress, logi i sondy).</p>
+</details>
+<h2 id="h3-wymien-limity-i-wartosci-puli-ktore-warto-znac">H3. Wymień limity i wartości puli, które warto znać.</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>--max-sessions</code> maks. 600; <code>--cooldown-period</code> 300-3600 s (domyślnie 300); <code>--network-status</code> domyślnie <code>EgressDisabled</code>; typy <code>PythonLTS</code> (domyślny), <code>NodeLTS</code>, <code>Shell</code>, <code>CustomContainer</code>; wykonanie maks. 220 s; wgrywanie pliku do 128 MB.</p>
+</details>
+<h2 id="h4-jakiej-roli-i-jakiego-odbiorcy-tokenu-wymaga-wywoanie-api-zarzadzania-puli">H4. Jakiej roli i jakiego odbiorcy tokenu wymaga wywołanie API zarządzania puli?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Roli Azure ContainerApps Session Executor (dokumentacja: także Contributor) na puli; token Entra z odbiorcą (audience) <code>https://dynamicsessions.io</code> (zakres <code>https://dynamicsessions.io/.default</code>).</p>
+</details>
+<h2 id="h5-jak-bezpiecznie-obsugiwac-identyfikatory-sesji">H5. Jak bezpiecznie obsługiwać identyfikatory sesji?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Generować je po stronie serwera (nieprzewidywalnie, np. UUID) dla uwierzytelnionego użytkownika lub rozmowy, trzymać powiązanie w stanie backendu, nie przyjmować identyfikatora od klienta i nie ujawniać go użytkownikom; sam identyfikator nie uwierzytelnia.</p>
+</details>
+<h2 id="h6-gdzie-laduja-wgrane-pliki-i-jak-wyglada-sciezka-pobrania">H6. Gdzie lądują wgrane pliki i jak wygląda ścieżka pobrania?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>W <code>/mnt/data</code> sesji; wgranie: <code>POST /files</code> (multipart); lista: <code>GET /files</code>; pobranie: <code>GET /files/{nazwa}/content</code> (nazwa kodowana jako jeden segment URL i walidowana przed zapisem lokalnym).</p>
+</details>
+<h2 id="h7-jak-odroznic-transport-failure-od-execution-failure">H7. Jak odróżnić transport failure od execution failure?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Transport failure: żądanie API nie zostało zrealizowane (uwierzytelnianie, autoryzacja, pojemność, sieć, usługa). Execution failure: HTTP się udał, ale kod w sesji zgłosił wyjątek lub zwrócił nieudany status wykonania. Dodatkowo validation failure: wynik niezgodny z kontraktem aplikacji.</p>
+</details>
+<h2 id="h8-kiedy-wolno-ponawiac-zadanie-wykonania-kodu">H8. Kiedy wolno ponawiać żądanie wykonania kodu?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Tylko dla operacji idempotentnych, gdy backend umie zweryfikować wynik; ograniczona liczba prób, rosnące opóźnienia z jitterem; timeout jest niejednoznaczny (wykonanie mogło się zakończyć). Odczyty (GET/HEAD) i zapytania o status są naturalnymi kandydatami.</p>
+</details>
+<h2 id="h9-co-zwroci-udane-usuniecie-sesji-i-po-co-je-robic">H9. Co zwróci udane usunięcie sesji i po co je robić?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p><code>DELETE .../session</code> odpowiada <code>204 No Content</code>. Zwalnia pojemność i natychmiast usuwa dane tymczasowe (zamiast czekać na cooldown); nie usuwaj sesji, gdy trwa inne żądanie tej rozmowy.</p>
+</details>
+<hr />
+<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<p><em>Źródło: [docs: https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200]</em></p>
+<p>To ostatni moduł ścieżki "Deploy and manage apps on Azure Container Apps" (moduły 04-07). Dalej w kursie AI-200T00: moduły o Kubernetes (AKS) - wdrażanie, konfiguracja i monitorowanie - oraz moduły o bazach danych (Cosmos DB, PostgreSQL, Redis). Wróć do części B i D, gdy projektujesz bezpieczną pulę i obsługę błędów.</p>
+<p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30; dla tego modułu nie ma odpowiadającej umiejętności):</p>
+<table>
+<thead>
+<tr>
+<th>Umiejętność (study guide)</th>
+<th>Domena</th>
+<th>Status</th>
+<th>Gdzie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(brak osobnej umiejętności o sesjach dynamicznych w study guide)</td>
+<td>1</td>
+<td>tu tylko wzmianka (wiedza pokrewna; moduł jest w kursie, ale nie ma wiersza w skill-map)</td>
+<td><code>07-dynamic-sessions-azure-container-apps.md</code></td>
+</tr>
+<tr>
+<td>Deploy applications to Azure Container Apps, including environment configuration and revision management</td>
+<td>1</td>
+<td>uczone w modułach 04 i 05</td>
+<td><code>04-deploy-containers-azure-container-apps.md</code>; <code>05-manage-containers-azure-container-apps.md</code></td>
+</tr>
+<tr>
+<td>Implement event-driven scaling by using KEDA in Container Apps</td>
+<td>1</td>
+<td>uczone w module 06</td>
+<td><code>06-scale-containers-azure-container-apps.md</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</h2>
+<p><em>Źródło: [autor]</em></p>
+<p>Ten moduł nie odpowiada żadnej wprost wymienionej umiejętności study guide AI-200 (stan 2026-10-30), więc na egzaminie spodziewaj się raczej pytań z modułów 04-06. Wiedza z modułu 07 jest wartościowa jako pokrewna (bezpieczne wykonywanie kodu AI, tożsamości, identyfikatory, klasyfikacja błędów). Quiz jest krótki (5 pytań); jeśli pojawią się pytania o sesje, ćwicz: wybór puli, egress wyłączony domyślnie, identyfikatory po stronie serwera, rola Session Executor i odbiorca <code>https://dynamicsessions.io</code>, rozróżnienie błędów transportu i wykonania oraz ponawianie tylko idempotentnych operacji.</p></main></body></html>

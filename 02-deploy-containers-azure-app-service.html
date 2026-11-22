@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Moduł 02: Kontenery w Azure App Service (źródła obrazu, runtime, ustawienia aplikacji, diagnostyka)</title><style>
+:root{--bg:#fff;--fg:#1f2328;--mut:#59636e;--bd:#d1d9e0;--code:#f6f8fa;--ac:#0969da;--qb:#f6f8fa}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--mut:#9198a1;--bd:#3d444d;--code:#151b23;--ac:#4493f8;--qb:#151b23}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+nav.top{font-size:14px;color:var(--mut);margin-bottom:16px}
+a{color:var(--ac)}
+h1,h2,h3,h4{line-height:1.25;margin:1.6em 0 .6em}
+h1{font-size:2em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h2{font-size:1.5em;border-bottom:1px solid var(--bd);padding-bottom:.3em}
+h3{font-size:1.2em}
+pre{background:var(--code);border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;font-size:14px;line-height:1.45}
+code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:var(--code);padding:.15em .35em;border-radius:4px}
+pre code{background:none;padding:0}
+.codehilite{background:var(--code)!important}
+.codehilite pre{margin:0;border:0;padding:0;background:none}
+.codehilite{border:1px solid var(--bd);border-radius:6px;padding:12px;overflow:auto;margin:1em 0}
+table{border-collapse:collapse;display:block;overflow-x:auto;max-width:100%;margin:1em 0}
+th,td{border:1px solid var(--bd);padding:6px 12px;text-align:left;vertical-align:top}
+th{background:var(--code)}
+blockquote{margin:1em 0;padding:.2em 1em;border-left:4px solid var(--bd);color:var(--mut);background:var(--qb)}
+img{max-width:100%}
+hr{border:0;border-top:1px solid var(--bd);margin:2em 0}
+pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #ffffcc }
+.codehilite { background: #f8f8f8; }
+.codehilite .c { color: #3D7B7B; font-style: italic } /* Comment */
+.codehilite .err { border: 1px solid #F00 } /* Error */
+.codehilite .k { color: #008000; font-weight: bold } /* Keyword */
+.codehilite .o { color: #666 } /* Operator */
+.codehilite .ch { color: #3D7B7B; font-style: italic } /* Comment.Hashbang */
+.codehilite .cm { color: #3D7B7B; font-style: italic } /* Comment.Multiline */
+.codehilite .cp { color: #9C6500 } /* Comment.Preproc */
+.codehilite .cpf { color: #3D7B7B; font-style: italic } /* Comment.PreprocFile */
+.codehilite .c1 { color: #3D7B7B; font-style: italic } /* Comment.Single */
+.codehilite .cs { color: #3D7B7B; font-style: italic } /* Comment.Special */
+.codehilite .gd { color: #A00000 } /* Generic.Deleted */
+.codehilite .ge { font-style: italic } /* Generic.Emph */
+.codehilite .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #E40000 } /* Generic.Error */
+.codehilite .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.codehilite .gi { color: #008400 } /* Generic.Inserted */
+.codehilite .go { color: #717171 } /* Generic.Output */
+.codehilite .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.codehilite .gt { color: #04D } /* Generic.Traceback */
+.codehilite .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.codehilite .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.codehilite .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.codehilite .kp { color: #008000 } /* Keyword.Pseudo */
+.codehilite .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.codehilite .kt { color: #B00040 } /* Keyword.Type */
+.codehilite .m { color: #666 } /* Literal.Number */
+.codehilite .s { color: #BA2121 } /* Literal.String */
+.codehilite .na { color: #687822 } /* Name.Attribute */
+.codehilite .nb { color: #008000 } /* Name.Builtin */
+.codehilite .nc { color: #00F; font-weight: bold } /* Name.Class */
+.codehilite .no { color: #800 } /* Name.Constant */
+.codehilite .nd { color: #A2F } /* Name.Decorator */
+.codehilite .ni { color: #717171; font-weight: bold } /* Name.Entity */
+.codehilite .ne { color: #CB3F38; font-weight: bold } /* Name.Exception */
+.codehilite .nf { color: #00F } /* Name.Function */
+.codehilite .nl { color: #767600 } /* Name.Label */
+.codehilite .nn { color: #00F; font-weight: bold } /* Name.Namespace */
+.codehilite .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.codehilite .nv { color: #19177C } /* Name.Variable */
+.codehilite .ow { color: #A2F; font-weight: bold } /* Operator.Word */
+.codehilite .w { color: #BBB } /* Text.Whitespace */
+.codehilite .mb { color: #666 } /* Literal.Number.Bin */
+.codehilite .mf { color: #666 } /* Literal.Number.Float */
+.codehilite .mh { color: #666 } /* Literal.Number.Hex */
+.codehilite .mi { color: #666 } /* Literal.Number.Integer */
+.codehilite .mo { color: #666 } /* Literal.Number.Oct */
+.codehilite .sa { color: #BA2121 } /* Literal.String.Affix */
+.codehilite .sb { color: #BA2121 } /* Literal.String.Backtick */
+.codehilite .sc { color: #BA2121 } /* Literal.String.Char */
+.codehilite .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.codehilite .s2 { color: #BA2121 } /* Literal.String.Double */
+.codehilite .se { color: #AA5D1F; font-weight: bold } /* Literal.String.Escape */
+.codehilite .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.codehilite .si { color: #A45A77; font-weight: bold } /* Literal.String.Interpol */
+.codehilite .sx { color: #008000 } /* Literal.String.Other */
+.codehilite .sr { color: #A45A77 } /* Literal.String.Regex */
+.codehilite .s1 { color: #BA2121 } /* Literal.String.Single */
+.codehilite .ss { color: #19177C } /* Literal.String.Symbol */
+.codehilite .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #00F } /* Name.Function.Magic */
+.codehilite .vc { color: #19177C } /* Name.Variable.Class */
+.codehilite .vg { color: #19177C } /* Name.Variable.Global */
+.codehilite .vi { color: #19177C } /* Name.Variable.Instance */
+.codehilite .vm { color: #19177C } /* Name.Variable.Magic */
+.codehilite .il { color: #666 } /* Literal.Number.Integer.Long */
+@media (prefers-color-scheme:dark){pre { line-height: 125%; }
+td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.codehilite .hll { background-color: #49483e }
+.codehilite { background: #272822; color: #F8F8F2 }
+.codehilite .c { color: #959077 } /* Comment */
+.codehilite .err { color: #ED007E; background-color: #1E0010 } /* Error */
+.codehilite .esc { color: #F8F8F2 } /* Escape */
+.codehilite .g { color: #F8F8F2 } /* Generic */
+.codehilite .k { color: #66D9EF } /* Keyword */
+.codehilite .l { color: #AE81FF } /* Literal */
+.codehilite .n { color: #F8F8F2 } /* Name */
+.codehilite .o { color: #FF4689 } /* Operator */
+.codehilite .x { color: #F8F8F2 } /* Other */
+.codehilite .p { color: #F8F8F2 } /* Punctuation */
+.codehilite .ch { color: #959077 } /* Comment.Hashbang */
+.codehilite .cm { color: #959077 } /* Comment.Multiline */
+.codehilite .cp { color: #959077 } /* Comment.Preproc */
+.codehilite .cpf { color: #959077 } /* Comment.PreprocFile */
+.codehilite .c1 { color: #959077 } /* Comment.Single */
+.codehilite .cs { color: #959077 } /* Comment.Special */
+.codehilite .gd { color: #FF4689 } /* Generic.Deleted */
+.codehilite .ge { color: #F8F8F2; font-style: italic } /* Generic.Emph */
+.codehilite .ges { color: #F8F8F2; font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.codehilite .gr { color: #FF4689 } /* Generic.Error */
+.codehilite .gh { color: #F8F8F2 } /* Generic.Heading */
+.codehilite .gi { color: #A6E22E } /* Generic.Inserted */
+.codehilite .go { color: #66D9EF } /* Generic.Output */
+.codehilite .gp { color: #FF4689; font-weight: bold } /* Generic.Prompt */
+.codehilite .gs { color: #F8F8F2; font-weight: bold } /* Generic.Strong */
+.codehilite .gu { color: #959077 } /* Generic.Subheading */
+.codehilite .gt { color: #66D9EF } /* Generic.Traceback */
+.codehilite .kc { color: #66D9EF } /* Keyword.Constant */
+.codehilite .kd { color: #66D9EF } /* Keyword.Declaration */
+.codehilite .kn { color: #FF4689 } /* Keyword.Namespace */
+.codehilite .kp { color: #66D9EF } /* Keyword.Pseudo */
+.codehilite .kr { color: #66D9EF } /* Keyword.Reserved */
+.codehilite .kt { color: #66D9EF } /* Keyword.Type */
+.codehilite .ld { color: #E6DB74 } /* Literal.Date */
+.codehilite .m { color: #AE81FF } /* Literal.Number */
+.codehilite .s { color: #E6DB74 } /* Literal.String */
+.codehilite .na { color: #A6E22E } /* Name.Attribute */
+.codehilite .nb { color: #A6E22E } /* Name.Builtin */
+.codehilite .nc { color: #A6E22E } /* Name.Class */
+.codehilite .no { color: #66D9EF } /* Name.Constant */
+.codehilite .nd { color: #A6E22E } /* Name.Decorator */
+.codehilite .ni { color: #F8F8F2 } /* Name.Entity */
+.codehilite .ne { color: #A6E22E } /* Name.Exception */
+.codehilite .nf { color: #A6E22E } /* Name.Function */
+.codehilite .nl { color: #F8F8F2 } /* Name.Label */
+.codehilite .nn { color: #F8F8F2 } /* Name.Namespace */
+.codehilite .nx { color: #A6E22E } /* Name.Other */
+.codehilite .py { color: #F8F8F2 } /* Name.Property */
+.codehilite .nt { color: #FF4689 } /* Name.Tag */
+.codehilite .nv { color: #F8F8F2 } /* Name.Variable */
+.codehilite .ow { color: #FF4689 } /* Operator.Word */
+.codehilite .pm { color: #F8F8F2 } /* Punctuation.Marker */
+.codehilite .w { color: #F8F8F2 } /* Text.Whitespace */
+.codehilite .mb { color: #AE81FF } /* Literal.Number.Bin */
+.codehilite .mf { color: #AE81FF } /* Literal.Number.Float */
+.codehilite .mh { color: #AE81FF } /* Literal.Number.Hex */
+.codehilite .mi { color: #AE81FF } /* Literal.Number.Integer */
+.codehilite .mo { color: #AE81FF } /* Literal.Number.Oct */
+.codehilite .sa { color: #E6DB74 } /* Literal.String.Affix */
+.codehilite .sb { color: #E6DB74 } /* Literal.String.Backtick */
+.codehilite .sc { color: #E6DB74 } /* Literal.String.Char */
+.codehilite .dl { color: #E6DB74 } /* Literal.String.Delimiter */
+.codehilite .sd { color: #E6DB74 } /* Literal.String.Doc */
+.codehilite .s2 { color: #E6DB74 } /* Literal.String.Double */
+.codehilite .se { color: #AE81FF } /* Literal.String.Escape */
+.codehilite .sh { color: #E6DB74 } /* Literal.String.Heredoc */
+.codehilite .si { color: #E6DB74 } /* Literal.String.Interpol */
+.codehilite .sx { color: #E6DB74 } /* Literal.String.Other */
+.codehilite .sr { color: #E6DB74 } /* Literal.String.Regex */
+.codehilite .s1 { color: #E6DB74 } /* Literal.String.Single */
+.codehilite .ss { color: #E6DB74 } /* Literal.String.Symbol */
+.codehilite .bp { color: #A6E22E } /* Name.Builtin.Pseudo */
+.codehilite .fm { color: #A6E22E } /* Name.Function.Magic */
+.codehilite .vc { color: #F8F8F2 } /* Name.Variable.Class */
+.codehilite .vg { color: #F8F8F2 } /* Name.Variable.Global */
+.codehilite .vi { color: #F8F8F2 } /* Name.Variable.Instance */
+.codehilite .vm { color: #F8F8F2 } /* Name.Variable.Magic */
+.codehilite .il { color: #AE81FF } /* Literal.Number.Integer.Long */}
+
+@page{size:A4;margin:16mm 14mm}
+@media print{
+:root{--bg:#fff;--fg:#000;--mut:#333;--bd:#999;--code:#f3f3f3;--ac:#000;--qb:#f3f3f3}
+body{font-size:10.5pt;line-height:1.45}
+main{max-width:none;padding:0}
+nav.top{display:none}
+h1,h2,h3,h4{break-after:avoid}
+h2{break-before:auto}
+pre,.codehilite,table,blockquote,tr{break-inside:avoid}
+pre,.codehilite pre,code{white-space:pre-wrap;word-break:break-word;font-size:8.5pt}
+.codehilite{overflow:visible}
+table{display:table;font-size:9pt;width:100%}
+a{text-decoration:none}
+a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
+}
+</style></head>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-02-kontenery-w-azure-app-service-zroda-obrazu-runtime-ustawienia-aplikacji-diagnostyka">Moduł 02: Kontenery w Azure App Service (źródła obrazu, runtime, ustawienia aplikacji, diagnostyka)</h1>
+<p>Moduł Microsoft Learn: <strong>Deploy containers to Azure App Service</strong> - https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-app-service/
+Ścieżka: Implement container application hosting on Azure (moduł 2 z 3), kurs AI-200T00, egzamin <strong>AI-200</strong> (Azure AI Cloud Developer Associate), domena 1 "Develop containerized solutions on Azure".
+Cel: po tym module umiesz wdrożyć własny kontener z rejestru do Azure App Service, ustawić port, polecenie startowe, trwały magazyn i kontrolę stanu, przekazać konfigurację przez ustawienia aplikacji (w tym sekrety z Key Vault) oraz diagnozować problemy logami i konsolą Kudu.
+Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Shell (Bash) albo lokalnie z Azure CLI 2.x. Potrzebujesz subskrypcji <strong>płatnej</strong>: ćwiczenie buduje obraz przez ACR Tasks, a uruchomienia ACR Tasks są tymczasowo wstrzymane dla darmowych kredytów Azure. Koszt: rejestr ACR Basic i plan App Service B1 (płatne); szczegóły i sprzątanie w części E.</p>
+<p>Język kodu: egzamin AI-200 zakłada programowanie w <strong>Pythonie</strong>, więc kod aplikacji jest w Pythonie. W ćwiczeniu I1 dodano blok <strong>Odpowiednik C# (.NET)</strong> z opisem różnic (m.in. inny domyślny port). Polecenia <code>az</code>, Dockerfile i teoria są wspólne dla obu języków.</p>
+<p>Znaczniki źródeł (linia <code>_Źródło: ..._</code> pod nagłówkiem):
+- <code>[unit N]</code> - jednostka (unit) modułu Microsoft Learn; N to prefiks pliku w <code>sources/deploy-containers-azure-app-service/</code> (<code>6-lab</code> = README laboratorium, <code>6-starter</code> = pliki startowe laboratorium).
+- <code>[moduł kursu: &lt;slug&gt;]</code> - inny moduł tego samego kursu.
+- <code>[docs: URL]</code> - oficjalna dokumentacja produktu.
+- <code>[autor]</code> - dodane przez autora tutoriala; <code>[autor: test &lt;data&gt;]</code> - sprawdzone testem w danym dniu; <code>[autor: niezweryfikowane]</code> - jeszcze nie sprawdzone w Azure.</p>
+<p>W tekście "moduł N" znaczy plik tutoriala <code>0N-*.md</code> (moduł 01 = <code>01-store-manage-containers-azure-container-registry.md</code>).</p>
+<hr />
+<h1 id="czesc-a-wdrazanie-kontenera-do-app-service">CZĘŚĆ A - WDRAŻANIE KONTENERA DO APP SERVICE</h1>
+<h2 id="a1-czym-jest-app-service-dla-kontenerow-i-po-co">A1. Czym jest App Service dla kontenerów i po co</h2>
+<p><em>Źródło: [unit 1] + [unit 2]</em></p>
+<p><strong>Azure App Service</strong> to w pełni zarządzana platforma do hostowania aplikacji webowych. Możesz na niej uruchamiać <strong>własny kontener</strong> (Web App for Containers): przynosisz obraz z rejestru, a platforma zajmuje się przydzielaniem maszyn, równoważeniem obciążenia (load balancing) i skalowaniem. Dostajesz też sloty wdrożeń (deployment slots = osobne środowiska tej samej aplikacji, np. staging) i zintegrowaną diagnostykę. App Service uruchamia kontenery <strong>Linux</strong> (ten moduł dotyczy Linuksa).</p>
+<p>Scenariusz z modułu: serwis przetwarzania dokumentów (przyjmuje dokumenty, wyciąga tekst i metadane, zwraca ustrukturyzowany wynik) w kontenerze. Wymagania: inna konfiguracja w każdym środowisku (dev: lokalny magazyn i szczegółowe logi; produkcja: konto Azure Storage i klucze API) <strong>bez przebudowy obrazu</strong>; widoczność działania (czy błąd to start kontenera, zła zmienna środowiskowa czy błąd aplikacji); automatyczne skalowanie przy zmiennym obciążeniu i krótki zimny start (cold start = start po bezczynności lub nowej instancji). [unit 1]</p>
+<p>Cele modułu: wdrażać własne kontenery z rejestrów; konfigurować zachowanie runtime (polecenie startowe, port, trwały magazyn); konfigurować ustawienia aplikacji i connection strings; obserwować i diagnozować kontenery narzędziami diagnostycznymi App Service. [unit 1]</p>
+<h2 id="a2-zroda-obrazu">A2. Źródła obrazu</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Przy tworzeniu Web App for Containers wybierasz skąd App Service pobierze obraz (portal oferuje dwie opcje):</p>
+<table>
+<thead>
+<tr>
+<th>Źródło</th>
+<th>Kiedy</th>
+<th>Szczegóły</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Azure Container Registry (ACR)</strong></td>
+<td>zalecane dla produkcji</td>
+<td>uwierzytelnianie przez Microsoft Entra ID, tożsamość zarządzana, geo-replikacja, skanowanie obrazów, dostęp prywatny; wybierasz rejestr, metodę uwierzytelniania, obraz i tag</td>
+</tr>
+<tr>
+<td><strong>Inne rejestry</strong></td>
+<td>Docker Hub, GitHub Container Registry, rejestry własne</td>
+<td>dowolny rejestr dostępny przez HTTPS zgodny ze specyfikacją Docker Registry HTTP API V2; dla obrazów prywatnych podajesz adres serwera, użytkownika i hasło; dla publicznych tylko nazwę obrazu</td>
+</tr>
+</tbody>
+</table>
+<h2 id="a3-wdrozenie-przez-portal-azure">A3. Wdrożenie przez portal Azure</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>Utworzenie aplikacji:</p>
+<ol>
+<li>W portalu: <strong>Create a resource</strong> -&gt; wyszukaj <strong>Web App</strong> -&gt; <strong>Create</strong> -&gt; <strong>Web App</strong>.</li>
+<li>Karta <strong>Basics</strong>: subskrypcja, grupa zasobów, nazwa aplikacji, region.</li>
+<li><strong>Publish</strong>: <strong>Container</strong>; <strong>Operating System</strong>: <strong>Linux</strong>.</li>
+<li>Wybierz plan App Service (App Service plan = zestaw maszyn i rozmiar, na których działa aplikacja) albo utwórz nowy.</li>
+<li>Karta <strong>Container</strong>: konfiguracja źródła obrazu.</li>
+</ol>
+<p>Dla ACR: <strong>Image Source</strong> = <strong>Azure Container Registry</strong>; wybierz <strong>Registry</strong> (rejestry z tej subskrypcji pojawiają się same); wybierz <strong>Authentication</strong> (<strong>Managed Identity</strong> albo <strong>Admin credentials</strong>); wybierz <strong>Image</strong> i <strong>Tag</strong>. Dla innych rejestrów: <strong>Image Source</strong> = <strong>Other container registries</strong>; dla prywatnych podaj <strong>Server URL</strong> (np. <code>https://index.docker.io/v1/</code> dla Docker Hub), <strong>Username</strong>, <strong>Password</strong>; podaj <strong>Full Image Name and Tag</strong> (np. <code>nginx:latest</code>, <code>myuser/myapp:v1</code>).</p>
+<h2 id="a4-uwierzytelnianie-do-acr-tozsamosc-zarzadzana-albo-dane-administratora">A4. Uwierzytelnianie do ACR: tożsamość zarządzana albo dane administratora</h2>
+<p><em>Źródło: [unit 2] + [unit 6-lab] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container]</em></p>
+<ul>
+<li><strong>Tożsamość zarządzana (managed identity)</strong> - zalecana na produkcji. App Service uwierzytelnia się w ACR tożsamością Azure, a nie zapisanym hasłem: nie ma rotacji haseł i jest lepszy audyt. Tożsamość musi mieć w rejestrze rolę <strong>AcrPull</strong> (pobieranie obrazów; to zasada najmniejszych uprawnień: aplikacja może pobierać, ale nie wypychać ani administrować). Dwa rodzaje:</li>
+<li><strong>system-assigned</strong> - związana z cyklem życia aplikacji (tworzona po włączeniu, usuwana z aplikacją); prostsza, gdy tylko ta aplikacja jej potrzebuje;</li>
+<li><strong>user-assigned</strong> - osobny zasób Azure, który przypisujesz do jednej lub wielu aplikacji; wygodna, gdy wiele aplikacji ma ten sam dostęp lub chcesz nadać uprawnienia przed utworzeniem aplikacji.</li>
+<li><strong>Dane administratora (admin credentials)</strong> - nazwa i hasło przechowywane w ACR. Prostsze w development (bez przypisywania ról), ale hasło trafia do konfiguracji App Service i trzeba je ręcznie rotować, gdy wycieknie. Wymaga włączenia konta admin w rejestrze:</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>az acr update --name myregistry --admin-enabled true
+</code></pre></div>
+
+<p>Przypisanie roli po stronie CLI (z laboratorium Microsoftu): <code>az webapp identity assign</code>, potem <code>az role assignment create --assignee &lt;principalId&gt; --scope &lt;ID rejestru&gt; --role AcrPull</code> i <code>az webapp config set --acr-use-identity true --acr-identity [system]</code>. Propagacja roli trwa minutę lub dwie. Laboratorium tworzy rejestr z wyłączonym kontem admin, żeby aplikacja nie polegała na wspólnych poświadczeniach. [unit 6-lab] Podczas ustawiania kontenera może pojawić się komunikat o braku poświadczeń do ACR; przy tożsamości zarządzanej można go zignorować (nie włączaj konta admin). [unit 6-lab]</p>
+<h2 id="a5-wdrozenie-z-cli-z-innych-rejestrow-i-z-vs-code">A5. Wdrożenie z CLI, z innych rejestrów i z VS Code</h2>
+<p><em>Źródło: [unit 2]</em></p>
+<p>CLI daje powtarzalny przepływ do skryptu lub CI. Zakłada, że obraz jest już w ACR, a App Service ma uprawnienie do jego pobrania (zwykle tożsamość zarządzana z rolą AcrPull). Podaj pełny adres obrazu <strong>z tagiem</strong>, żeby wdrożenie było deterministyczne (patrz moduł 01, C1 i C4).</p>
+<div class="codehilite"><pre><span></span><code>az webapp create \
+    --resource-group myResourceGroup \
+    --plan myAppServicePlan \
+    --name myDocumentProcessor \
+    --container-image-name myregistry.azurecr.io/docprocessor:v1
+</code></pre></div>
+
+<p>Inne rejestry:</p>
+<div class="codehilite"><pre><span></span><code># publiczny obraz z Docker Hub
+az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name myWebApp \
+    --container-image-name nginx --docker-registry-server-url https://index.docker.io/v1/
+
+# prywatny obraz
+az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name myWebApp \
+    --container-image-name myusername/myapp:latest \
+    --docker-registry-server-url https://index.docker.io/v1/ \
+    --docker-registry-server-user myusername \
+    --docker-registry-server-password &lt;password&gt;
+</code></pre></div>
+
+<p>Dla GitHub Container Registry użyj adresu serwera <code>https://ghcr.io</code>. <strong>VS Code</strong> z rozszerzeniami Docker i Azure App Service: zbuduj obraz lokalnie, wypchnij go do rejestru, w widoku REGISTRIES kliknij tag prawym przyciskiem -&gt; <strong>Deploy Image to Azure App Service</strong> i przejdź kreator. Na produkcji sprawdź osobno uwierzytelnianie i role, żeby aplikacja mogła pobierać obraz.</p>
+<h2 id="a6-aktualizacja-obrazu-ciage-wdrazanie-pobieranie-warstw-i-weryfikacja">A6. Aktualizacja obrazu, ciągłe wdrażanie, pobieranie warstw i weryfikacja</h2>
+<p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container]</em></p>
+<p>Nowa wersja = nowy tag. Zmień skonfigurowany tag, a App Service sam zrestartuje aplikację i pobierze obraz na każdej instancji:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config container set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --container-image-name myregistry.azurecr.io/docprocessor:v2
+</code></pre></div>
+
+<p>Jeśli wypchniesz nowy obraz pod <strong>ten sam tag</strong> (np. <code>latest</code>), App Service tego <strong>nie wykryje</strong>. Przy każdym restarcie robi <code>docker pull</code> i pobiera tylko zmienione warstwy; żeby przejąć nowy obraz, zrestartuj aplikację ręcznie lub włącz <strong>ciągłe wdrażanie (continuous deployment)</strong>, w którym webhook restartuje aplikację:</p>
+<div class="codehilite"><pre><span></span><code>az webapp deployment container config \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --enable-cd true
+</code></pre></div>
+
+<p>Polecenie zwraca adres <strong>webhooka</strong>; w ACR utwórz webhook wywoływany przy zdarzeniu push (egzamin je lubi).</p>
+<p>Kiedy App Service pobiera obraz:</p>
+<ul>
+<li><strong>pierwsze wdrożenie</strong> lub zmiana odwołania do obrazu: wszystkie warstwy,</li>
+<li><strong>restart</strong>: tylko zmienione warstwy (niezmienione warstwy z cache),</li>
+<li><strong>skalowanie w poziomie (scale out)</strong>: każda nowa instancja pobiera obraz, czasem całość,</li>
+<li><strong>zmiana poziomu cenowego</strong>: może przydzielić nową infrastrukturę, która pobiera obraz od zera, co wydłuża start. [docs: custom-container] zaznacza, że instancje mogą też zmienić się rzadko bez operacji skalowania.</li>
+</ul>
+<p>Weryfikacja:</p>
+<div class="codehilite"><pre><span></span><code>az webapp show \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --query defaultHostName \
+    --output tsv
+</code></pre></div>
+
+<p>Otwórz adres w przeglądarce lub wywołaj <code>curl</code>; gdy kontener się nie uruchamia, użyj narzędzi z części D.</p>
+<hr />
+<h1 id="czesc-b-zachowanie-kontenera-w-runtime">CZĘŚĆ B - ZACHOWANIE KONTENERA W RUNTIME</h1>
+<h2 id="b1-polecenie-startowe">B1. Polecenie startowe</h2>
+<p><em>Źródło: [unit 3]</em></p>
+<p>App Service uruchamia kontener według <code>ENTRYPOINT</code> i <code>CMD</code> z Dockerfile. <strong>Polecenie startowe (startup command)</strong> nadpisuje te domyślne wartości, gdy chcesz przekazać argumenty zależne od środowiska, uruchomić skrypt inicjalizujący (np. migracje bazy), wystartować wiele procesów albo zmienić domyślną konfigurację frameworka.</p>
+<div class="codehilite"><pre><span></span><code>az webapp config set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --startup-file "gunicorn --bind=0.0.0.0:8000 --workers=4 app:application"
+</code></pre></div>
+
+<p>Polecenie startowe zastępuje instrukcję <code>CMD</code>; <code>ENTRYPOINT</code> zostaje, chyba że zmienisz konfigurację kontenera bezpośrednio. Gdy potrzebna jest powłoka, poprzedź polecenie powłoką:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --startup-file "/bin/bash -c 'python migrate.py &amp;&amp; gunicorn app:application'"
+</code></pre></div>
+
+<p>Objaśnienie: <code>gunicorn</code> to produkcyjny serwer WSGI dla Pythona (WSGI = standard łączący serwer z aplikacją, np. Flask); <code>&amp;&amp;</code> uruchamia drugie polecenie dopiero po sukcesie pierwszego.</p>
+<h2 id="b2-port-kontenera-websites_port">B2. Port kontenera (<code>WEBSITES_PORT</code>)</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container] + [docs: https://learn.microsoft.com/en-us/dotnet/core/compatibility/containers/8.0/aspnet-port]</em></p>
+<p>App Service musi wiedzieć, na którym porcie <strong>wewnątrz kontenera</strong> są przyjmowane żądania HTTP. Według dokumentacji domyślnie zakłada port <strong>80</strong>. Jeśli kontener nasłuchuje na innym porcie, ustaw <strong>ustawienie aplikacji</strong> (app setting) <code>WEBSITES_PORT</code>:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --settings WEBSITES_PORT=8000
+</code></pre></div>
+
+<p>Platforma kończy TLS (TLS = szyfrowanie HTTPS) przed kontenerem, więc kontener dostaje zwykły HTTP także przy połączeniu HTTPS. App Service obsługuje <strong>tylko jeden port</strong> dla HTTP do kontenera niestandardowego. Pułapka w nazwach (egzamin je lubi): to ustawienie nazywa się <code>WEBSITES_PORT</code> (liczba mnoga), a nie <code>WEBSITE_PORT</code>.</p>
+<p>Typowe porty domyślne frameworków (z modułu):</p>
+<table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Port domyślny</th>
+<th>Ustawienie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Node.js (Express)</td>
+<td>3000</td>
+<td><code>WEBSITES_PORT=3000</code></td>
+</tr>
+<tr>
+<td>Python (Gunicorn)</td>
+<td>8000</td>
+<td><code>WEBSITES_PORT=8000</code></td>
+</tr>
+<tr>
+<td>Java (Spring Boot)</td>
+<td>8080</td>
+<td><code>WEBSITES_PORT=8080</code></td>
+</tr>
+<tr>
+<td>ASP.NET Core</td>
+<td>80</td>
+<td>brak zmian (wg modułu)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 3): tabela podaje dla ASP.NET Core port domyślny 80 i "brak zmian" -&gt; od .NET 8 oficjalne obrazy kontenerów ASP.NET Core nasłuchują domyślnie na porcie <strong>8080</strong>, a App Service domyślnie zakłada port 80, więc taka aplikacja wymaga <code>WEBSITES_PORT=8080</code> (albo ustawienia portu aplikacji na 80 przez <code>ASPNETCORE_HTTP_PORTS=80</code>). Źródło: https://learn.microsoft.com/en-us/dotnet/core/compatibility/containers/8.0/aspnet-port oraz https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container.</p>
+<p>Uwaga o dokumentacji: moduł (unit 3) pisze, że App Service sam kieruje ruch, gdy kontener nasłuchuje na 80 lub 8080. Strona o kontenerach niestandardowych [docs: custom-container] mówi o domyślnym porcie 80 (wzmianka o 80 i 8080 dotyczy w niej opcji Docker Compose). Na egzaminie i w praktyce ustawiaj <code>WEBSITES_PORT</code> jawnie, gdy port jest inny niż 80.</p>
+</blockquote>
+<h2 id="b3-trway-magazyn-websites_enable_app_service_storage">B3. Trwały magazyn (<code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code>)</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container]</em></p>
+<p>Domyślnie zapisy do systemu plików kontenera są <strong>ulotne (ephemeral)</strong>: giną po restarcie lub przeniesieniu aplikacji na inną infrastrukturę. App Service może zamontować <strong>trwały magazyn</strong> w katalogu <code>/home</code>. Dla niestandardowych kontenerów <strong>Linux</strong> jest on <strong>domyślnie wyłączony</strong>; włączasz go ustawieniem:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --settings WEBSITES_ENABLE_APP_SERVICE_STORAGE=true
+</code></pre></div>
+
+<p>Po włączeniu: <code>/home</code> przetrwa restarty; wszystkie instancje skalowanej aplikacji współdzielą zawartość <code>/home</code>; w <code>/home/LogFiles</code> są logi kontenera i aplikacji. Zapisuj trwałe dane w <code>/home</code> lub podkatalogu (np. <code>/home/output/</code>). Pojemność zależy od planu App Service, a limit jest wspólny dla wszystkich aplikacji w planie; dla dużych wolumenów lub wysokiego I/O użyj zamontowanego Azure Storage. (Na Windows niestandardowe kontenery mają ten magazyn domyślnie włączony. [docs: custom-container])</p>
+<h2 id="b4-always-on">B4. Always On</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-common]</em></p>
+<p>Aplikacja bez ruchu jest po ok. 20 minutach wyładowywana; następne żądanie powoduje <strong>zimny start</strong> (od kilku sekund do minut, zależnie od rozmiaru obrazu i inicjalizacji). <strong>Always On</strong> utrzymuje aplikację załadowaną:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --always-on true
+</code></pre></div>
+
+<p>Front-end wysyła wtedy żądanie <code>GET</code> do katalogu głównego aplikacji co pięć minut. [docs: configure-common] Wymaga poziomu cenowego <strong>Basic lub wyższego</strong> (egzamin je lubi). Zalecane dla: produkcji z wymogiem czasu odpowiedzi, długiego startu, dużych obrazów i usług z procesami w tle.</p>
+<h2 id="b5-kontrola-stanu-health-check">B5. Kontrola stanu (health check)</h2>
+<p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/app-service/monitor-instances-health-check]</em></p>
+<p><strong>Health check</strong> wysyła żądania HTTP na wskazaną ścieżkę i restartuje (zastępuje) niezdrowe instancje:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --generic-configurations '{"healthCheckPath": "/health"}'
+</code></pre></div>
+
+<p>Aplikacja powinna mieć endpoint zwracający HTTP 200 przy zdrowiu, który może sprawdzać dostępność bazy, usług czy zasobów:</p>
+<div class="codehilite"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/health'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'healthy'</span><span class="p">},</span> <span class="mi">200</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s1">'/health'</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health_check</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">'SELECT 1'</span><span class="p">)</span>          <span class="c1"># (1) sprawdź bazę</span>
+        <span class="n">storage</span><span class="o">.</span><span class="n">list_containers</span><span class="p">()</span>       <span class="c1"># (2) sprawdź magazyn</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'healthy'</span><span class="p">},</span> <span class="mi">200</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">'status'</span><span class="p">:</span> <span class="s1">'unhealthy'</span><span class="p">,</span> <span class="s1">'error'</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)},</span> <span class="mi">503</span>   <span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1)-(2) sprawdzają zależności; (3) kod 5xx oznacza niezdrowy. Z dokumentacji [docs: health-check] (egzamin je lubi): ścieżka nie ma wartości domyślnej; ping co <strong>1 minutę</strong> na wszystkich instancjach; zdrowa odpowiedź to kod <strong>200-299</strong>; instancja jest uznana za niezdrową po <strong>10</strong> nieudanych żądaniach (wartość domyślna, konfigurowalna ustawieniem <code>WEBSITE_HEALTHCHECK_MAXPINGFAILURES</code> od 2 do 10) i usuwana z load balancera; ping jest nadal wysyłany i instancja wraca, gdy znów odpowie poprawnie; domyślnie nie więcej niż połowa instancji (<code>WEBSITE_HEALTHCHECK_MAXUNHEALTHYWORKERPERCENT</code>, domyślnie 50) jest wyłączana naraz; przy jednej instancji load balancer jej nie usuwa, ale po godzinie ciągłych niepowodzeń instancja jest zastępowana; do pełnego efektu potrzeba co najmniej dwóch instancji. Zmiana konfiguracji health check <strong>restartuje aplikację</strong>, więc na produkcji rób to ostrożnie. [unit 3]</p>
+<hr />
+<h1 id="czesc-c-ustawienia-aplikacji-i-sekrety">CZĘŚĆ C - USTAWIENIA APLIKACJI I SEKRETY</h1>
+<h2 id="c1-ustawienia-aplikacji-app-settings">C1. Ustawienia aplikacji (app settings)</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-common]</em></p>
+<p><strong>App settings</strong> to pary nazwa-wartość, które App Service wstrzykuje do kontenera jako <strong>zmienne środowiskowe</strong> przy starcie. Dzięki temu ten sam obraz działa w różnych środowiskach z różną konfiguracją, bez przebudowy.</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --settings \
+        STORAGE_ACCOUNT_NAME=mystorageaccount \
+        LOG_LEVEL=INFO \
+        MAX_DOCUMENT_SIZE_MB=50
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="n">storage_account</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'STORAGE_ACCOUNT_NAME'</span><span class="p">)</span>                <span class="c1"># (1)</span>
+<span class="n">log_level</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'LOG_LEVEL'</span><span class="p">,</span> <span class="s1">'WARNING'</span><span class="p">)</span>                      <span class="c1"># (2)</span>
+<span class="n">max_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'MAX_DOCUMENT_SIZE_MB'</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>              <span class="c1"># (3)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) odczyt zmiennej; (2) wartość domyślna, gdy brak; (3) wartości są tekstem, więc liczby trzeba rzutować. <strong>Wszystkie</strong> ustawienia są szyfrowane w spoczynku (encrypted at rest), niezależnie od tego, czy zawierają sekrety. Dla Linuksa zagnieżdżone klucze .NET z dwukropkiem zapisuj z podwójnym podkreśleniem: <code>ConnectionStrings:DefaultConnection</code> -&gt; <code>ConnectionStrings__DefaultConnection</code> (dokumentacja dodaje: kropkę w nazwie zamień na pojedyncze podkreślenie). [docs: configure-common]</p>
+<blockquote>
+<p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 4): "App setting names can contain only letters, numbers, and underscores" -&gt; nazwy mogą zawierać litery, cyfry, <strong>kropki (.)</strong> i podkreślenia (_). Źródło: https://learn.microsoft.com/en-us/azure/app-service/configure-common.</p>
+</blockquote>
+<h2 id="c2-connection-strings">C2. Connection strings</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p><strong>Connection strings</strong> to wyspecjalizowane ustawienia dla połączeń z bazami; App Service dodaje do nazwy zmiennej <strong>prefiks typu</strong>:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config connection-string set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --connection-string-type SQLAzure \
+    --settings DefaultConnection="Server=myserver.database.windows.net;Database=mydb;..."
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Typ</th>
+<th>Prefiks zmiennej środowiskowej</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SQL Server</td>
+<td><code>SQLCONNSTR_</code></td>
+</tr>
+<tr>
+<td>SQL Azure</td>
+<td><code>SQLAZURECONNSTR_</code></td>
+</tr>
+<tr>
+<td>MySQL</td>
+<td><code>MYSQLCONNSTR_</code></td>
+</tr>
+<tr>
+<td>PostgreSQL</td>
+<td><code>POSTGRESQLCONNSTR_</code></td>
+</tr>
+<tr>
+<td>Custom</td>
+<td><code>CUSTOMCONNSTR_</code></td>
+</tr>
+</tbody>
+</table>
+<p>Dla przykładu powyżej zmienna to <code>SQLAZURECONNSTR_DefaultConnection</code>. W aplikacjach spoza .NET (Python, Node.js) prostsze są zwykłe app settings: prefiks tylko komplikuje, a nie daje korzyści frameworkom, które go nie oczekują. Connection strings są też szyfrowane w spoczynku. [docs: configure-common]</p>
+<h2 id="c3-edycja-zbiorcza">C3. Edycja zbiorcza</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Wyeksportuj ustawienia do JSON, edytuj i zaimportuj:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings list \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --output json &gt; settings.json
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"STORAGE_ACCOUNT_NAME"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"mystorageaccount"</span><span class="p">,</span><span class="w"> </span><span class="nt">"slotSetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"LOG_LEVEL"</span><span class="p">,</span><span class="w"> </span><span class="nt">"value"</span><span class="p">:</span><span class="w"> </span><span class="s2">"INFO"</span><span class="p">,</span><span class="w"> </span><span class="nt">"slotSetting"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}</span>
+<span class="p">]</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --settings @settings.json
+</code></pre></div>
+
+<p>Prefiks <code>@</code> oznacza odczyt z pliku. W portalu opcja <strong>Environment variables</strong> ma tryb <strong>Advanced edit</strong> z widokiem JSON.</p>
+<h2 id="c4-ustawienia-slotow-slot-settings">C4. Ustawienia slotów (slot settings)</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p><strong>Sloty wdrożeń</strong> pozwalają uruchomić różne wersje aplikacji obok siebie w tym samym planie. Każdy slot ma własną nazwę hosta i konfigurację, ale współdzieli zasoby obliczeniowe planu. Możesz <strong>zamienić (swap)</strong> sloty, żeby awansować staging na produkcję. Ustawienia oznaczone jako <strong>slot settings</strong> zostają przy slocie podczas swap (egzamin je lubi):</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --slot staging \
+    --slot-settings \
+        ENVIRONMENT=staging \
+        API_ENDPOINT=https://api-staging.example.com
+</code></pre></div>
+
+<p>Zastosowania: identyfikatory środowiska (<code>ENVIRONMENT=production</code> nie ma przejść na staging), adresy zależne od środowiska (API, bazy), flagi funkcji dostępne tylko w jednym środowisku, ustawienia diagnostyczne (szczegółowe logi w staging). Lista ustawień slotowych:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings list \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --query "[?slotSetting==\`true\`].name"
+</code></pre></div>
+
+<h2 id="c5-odwoania-do-key-vault">C5. Odwołania do Key Vault</h2>
+<p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/app-service/app-service-key-vault-references]</em></p>
+<p>Sekrety wymagające centralnego zarządzania, audytu lub automatycznej rotacji trzymaj w <strong>Azure Key Vault</strong> (magazyn sekretów). App Service pozwala w ustawieniu aplikacji wpisać <strong>odwołanie do Key Vault</strong>; aplikacja czyta zwykłą zmienną środowiskową i nie wie, że wartość pochodzi z Key Vault:</p>
+<div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --settings \
+        API_KEY="@Microsoft.KeyVault(SecretUri=https://myvault.vault.azure.net/secrets/api-key)"
+</code></pre></div>
+
+<p>Wymagania: <strong>tożsamość zarządzana</strong> włączona na aplikacji, nadanie jej dostępu do odczytu sekretów w Key Vault i składnia odwołania w wartości ustawienia. Bez wskazania wersji odwołanie rozwiązuje się do <strong>najnowszej wersji</strong> sekretu. Po rotacji sekretu App Service odświeża wartość w ciągu <strong>24 godzin</strong> (buforuje wartości i pobiera je ponownie co 24 h); każda zmiana konfiguracji aplikacji powoduje restart i natychmiastowe ponowne pobranie sekretów. Wymuszenie rozwiązania odwołań: uwierzytelnione żądanie POST do endpointu <code>.../config/configreferences/appsettings/refresh</code>. [docs: key-vault-references] Szczegóły Key Vault: moduł <code>manage-app-secrets-key-vault</code> (https://learn.microsoft.com/en-us/training/modules/manage-app-secrets-key-vault/).</p>
+<h2 id="c6-weryfikacja-konfiguracji">C6. Weryfikacja konfiguracji</h2>
+<p><em>Źródło: [unit 4]</em></p>
+<p>Strona <strong>SCM (Kudu)</strong> pod <code>https://&lt;nazwa-aplikacji&gt;.scm.azurewebsites.net</code> -&gt; <strong>Environment</strong> (lub bezpośrednio <code>.../Env</code>) pokazuje zmienne środowiskowe zastosowane do aplikacji: Twoje ustawienia i zmienne systemowe. Możesz też dodać endpoint diagnostyczny, który zwraca <strong>niewrażliwe</strong> wartości konfiguracji, albo sprawdzić logi startowe aplikacji.</p>
+<hr />
+<h1 id="czesc-d-obserwowanie-i-diagnozowanie-kontenera">CZĘŚĆ D - OBSERWOWANIE I DIAGNOZOWANIE KONTENERA</h1>
+<h2 id="d1-logi-kontenera">D1. Logi kontenera</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs]</em></p>
+<p>App Service przechwytuje wyjście <strong>stdout</strong> i <strong>stderr</strong> kontenera. Włącz zapisywanie logów:</p>
+<div class="codehilite"><pre><span></span><code>az webapp log config \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor \
+    --docker-container-logging filesystem
+</code></pre></div>
+
+<p>Opcja <code>filesystem</code> zapisuje logi w systemie plików App Service (<code>/home/LogFiles/</code>). Logi obejmują: wyjście aplikacji (stdout), błędy (stderr), logi frameworka (start serwera WWW, żądania) i komunikaty platformy o cyklu życia kontenera. Aplikacja ma pisać sensowne logi na stdout; większość bibliotek logowania ma wyjście konsolowe.</p>
+<h2 id="d2-strumien-logow-log-stream">D2. Strumień logów (log stream)</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs]</em></p>
+<p>Log stream pokazuje wyjście kontenera na żywo; przydaje się do diagnozy startu i obserwacji ruchu.</p>
+<div class="codehilite"><pre><span></span><code>az webapp log tail \
+    --resource-group myResourceGroup \
+    --name myDocumentProcessor
+</code></pre></div>
+
+<p>Zakończ przez Ctrl+C. W portalu: aplikacja -&gt; <strong>Monitoring</strong> -&gt; <strong>Log stream</strong>. Strumień pokazuje wyjście ze wszystkich instancji, a wiersz ma identyfikator instancji do korelacji.</p>
+<h2 id="d3-konsola-diagnostyczna-kudu-scm">D3. Konsola diagnostyczna Kudu (SCM)</h2>
+<p><em>Źródło: [unit 5] + [unit 6-lab]</em></p>
+<p><strong>Kudu</strong> (strona SCM: <code>https://&lt;nazwa-aplikacji&gt;.scm.azurewebsites.net</code>) to zaawansowana konsola diagnostyczna działająca jako osobna witryna; wymaga uwierzytelnienia poświadczeniami, które mogą zarządzać aplikacją. Przydatne funkcje:</p>
+<ul>
+<li><strong>Environment</strong> - wszystkie zmienne środowiskowe kontenera (sprawdzisz, czy ustawienia zadziałały; widać też zmienne systemowe),</li>
+<li><strong>przeglądarka plików / konsola Debug</strong> - pliki w zamontowanych ścieżkach, np. <code>/home</code> i <code>/home/LogFiles/</code>,</li>
+<li><strong>diagnostic dump</strong> - archiwum ZIP z logami, konfiguracją i danymi diagnostycznymi (do analizy offline lub dla wsparcia),</li>
+<li><strong>ograniczenie:</strong> SCM nie jest tym samym środowiskiem co kontener aplikacji, więc nie pokaże całego systemu plików ani procesów wewnątrz kontenera; do tego służy SSH.</li>
+</ul>
+<h2 id="d4-diagnostyka-platformowa-i-log-analytics">D4. Diagnostyka platformowa i Log Analytics</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p>Do długoterminowego przechowywania i analizy wyślij logi przez <strong>ustawienia diagnostyczne (diagnostic settings)</strong> do Azure Monitor (Log Analytics), Event Hubs lub konta magazynu:</p>
+<div class="codehilite"><pre><span></span><code>resourceId=$(az webapp show -g myResourceGroup -n myDocumentProcessor --query id -o tsv)
+workspaceId=$(az monitor log-analytics workspace show -g myResourceGroup -n myLogAnalyticsWorkspace --query id -o tsv)
+
+az monitor diagnostic-settings create \
+    --resource "$resourceId" \
+    --name myDiagnosticSettings \
+    --workspace "$workspaceId" \
+    --logs '[{"category":"AppServiceConsoleLogs","enabled":true},{"category":"AppServiceHTTPLogs","enabled":true}]'
+</code></pre></div>
+
+<table>
+<thead>
+<tr>
+<th>Kategoria</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AppServiceConsoleLogs</code></td>
+<td>stdout i stderr kontenera</td>
+</tr>
+<tr>
+<td><code>AppServiceHTTPLogs</code></td>
+<td>informacje o żądaniach i odpowiedziach HTTP</td>
+</tr>
+<tr>
+<td><code>AppServicePlatformLogs</code></td>
+<td>zdarzenia cyklu życia kontenera i komunikaty platformy</td>
+</tr>
+<tr>
+<td><code>AppServiceAppLogs</code></td>
+<td>logi na poziomie aplikacji (po konfiguracji)</td>
+</tr>
+</tbody>
+</table>
+<p>Zapytanie KQL (Kusto Query Language = język zapytań Log Analytics) o błędy z ostatniej godziny:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">AppServiceConsoleLogs</span>
+<span class="p">|</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">Level</span><span class="w"> </span><span class="p">==</span><span class="w"> </span><span class="s">"Error"</span>
+<span class="p">|</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">TimeGenerated</span><span class="w"> </span><span class="p">&gt;</span><span class="w"> </span><span class="n">ago</span><span class="p">(</span><span class="mi">1</span><span class="n">h</span><span class="p">)</span>
+<span class="p">|</span><span class="w"> </span><span class="k">project</span><span class="w"> </span><span class="n">TimeGenerated</span><span class="p">,</span><span class="w"> </span><span class="n">ResultDescription</span>
+<span class="p">|</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">TimeGenerated</span><span class="w"> </span><span class="n">desc</span>
+</code></pre></div>
+
+<p>Alerty i dashboardy budujesz na takich zapytaniach (KQL: moduł <code>analyze-telemetry-logs-metrics</code>).</p>
+<h2 id="d5-dostep-ssh-do-kontenera">D5. Dostęp SSH do kontenera</h2>
+<p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-linux-open-ssh-session]</em></p>
+<p>Do interaktywnej diagnozy możesz połączyć się z działającym kontenerem przez SSH. Moduł podaje klasyczną konfigurację: obraz zawiera serwer OpenSSH (<code>openssh-server</code>), nasłuchuje na porcie <strong>2222</strong>, hasło użytkownika root to <strong><code>Docker!</code></strong> (wymagane przez App Service) i demon SSH startuje razem z aplikacją.</p>
+<div class="codehilite"><pre><span></span><code><span class="k">RUN</span><span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>openssh-server<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="s2">"root:Docker!"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>chpasswd
+
+<span class="k">COPY</span><span class="w"> </span>sshd_config<span class="w"> </span>/etc/ssh/
+
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">8000 2222</span>
+
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"/bin/bash"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-c"</span><span class="p">,</span><span class="w"> </span><span class="s2">"service ssh start &amp;&amp; gunicorn app:application"</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Dostęp w portalu: aplikacja -&gt; <strong>Development Tools</strong> -&gt; <strong>SSH</strong>.</p>
+<blockquote>
+<p>Uwaga o dokumentacji: nowsze opcje (terminal w przeglądarce i <code>az webapp exec</code>, podgląd) łączą się przez Kudu jako uwierzytelniony proxy i <strong>nie wymagają</strong> serwera SSH w obrazie; klasyczne Kudu WebSSH i <code>az webapp ssh</code> mogą go nadal wymagać. Do terminala w przeglądarce potrzebny jest <code>/bin/bash</code> w obrazie; obrazy bez powłoki (distroless) nie otworzą sesji interaktywnej. [docs: custom-container] Przy SSH w obrazach niestandardowych <code>env</code> może pokazać tylko część zmiennych; do pełnej listy użyj widoku SCM <code>/Env</code>.</p>
+</blockquote>
+<h2 id="d6-typowe-problemy-i-rozwiazania">D6. Typowe problemy i rozwiązania</h2>
+<p><em>Źródło: [unit 5]</em></p>
+<p><strong>Kontener się nie uruchamia.</strong> Objawy: adres zwraca błąd, logi pokazują błędy startu. Diagnoza: logi (log stream); czy obraz istnieje w rejestrze i poświadczenia są poprawne; czy kontener działa lokalnie z tą konfiguracją. Przyczyny: brak wymaganych zmiennych środowiskowych; niezgodność <code>WEBSITES_PORT</code> z portem, na którym nasłuchuje kontener; awaria aplikacji przy inicjalizacji (brak zależności).</p>
+<p><strong>404 po wdrożeniu.</strong> Kontener wygląda na uruchomiony, ale żądania zwracają 404. Diagnoza: <code>WEBSITES_PORT</code> zgodny z portem aplikacji; aplikacja nasłuchuje na <code>0.0.0.0</code>, a nie <code>localhost</code>; aplikacja obsługuje ścieżkę główną lub oczekiwane trasy. Przyczyny: nasłuch tylko na localhost, zły port, brak tras.</p>
+<p><strong>Brakujące zmienne środowiskowe.</strong> Aplikacja loguje brak konfiguracji. Diagnoza: ustawienia zapisane w portalu lub CLI; zmienne w Kudu (Environment); przy SSH użyj widoku SCM <code>/Env</code>, gdy wynik powłoki jest niepełny. Przyczyny: niezapisane zmiany, literówki w nazwach, aplikacja sprawdza zmienną, zanim App Service ją wstrzyknie.</p>
+<p><strong>Wolne zimne starty.</strong> Pierwsze żądania po bezczynności są wolniejsze. Diagnoza: rozmiar obrazu (<code>docker images</code>), czas startu w logach, ustawienie Always On. Rozwiązania: włącz Always On; zmniejsz obraz (mniejsze obrazy bazowe, budowa wieloetapowa - multi-stage builds); odrocz ciężką inicjalizację.</p>
+<hr />
+<h1 id="czesc-e-cwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
+<p>Przed ćwiczeniami przeczytaj części A-D. Układ ćwiczeń: Gdzie / Plik, kod lub kroki, Koszt, Zadania, Sprawdź, Sprzątanie. I1 odpowiada laboratorium z modułu (unit 6), ale używa mniejszej aplikacji podanej w całości (zamiast archiwum ze starterem); I2 i I3 są autorskie i korzystają z zasobów z I1 (zmienne <code>RG</code>, <code>ACR_NAME</code>, <code>APP_PLAN</code>, <code>APP_NAME</code>). Wszystkie ćwiczenia tworzą płatne zasoby; wykonaj Sprzątanie z ostatniego ćwiczenia, które robisz.</p>
+<blockquote>
+<p>Niesprawdzone: dokładne ceny rejestru ACR Basic i planu App Service B1 (Linux) za dzień - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/ i https://azure.microsoft.com/pricing/details/app-service/linux/. Laboratorium Microsoftu używa planu P0v3 (droższy od B1) [unit 6-starter]; Always On wymaga Basic lub wyższego [docs: configure-common].</p>
+</blockquote>
+<h2 id="i1-wdrozenie-kontenera-z-acr-do-app-service-z-tozsamoscia-zarzadzana-python-i-c">I1. Wdrożenie kontenera z ACR do App Service z tożsamością zarządzaną - Python i C</h2>
+<p><em>Źródło: [unit 6] + [unit 6-lab] + [unit 6-starter] + [autor: niezweryfikowane]</em>
+(rozwinięte w <code>02-deploy-containers-azure-app-service.md</code> §A4, §A5, §B2)</p>
+<p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash), katalog <code>appsvc-lab</code>. Pliki aplikacji: <code>appsvc-lab/api/app.py</code>, <code>appsvc-lab/api/requirements.txt</code>, <code>appsvc-lab/api/Dockerfile</code>. Wymaga subskrypcji płatnej (ACR Tasks nie działają na darmowych kredytach).</p>
+<p>Krok 1 - aplikacja (Python, Flask; konfiguracja ze zmiennych środowiskowych, zapis wyników do <code>/home/processed</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># appsvc-lab/api/app.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">flask</span><span class="w"> </span><span class="kn">import</span> <span class="n">Flask</span><span class="p">,</span> <span class="n">jsonify</span><span class="p">,</span> <span class="n">request</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">Flask</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">ENVIRONMENT</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"ENVIRONMENT"</span><span class="p">,</span> <span class="s2">"development"</span><span class="p">)</span>            <span class="c1"># (1)</span>
+<span class="n">STORAGE_PATH</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"STORAGE_PATH"</span><span class="p">,</span> <span class="s2">"/home/processed"</span><span class="p">)</span>      <span class="c1"># (2)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">root</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">service</span><span class="o">=</span><span class="s2">"docprocessor"</span><span class="p">,</span> <span class="n">environment</span><span class="o">=</span><span class="n">ENVIRONMENT</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/health"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">health</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s2">"healthy"</span><span class="p">),</span> <span class="mi">200</span>                         <span class="c1"># (3)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/process"</span><span class="p">,</span> <span class="n">methods</span><span class="o">=</span><span class="p">[</span><span class="s2">"POST"</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">():</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">get_data</span><span class="p">(</span><span class="n">as_text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">doc_id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="n">doc_id</span><span class="p">,</span> <span class="s2">"words"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">split</span><span class="p">())}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">STORAGE_PATH</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">STORAGE_PATH</span><span class="p">,</span> <span class="n">doc_id</span> <span class="o">+</span> <span class="s2">".json"</span><span class="p">),</span> <span class="s2">"w"</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>                                  <span class="c1"># (4)</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">"saved"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">"saved"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">result</span><span class="p">[</span><span class="s2">"error"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+
+<span class="nd">@app</span><span class="o">.</span><span class="n">route</span><span class="p">(</span><span class="s2">"/documents"</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">documents</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">STORAGE_PATH</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span><span class="p">[:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">STORAGE_PATH</span><span class="p">)</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".json"</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="n">jsonify</span><span class="p">(</span><span class="n">documents</span><span class="o">=</span><span class="n">names</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) środowisko z app setting <code>ENVIRONMENT</code>; (2) ścieżka zapisu, domyślnie w <code>/home</code>; (3) endpoint kontroli stanu; (4) zapis wyniku jako plik JSON w <code>STORAGE_PATH</code>. Aplikacja nie wie, czy <code>/home</code> jest trwały: to decyduje ustawienie platformy.</p>
+<div class="codehilite"><pre><span></span><code># appsvc-lab/api/requirements.txt
+flask==3.1.3
+gunicorn==22.0.0
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c"># appsvc-lab/api/Dockerfile</span>
+<span class="k">FROM</span><span class="w"> </span><span class="s">python:3.12-slim</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>requirements.txt<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<span class="k">COPY</span><span class="w"> </span>app.py<span class="w"> </span>.
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">8000</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"gunicorn"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--bind"</span><span class="p">,</span><span class="w"> </span><span class="s2">"0.0.0.0:8000"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--workers"</span><span class="p">,</span><span class="w"> </span><span class="s2">"2"</span><span class="p">,</span><span class="w"> </span><span class="s2">"--access-logfile"</span><span class="p">,</span><span class="w"> </span><span class="s2">"-"</span><span class="p">,</span><span class="w"> </span><span class="s2">"app:app"</span><span class="p">]</span>
+</code></pre></div>
+
+<p>Objaśnienie: kontener nasłuchuje na porcie <strong>8000</strong> (nie 80), więc konieczne będzie <code>WEBSITES_PORT=8000</code>; <code>--access-logfile -</code> kieruje logi żądań na stdout.</p>
+<p>Krok 2 - rejestr, obraz i plan:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>login
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.ContainerRegistry
+az<span class="w"> </span>provider<span class="w"> </span>register<span class="w"> </span>--namespace<span class="w"> </span>Microsoft.Web
+<span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-appsvc-i1
+<span class="nb">export</span><span class="w"> </span><span class="nv">ACR_NAME</span><span class="o">=</span>acrapp<span class="nv">$RANDOM$RANDOM</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_PLAN</span><span class="o">=</span>plan-docproc
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_NAME</span><span class="o">=</span>docproc<span class="nv">$RANDOM$RANDOM</span><span class="w">                                     </span><span class="c1"># (1)</span>
+az<span class="w"> </span>group<span class="w"> </span>create<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--location<span class="w"> </span>westeurope
+az<span class="w"> </span>acr<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--sku<span class="w"> </span>Basic<span class="w">          </span><span class="c1"># (2)</span>
+az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>docprocessor:v1<span class="w"> </span>./api<span class="w">          </span><span class="c1"># (3)</span>
+az<span class="w"> </span>appservice<span class="w"> </span>plan<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_PLAN</span><span class="w"> </span>--sku<span class="w"> </span>B1<span class="w"> </span>--is-linux<span class="w">   </span><span class="c1"># (4)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) nazwa aplikacji musi być globalnie unikalna (staje się częścią <code>&lt;nazwa&gt;.azurewebsites.net</code>); (2) rejestr z wyłączonym kontem admin (domyślnie); (3) build w chmurze, jak w module 01; (4) plan Linux w poziomie B1.</p>
+<p>Krok 3 - aplikacja z tożsamością zarządzaną i rolą AcrPull:</p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>webapp<span class="w"> </span>create<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--plan<span class="w"> </span><span class="nv">$APP_PLAN</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-image-name<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io/docprocessor:v1<span class="w">          </span><span class="c1"># (1)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>identity<span class="w"> </span>assign<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w">          </span><span class="c1"># (2)</span>
+<span class="nv">PRINCIPAL_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>webapp<span class="w"> </span>identity<span class="w"> </span>show<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--query<span class="w"> </span>principalId<span class="w"> </span>--output<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nv">ACR_ID</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>acr<span class="w"> </span>show<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--query<span class="w"> </span>id<span class="w"> </span>--output<span class="w"> </span>tsv<span class="k">)</span>
+az<span class="w"> </span>role<span class="w"> </span>assignment<span class="w"> </span>create<span class="w"> </span>--assignee<span class="w"> </span><span class="nv">$PRINCIPAL_ID</span><span class="w"> </span>--scope<span class="w"> </span><span class="nv">$ACR_ID</span><span class="w"> </span>--role<span class="w"> </span>AcrPull<span class="w">        </span><span class="c1"># (3)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--acr-use-identity<span class="w"> </span><span class="nb">true</span><span class="w"> </span>--acr-identity<span class="w"> </span><span class="s1">'[system]'</span><span class="w">                    </span><span class="c1"># (4)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>container<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-image-name<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io/docprocessor:v1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-registry-url<span class="w"> </span>https://<span class="nv">$ACR_NAME</span>.azurecr.io<span class="w">                </span><span class="c1"># (5)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--settings<span class="w"> </span><span class="nv">WEBSITES_PORT</span><span class="o">=</span><span class="m">8000</span><span class="w">                                        </span><span class="c1"># (6)</span>
+<span class="nv">APP_URL</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>webapp<span class="w"> </span>show<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--query<span class="w"> </span>defaultHostName<span class="w"> </span>--output<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"https://</span><span class="nv">$APP_URL</span><span class="s2">"</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/<span class="w">                                                </span><span class="c1"># (7)</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) tworzy aplikację z obrazem z ACR; (2) włącza tożsamość system-assigned; (3) rola AcrPull ogranicza uprawnienia do pobierania (propagacja minutę-dwie); (4) App Service ma używać tożsamości zamiast danych admin; (5) jawnie ustawia obraz i adres rejestru (tu wskazujesz nowy tag przy aktualizacji); (6) port kontenera; (7) pierwsze żądanie jest wolniejsze, bo trzeba pobrać obraz. Może pojawić się komunikat o braku poświadczeń do ACR: to oczekiwane przy tożsamości zarządzanej (patrz A4).</p>
+<p><strong>Odpowiednik C# (.NET).</strong> Ten sam serwis w ASP.NET Core (minimal API). Różnica kluczowa: oficjalne obrazy ASP.NET Core od .NET 8 nasłuchują na <strong>8080</strong>, więc potrzebne jest <code>WEBSITES_PORT=8080</code> (patrz uwaga o błędzie w B2).</p>
+<p>Plik <code>appsvc-lab/api-dotnet/DocProcessor.csproj</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="nt">&lt;Project</span><span class="w"> </span><span class="na">Sdk=</span><span class="s">"Microsoft.NET.Sdk.Web"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;PropertyGroup&gt;</span>
+<span class="w">    </span><span class="nt">&lt;TargetFramework&gt;</span>net10.0<span class="nt">&lt;/TargetFramework&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Nullable&gt;</span>enable<span class="nt">&lt;/Nullable&gt;</span>
+<span class="w">    </span><span class="nt">&lt;ImplicitUsings&gt;</span>enable<span class="nt">&lt;/ImplicitUsings&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/PropertyGroup&gt;</span>
+<span class="nt">&lt;/Project&gt;</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c1">// appsvc-lab/api-dotnet/Program.cs</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">System.Text.Json</span><span class="p">;</span>
+
+<span class="kt">var</span><span class="w"> </span><span class="n">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">WebApplication</span><span class="p">.</span><span class="n">CreateBuilder</span><span class="p">(</span><span class="n">args</span><span class="p">).</span><span class="n">Build</span><span class="p">();</span>
+
+<span class="kt">string</span><span class="w"> </span><span class="n">environment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"ENVIRONMENT"</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s">"development"</span><span class="p">;</span><span class="w">   </span><span class="c1">// (1)</span>
+<span class="kt">string</span><span class="w"> </span><span class="n">storage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Environment</span><span class="p">.</span><span class="n">GetEnvironmentVariable</span><span class="p">(</span><span class="s">"STORAGE_PATH"</span><span class="p">)</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s">"/home/processed"</span><span class="p">;</span><span class="w">   </span><span class="c1">// (2)</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">service</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"docprocessor"</span><span class="p">,</span><span class="w"> </span><span class="n">environment</span><span class="w"> </span><span class="p">});</span>
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/health"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Results</span><span class="p">.</span><span class="n">Ok</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"healthy"</span><span class="w"> </span><span class="p">}));</span><span class="w">                        </span><span class="c1">// (3)</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">MapPost</span><span class="p">(</span><span class="s">"/process"</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="n">HttpRequest</span><span class="w"> </span><span class="n">req</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">using</span><span class="w"> </span><span class="nn">var</span><span class="w"> </span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StreamReader</span><span class="p">(</span><span class="n">req</span><span class="p">.</span><span class="n">Body</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">reader</span><span class="p">.</span><span class="n">ReadToEndAsync</span><span class="p">();</span>
+<span class="w">    </span><span class="kt">string</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Guid</span><span class="p">.</span><span class="n">NewGuid</span><span class="p">().</span><span class="n">ToString</span><span class="p">();</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="p">.</span><span class="n">Split</span><span class="p">((</span><span class="kt">char</span><span class="p">[]</span><span class="o">?</span><span class="p">)</span><span class="k">null</span><span class="p">,</span><span class="w"> </span><span class="n">StringSplitOptions</span><span class="p">.</span><span class="n">RemoveEmptyEntries</span><span class="p">).</span><span class="n">Length</span><span class="p">;</span>
+<span class="w">    </span><span class="k">try</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Directory</span><span class="p">.</span><span class="n">CreateDirectory</span><span class="p">(</span><span class="n">storage</span><span class="p">);</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="n">File</span><span class="p">.</span><span class="n">WriteAllTextAsync</span><span class="p">(</span><span class="n">Path</span><span class="p">.</span><span class="n">Combine</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">".json"</span><span class="p">),</span>
+<span class="w">            </span><span class="n">JsonSerializer</span><span class="p">.</span><span class="n">Serialize</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="p">}));</span><span class="w">                                     </span><span class="c1">// (4)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Results</span><span class="p">.</span><span class="n">Ok</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">words</span><span class="p">,</span><span class="w"> </span><span class="n">saved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="w"> </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Results</span><span class="p">.</span><span class="n">Ok</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">words</span><span class="p">,</span><span class="w"> </span><span class="n">saved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">,</span><span class="w"> </span><span class="n">error</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">Message</span><span class="w"> </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">});</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">MapGet</span><span class="p">(</span><span class="s">"/documents"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Directory</span><span class="p">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span>
+<span class="w">    </span><span class="o">?</span><span class="w"> </span><span class="n">Directory</span><span class="p">.</span><span class="n">GetFiles</span><span class="p">(</span><span class="n">storage</span><span class="p">,</span><span class="w"> </span><span class="s">"*.json"</span><span class="p">).</span><span class="n">Select</span><span class="p">(</span><span class="n">f</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">Path</span><span class="p">.</span><span class="n">GetFileNameWithoutExtension</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+<span class="w">    </span><span class="p">:</span><span class="w"> </span><span class="n">Enumerable</span><span class="p">.</span><span class="n">Empty</span><span class="o">&lt;</span><span class="kt">string</span><span class="o">&gt;</span><span class="p">());</span>
+
+<span class="n">app</span><span class="p">.</span><span class="n">Run</span><span class="p">();</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code><span class="c"># appsvc-lab/api-dotnet/Dockerfile</span>
+<span class="k">FROM</span><span class="w"> </span><span class="s">mcr.microsoft.com/dotnet/sdk:10.0</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="s">build</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/src</span>
+<span class="k">COPY</span><span class="w"> </span>DocProcessor.csproj<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>dotnet<span class="w"> </span>restore
+<span class="k">COPY</span><span class="w"> </span>.<span class="w"> </span>.
+<span class="k">RUN</span><span class="w"> </span>dotnet<span class="w"> </span>publish<span class="w"> </span>-c<span class="w"> </span>Release<span class="w"> </span>-o<span class="w"> </span>/out<span class="w"> </span>--no-restore
+
+<span class="k">FROM</span><span class="w"> </span><span class="s">mcr.microsoft.com/dotnet/aspnet:10.0</span>
+<span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<span class="k">COPY</span><span class="w"> </span>--from<span class="o">=</span>build<span class="w"> </span>/out<span class="w"> </span>.
+<span class="k">ENV</span><span class="w"> </span><span class="nv">STORAGE_PATH</span><span class="o">=</span>/home/processed
+<span class="k">EXPOSE</span><span class="w"> </span><span class="s">8080</span>
+<span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">"dotnet"</span><span class="p">,</span><span class="w"> </span><span class="s2">"DocProcessor.dll"</span><span class="p">]</span>
+</code></pre></div>
+
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>acr<span class="w"> </span>build<span class="w"> </span>--registry<span class="w"> </span><span class="nv">$ACR_NAME</span><span class="w"> </span>--image<span class="w"> </span>docprocessor-dotnet:v1<span class="w"> </span>./api-dotnet
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>container<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-image-name<span class="w"> </span><span class="nv">$ACR_NAME</span>.azurecr.io/docprocessor-dotnet:v1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-registry-url<span class="w"> </span>https://<span class="nv">$ACR_NAME</span>.azurecr.io<span class="w">               </span><span class="c1"># (1) zmiana obrazu</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--settings<span class="w"> </span><span class="nv">WEBSITES_PORT</span><span class="o">=</span><span class="m">8080</span><span class="w">   </span><span class="c1"># (2)</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/
+</code></pre></div>
+
+<p>Objaśnienie: (1) wskazanie innego obrazu restartuje aplikację (ta sama procedura jak przy nowym tagu); (2) port .NET zamiast 8000. Różnice względem Pythona: budowa wieloetapowa, port 8080, <code>Environment.GetEnvironmentVariable</code> zamiast <code>os.getenv</code>. Wersje obrazów MCR (<code>dotnet/sdk:10.0</code>, <code>dotnet/aspnet:10.0</code>) istnieją (sprawdzone 2026-11-22), podobnie <code>python:3.12-slim</code> w Docker Hub; aplikacje skompilowano/sprawdzono składniowo lokalnie 2026-11-22 [autor: niezweryfikowane] (nie uruchamiano w Azure). Aby wrócić do Pythona, ustaw obraz <code>docprocessor:v1</code> i <code>WEBSITES_PORT=8000</code>.</p>
+<p><strong>Koszt:</strong> rejestr ACR Basic (płatny za dzień) i plan App Service B1 Linux (płatny za godzinę działania, niezależnie od ruchu); buildy ACR Tasks naliczane za czas obliczeń (ceny: ostrzeżenie "Niesprawdzone" na początku części E). Przy pracy rzędu godziny koszt jest niewielki, o ile wykonasz Sprzątanie. [unit 6]</p>
+<p><strong>Zadania:</strong> (a) wdróż wersję Pythona i odczytaj <code>/</code>; (b) sprawdź, że aplikacja ma tożsamość i rolę AcrPull (<code>az role assignment list --assignee $PRINCIPAL_ID --scope $ACR_ID --output table</code>); (c) przełącz na obraz C# z <code>WEBSITES_PORT=8080</code>; (d) <strong>zepsuj to:</strong> przy obrazie Pythona usuń ustawienie portu (<code>az webapp config appsettings delete --resource-group $RG --name $APP_NAME --setting-names WEBSITES_PORT</code>) i wywołaj <code>/</code>.</p>
+<p><strong>Sprawdź:</strong> (a) odpowiedź JSON z <code>"service": "docprocessor"</code> i <code>"environment": "development"</code>; (b) lista zawiera rolę <code>AcrPull</code>; (c) odpowiedź JSON z tą samą treścią (z obrazu C#); (d) bez <code>WEBSITES_PORT</code> App Service zakłada port 80, kontener słucha na 8000, więc żądania nie dochodzą do aplikacji (błąd 5xx lub komunikat o błędzie aplikacji; dokładna treść - [autor: niezweryfikowane]). Przywróć <code>WEBSITES_PORT=8000</code> i potwierdź, że działa.</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span>rg-appsvc-i1<span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span>rg-appsvc-i1<span class="w">     </span><span class="c1"># po kilku minutach powinno wypisać false</span>
+</code></pre></div>
+
+<p>Usunięcie grupy usuwa rejestr, plan i aplikację. Zasoby z I1 są używane w I2 i I3, więc wykonaj sprzątanie po ostatnim ćwiczeniu, które robisz.</p>
+<h2 id="i2-ustawienia-aplikacji-trway-magazyn-always-on-health-check-i-slot-settings">I2. Ustawienia aplikacji, trwały magazyn, Always On, health check i slot settings</h2>
+<p><em>Źródło: [unit 3] + [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-common] + [autor: niezweryfikowane]</em></p>
+<p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash); zasoby z I1 (<code>RG</code>, <code>APP_NAME</code>, <code>APP_URL</code>), aplikacja Pythona (<code>docprocessor:v1</code>, <code>WEBSITES_PORT=8000</code>).</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-appsvc-i1
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_NAME</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>webapp<span class="w"> </span>list<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"[0].name"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_URL</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>webapp<span class="w"> </span>show<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--query<span class="w"> </span>defaultHostName<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>container<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--container-image-name<span class="w"> </span><span class="k">$(</span>az<span class="w"> </span>acr<span class="w"> </span>list<span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"[0].loginServer"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>/docprocessor:v1<span class="w">   </span><span class="c1"># (1)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--settings<span class="w"> </span><span class="nv">WEBSITES_PORT</span><span class="o">=</span><span class="m">8000</span>
+
+<span class="c1"># (2) ustawienia aplikacji</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--settings<span class="w"> </span><span class="nv">ENVIRONMENT</span><span class="o">=</span>production<span class="w"> </span><span class="nv">LOG_LEVEL</span><span class="o">=</span>INFO
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/<span class="w">                                               </span><span class="c1"># widać "environment": "production"</span>
+
+<span class="c1"># (3) zapis dokumentu i restart BEZ trwałego magazynu</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"Azure App Service hosts containers"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://<span class="nv">$APP_URL</span>/process<span class="w"> </span>--data-binary<span class="w"> </span>@-
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/documents
+az<span class="w"> </span>webapp<span class="w"> </span>restart<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span>
+sleep<span class="w"> </span><span class="m">60</span><span class="p">;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/documents<span class="w">                            </span><span class="c1"># lista pusta?</span>
+
+<span class="c1"># (4) włącz trwały magazyn i powtórz</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--settings<span class="w"> </span><span class="nv">WEBSITES_ENABLE_APP_SERVICE_STORAGE</span><span class="o">=</span><span class="nb">true</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"Persisted document"</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://<span class="nv">$APP_URL</span>/process<span class="w"> </span>--data-binary<span class="w"> </span>@-
+az<span class="w"> </span>webapp<span class="w"> </span>restart<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span>
+sleep<span class="w"> </span><span class="m">60</span><span class="p">;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/documents<span class="w">                            </span><span class="c1"># dokument przetrwał?</span>
+
+<span class="c1"># (5) Always On i health check</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--always-on<span class="w"> </span><span class="nb">true</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--generic-configurations<span class="w"> </span><span class="s1">'{"healthCheckPath": "/health"}'</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>show<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"{alwaysOn:alwaysOn, healthCheckPath:healthCheckPath}"</span><span class="w"> </span>-o<span class="w"> </span>json
+
+<span class="c1"># (6) ustawienie "przyklejone" do slotu</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--slot-settings<span class="w"> </span><span class="nv">ENVIRONMENT</span><span class="o">=</span>production
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span>list<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--query<span class="w"> </span><span class="s2">"[?slotSetting==\`true\`].name"</span><span class="w"> </span>-o<span class="w"> </span>tsv
+</code></pre></div>
+
+<p>Objaśnienie: (1) przywraca obraz Pythona, jeśli robiłeś wariant C#; (2) app setting wstrzyknięty jako zmienna środowiskowa, bez przebudowy obrazu; (3) bez <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> zapis trafia do ulotnego systemu plików (aplikacja zgłosi <code>saved: true</code>, ale po restarcie dokument zniknie); (4) po włączeniu <code>/home</code> jest trwały; (5) Always On wymaga Basic+, health check restartuje aplikację przy zmianie; (6) <code>--slot-settings</code> bez <code>--slot</code> oznacza ustawienie produkcyjne jako slotowe (zostaje przy slocie podczas swap).</p>
+<p><strong>Koszt:</strong> brak nowych zasobów; zasoby z I1 nadal naliczają opłaty do czasu Sprzątania.</p>
+<p><strong>Zadania:</strong> (a) ustaw <code>ENVIRONMENT=production</code> i potwierdź w odpowiedzi <code>/</code>; (b) pokaż, że bez trwałego magazynu dokument ginie po restarcie; (c) włącz magazyn i pokaż, że dokument przetrwa restart; (d) włącz Always On i health check i odczytaj konfigurację; (e) oznacz <code>ENVIRONMENT</code> jako slot setting; (f) <strong>zepsuj to:</strong> ustaw <code>healthCheckPath</code> na nieistniejącą ścieżkę <code>/healthz</code> (<code>--generic-configurations '{"healthCheckPath": "/healthz"}'</code>) i obserwuj stan aplikacji przez kilka minut, potem przywróć <code>/health</code>.</p>
+<p><strong>Sprawdź:</strong> (a) <code>"environment": "production"</code>; (b) po restarcie lista <code>documents</code> jest pusta (lub nie zawiera dokumentu z (3)); (c) po restarcie lista zawiera dokument zapisany po włączeniu magazynu; (d) <code>alwaysOn: true</code>, <code>healthCheckPath: "/health"</code>; (e) polecenie <code>list</code> zwraca <code>ENVIRONMENT</code>; (f) ścieżka zwraca 404, więc ping nie dostaje kodu 200-299 i po kilkunastu nieudanych pingach instancja jest uznana za niezdrową; przy jednej instancji load balancer jej nie usuwa (patrz B5), ale status w portalu (Health check) pokazuje niezdrowy stan. [autor: niezweryfikowane]</p>
+<p><strong>Sprzątanie:</strong> przywróć <code>/health</code>: <code>az webapp config set --resource-group $RG --name $APP_NAME --generic-configurations '{"healthCheckPath": "/health"}'</code>. Jeśli to ostatnie ćwiczenie: <code>az group delete --name rg-appsvc-i1 --yes --no-wait</code>, potem <code>az group exists --name rg-appsvc-i1</code> (po kilku minutach: <code>false</code>).</p>
+<h2 id="i3-logi-strumien-logow-kudu-i-diagnoza-bednego-portu">I3. Logi, strumień logów, Kudu i diagnoza błędnego portu</h2>
+<p><em>Źródło: [unit 5] + [unit 6-lab] + [docs: https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs] + [autor: niezweryfikowane]</em></p>
+<p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash) i przeglądarka; zasoby z I1 i I2.</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-appsvc-i1
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_NAME</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>webapp<span class="w"> </span>list<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--query<span class="w"> </span><span class="s2">"[0].name"</span><span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">APP_URL</span><span class="o">=</span><span class="k">$(</span>az<span class="w"> </span>webapp<span class="w"> </span>show<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--query<span class="w"> </span>defaultHostName<span class="w"> </span>-o<span class="w"> </span>tsv<span class="k">)</span>
+
+az<span class="w"> </span>webapp<span class="w"> </span>log<span class="w"> </span>config<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--docker-container-logging<span class="w"> </span>filesystem<span class="w">   </span><span class="c1"># (1)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>log<span class="w"> </span>tail<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w">                                            </span><span class="c1"># (2) w drugim terminalu; Ctrl+C kończy</span>
+curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/<span class="p">;</span><span class="w"> </span>curl<span class="w"> </span>-s<span class="w"> </span>https://<span class="nv">$APP_URL</span>/health<span class="w">                                         </span><span class="c1"># (3)</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">"Kudu: https://</span><span class="nv">$APP_NAME</span><span class="s2">.scm.azurewebsites.net"</span><span class="w">                                               </span><span class="c1"># (4)</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span>list<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--output<span class="w"> </span>table<span class="w">            </span><span class="c1"># (5)</span>
+
+<span class="c1"># (6) zepsuj: zły port</span>
+az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> </span>appsettings<span class="w"> </span><span class="nb">set</span><span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w"> </span>--settings<span class="w"> </span><span class="nv">WEBSITES_PORT</span><span class="o">=</span><span class="m">9999</span>
+az<span class="w"> </span>webapp<span class="w"> </span>restart<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span>
+az<span class="w"> </span>webapp<span class="w"> </span>log<span class="w"> </span>tail<span class="w"> </span>--resource-group<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--name<span class="w"> </span><span class="nv">$APP_NAME</span><span class="w">                                            </span><span class="c1"># szukaj komunikatu o porcie</span>
+</code></pre></div>
+
+<p>Objaśnienie: (1) włącza zapis stdout/stderr do <code>/home/LogFiles</code>; (2) strumień logów na żywo (przy skalowaniu w poziomie widać identyfikator instancji); (3) generuje wpisy w logach (gunicorn z <code>--access-logfile -</code> pisze żądania na stdout); (4) adres konsoli Kudu: otwórz go, wybierz <strong>Environment</strong>, sprawdź zmienne <code>ENVIRONMENT</code> i <code>WEBSITES_PORT</code>, a w <strong>File Manager</strong> katalog <code>/home/LogFiles/</code>; (5) lista ustawień (własne i systemowe); (6) zły port symuluje typową awarię z D6.</p>
+<p><strong>Koszt:</strong> brak nowych zasobów; logi w systemie plików mieszczą się w limicie magazynu planu.</p>
+<p><strong>Zadania:</strong> (a) włącz logowanie kontenera i obejrzyj strumień podczas kilku żądań; (b) w Kudu odszukaj <code>ENVIRONMENT=production</code> i pliki logów w <code>/home/LogFiles/</code>; (c) wypisz ustawienia aplikacji; (d) <strong>zepsuj to:</strong> ustaw <code>WEBSITES_PORT=9999</code>, zrestartuj aplikację i znajdź w logach przyczynę; (e) napraw (<code>WEBSITES_PORT=8000</code>) i potwierdź, że <code>/</code> działa.</p>
+<p><strong>Sprawdź:</strong> (a) w strumieniu pojawiają się wpisy żądań <code>GET /</code> i <code>GET /health</code>; (b) w widoku Environment jest <code>ENVIRONMENT=production</code>, a w <code>/home/LogFiles/</code> pliki logów; (c) w tabeli widać <code>WEBSITES_PORT</code>, <code>ENVIRONMENT</code> i ustawienia systemowe; (d) logi platformy informują, że kontener nie odpowiada na pingi HTTP na skonfigurowanym porcie 9999 (dokładny komunikat zależy od wersji platformy - [autor: niezweryfikowane]), a aplikacja jest niedostępna; (e) po przywróceniu portu <code>/</code> zwraca JSON.</p>
+<p><strong>Sprzątanie:</strong></p>
+<div class="codehilite"><pre><span></span><code>az<span class="w"> </span>group<span class="w"> </span>delete<span class="w"> </span>--name<span class="w"> </span>rg-appsvc-i1<span class="w"> </span>--yes<span class="w"> </span>--no-wait
+az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span>rg-appsvc-i1<span class="w">     </span><span class="c1"># po kilku minutach: false</span>
+</code></pre></div>
+
+<hr />
+<h1 id="czesc-f-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<p>Learn pokazuje pytania, ale nie pokazuje poprawnych odpowiedzi, więc każda odpowiedź poniżej jest <strong>wnioskowana</strong> z treści jednostek.</p>
+<h2 id="f1-obraz-nasuchuje-na-porcie-8000-po-wdrozeniu-zadania-koncza-sie-bedami-poaczenia">F1. Obraz nasłuchuje na porcie 8000, po wdrożeniu żądania kończą się błędami połączenia</h2>
+<p>-&gt; <em>Ustaw ustawienie aplikacji <code>WEBSITES_PORT</code> na 8000.</em> (B2). Pułapki: zmiana <code>EXPOSE</code> w Dockerfile nie wpływa na to, gdzie App Service kieruje ruch; HTTP/2 nie ma związku z portem.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Port configuration")</em></p>
+<h2 id="f2-pliki-wyjsciowe-znikaja-po-restarcie-kontenera">F2. Pliki wyjściowe znikają po restarcie kontenera</h2>
+<p>-&gt; <em>Ustaw <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> na <code>true</code> i zapisuj pliki w <code>/home</code>.</em> (B3). Pułapki: większy obraz nie daje trwałości zapisów; Always On zapobiega zimnym startom, ale nie chroni systemu plików przed restartem.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Persistent storage")</em></p>
+<h2 id="f3-inny-adres-api-dla-staging-i-produkcji-ktory-nie-ma-sie-zamienic-podczas-swap">F3. Inny adres API dla staging i produkcji, który nie ma się zamienić podczas swap</h2>
+<p>-&gt; <em>Skonfiguruj <code>API_ENDPOINT</code> jako slot setting.</em> (C4). Pułapki: adres w obrazie wymaga przebudowy dla każdego środowiska; connection strings nie rozwiązują problemu swap.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcja "Slot settings")</em></p>
+<h2 id="f4-kontener-startuje-ale-health-check-zawodzi-a-aplikacja-ma-endpoint-healthz-zwracajacy-200">F4. Kontener startuje, ale health check zawodzi, a aplikacja ma endpoint <code>/healthz</code> zwracający 200</h2>
+<p>-&gt; <em>Ścieżka health check w App Service jest skonfigurowana inaczej niż endpoint aplikacji.</em> (B5). Pułapki: health check nie wymaga HTTPS; ścieżka nie ma wartości domyślnej, więc trzeba ją ustawić jawnie.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Health checks")</em></p>
+<h2 id="f5-sprawdzenie-czy-ustawienia-aplikacji-trafiy-do-dziaajacego-kontenera">F5. Sprawdzenie, czy ustawienia aplikacji trafiły do działającego kontenera</h2>
+<p>-&gt; <em>Strona Environment w konsoli diagnostycznej Kudu.</em> (C6, D3). Pułapki: log stream pokazuje wyjście kontenera, a nie listę zmiennych; metryki nie pokazują wartości ustawień.
+<em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcja "Verify configuration" i unit 5, sekcja "Diagnostic console (Kudu)")</em></p>
+<hr />
+<h1 id="czesc-g-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="g1-jakie-dwie-metody-uwierzytelniania-do-acr-obsuguje-app-service-i-ktora-zalecasz-na-produkcji">G1. Jakie dwie metody uwierzytelniania do ACR obsługuje App Service i którą zalecasz na produkcji?</h2>
+<details><summary>Odpowiedź</summary>
+
+Tożsamość zarządzana (zalecana na produkcji; wymaga roli AcrPull w rejestrze; system-assigned lub user-assigned) i dane administratora ACR (prostsze w development, ale hasło trafia do konfiguracji i wymaga ręcznej rotacji; trzeba włączyć konto admin).
+</details>
+
+<h2 id="g2-co-sie-stanie-gdy-wypchniesz-nowy-obraz-pod-ten-sam-tag-ktory-app-service-juz-wdrozy">G2. Co się stanie, gdy wypchniesz nowy obraz pod ten sam tag, który App Service już wdrożył?</h2>
+<details><summary>Odpowiedź</summary>
+
+App Service tego nie wykryje. Obraz zostanie pobrany dopiero przy restarcie (pobierane są tylko zmienione warstwy); żeby nowy obraz był przejęty automatycznie, włącz ciągłe wdrażanie (`--enable-cd true`) i webhook w ACR. Lepsze rozwiązanie: nowy, unikalny tag i `az webapp config container set`.
+</details>
+
+<h2 id="g3-do-czego-suzy-websites_port-i-jaki-jest-port-domyslny">G3. Do czego służy <code>WEBSITES_PORT</code> i jaki jest port domyślny?</h2>
+<details><summary>Odpowiedź</summary>
+
+Wskazuje port wewnątrz kontenera, na który App Service kieruje ruch HTTP; domyślnie zakłada port 80. Obsługiwany jest tylko jeden port HTTP. Ustawiaj go, gdy kontener nasłuchuje gdzie indziej (np. 8000 dla Gunicorn, 8080 dla ASP.NET Core od .NET 8).
+</details>
+
+<h2 id="g4-co-robi-websites_enable_app_service_storage-i-jaki-jest-domyslny-stan-na-linuksie">G4. Co robi <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> i jaki jest domyślny stan na Linuksie?</h2>
+<details><summary>Odpowiedź</summary>
+
+Włącza trwały magazyn zamontowany w `/home`, współdzielony przez wszystkie instancje i przeżywający restarty. Dla niestandardowych kontenerów Linux domyślnie jest wyłączony (na Windows domyślnie włączony).
+</details>
+
+<h2 id="g5-jaki-poziom-cenowy-jest-potrzebny-dla-always-on-i-co-to-robi">G5. Jaki poziom cenowy jest potrzebny dla Always On i co to robi?</h2>
+<details><summary>Odpowiedź</summary>
+
+Basic lub wyższy. Aplikacja bez ruchu jest wyładowywana po ok. 20 minutach; Always On wysyła okresowe żądania (co 5 minut), aby ją utrzymać i uniknąć zimnych startów.
+</details>
+
+<h2 id="g6-jak-dziaa-health-check-w-app-service">G6. Jak działa health check w App Service?</h2>
+<details><summary>Odpowiedź</summary>
+
+Ping co minutę na ścieżkę, którą wskażesz (brak wartości domyślnej); zdrowa odpowiedź to 200-299; domyślnie po 10 nieudanych pingach instancja jest usuwana z load balancera (konfigurowalne od 2 do 10), a po dłuższym braku poprawy zastępowana. Zmiana konfiguracji restartuje aplikację.
+</details>
+
+<h2 id="g7-czym-roznia-sie-app-settings-od-connection-strings-i-ktore-wybierzesz-dla-pythona">G7. Czym różnią się app settings od connection strings i które wybierzesz dla Pythona?</h2>
+<details><summary>Odpowiedź</summary>
+
+Obie są wstrzykiwane jako zmienne środowiskowe i szyfrowane w spoczynku, ale connection strings dostają prefiks typu (np. `SQLAZURECONNSTR_`). Dla aplikacji spoza .NET, np. Pythona, wybieraj zwykłe app settings.
+</details>
+
+<h2 id="g8-jak-zapewnic-ze-ustawienie-nie-zamieni-sie-miedzy-slotami-podczas-swap-i-jak-odwoac-sie-do-sekretu-z-key-vault">G8. Jak zapewnić, że ustawienie nie zamieni się między slotami podczas swap, i jak odwołać się do sekretu z Key Vault?</h2>
+<details><summary>Odpowiedź</summary>
+
+Oznacz je jako slot setting (`--slot-settings`). Do sekretu użyj w wartości ustawienia składni `@Microsoft.KeyVault(SecretUri=...)`; wymaga to tożsamości zarządzanej z dostępem do odczytu sekretów. Bez wersji odwołanie bierze najnowszą, a po rotacji wartość odświeża się w ciągu 24 godzin.
+</details>
+
+<h2 id="g9-wymien-narzedzia-diagnostyczne-app-service-i-do-czego-suzy-kazde">G9. Wymień narzędzia diagnostyczne App Service i do czego służy każde.</h2>
+<details><summary>Odpowiedź</summary>
+
+Logi kontenera (`az webapp log config`, stdout/stderr w `/home/LogFiles`), log stream (`az webapp log tail`, na żywo), Kudu/SCM (Environment, pliki, diagnostic dump; nie pokazuje procesów w kontenerze), ustawienia diagnostyczne do Log Analytics (kategorie np. `AppServiceConsoleLogs`) z zapytaniami KQL oraz SSH do interaktywnej diagnozy kontenera.
+</details>
+
+<hr />
+<h1 id="czesc-h-co-dalej">CZĘŚĆ H - CO DALEJ</h1>
+<h2 id="h1-podsumowanie-nastepny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</h2>
+<p><em>Źródło: [unit 8] + [docs: https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200]</em></p>
+<p><strong>Podsumowanie modułu.</strong> Wdrożyłeś własny kontener z ACR do App Service z uwierzytelnianiem tożsamością zarządzaną (bez zapisanych poświadczeń do rejestru), skonfigurowałeś zachowanie runtime (polecenie startowe, port, trwały magazyn), przekazałeś konfigurację specyficzną dla środowiska przez ustawienia aplikacji bez przebudowy obrazu oraz użyłeś logowania kontenera, log stream i Kudu do diagnozy. [unit 8]</p>
+<p><strong>Co dalej:</strong> moduł 03 - <code>deploy-sidecar-azure-app-service</code> (https://learn.microsoft.com/en-us/training/modules/deploy-sidecar-azure-app-service/): sidecary (kontenery pomocnicze obok głównego) na App Service, bezpieczne pobieranie obrazów, komunikacja lokalna, pliki współdzielone i diagnostyka. Wróć do A4 (tożsamość i AcrPull) i B2 (port) przy konfiguracji wielu kontenerów.</p>
+<p><strong>Pokrycie egzaminu</strong> - lista umiejętności AI-200 (stan study guide z 2026-10-30), domena 1, część "Implement container application hosting":</p>
+<table>
+<thead>
+<tr>
+<th>Umiejętność (study guide)</th>
+<th>Domena</th>
+<th>Status</th>
+<th>Gdzie</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Build, store, version, and manage container images by using Azure Container Registry</td>
+<td>1</td>
+<td>uczone w module 01</td>
+<td><code>01-store-manage-containers-azure-container-registry.md</code> §A1-A5, §C1-C8</td>
+</tr>
+<tr>
+<td>Build and run images by using Azure Container Registry Tasks</td>
+<td>1</td>
+<td>uczone w module 01</td>
+<td><code>01-store-manage-containers-azure-container-registry.md</code> §B1-B6</td>
+</tr>
+<tr>
+<td>Deploy containers to Azure App Service, including configuring App Service to supply environment variables and secrets</td>
+<td>1</td>
+<td>uczone tutaj</td>
+<td><code>02-deploy-containers-azure-app-service.md</code> §A1-A6, §B1-B5, §C1-C6 (sekrety: §C5; więcej o Key Vault w module <code>manage-app-secrets-key-vault</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Pozostałe umiejętności egzaminu należą do innych modułów kursu; pełny przydział jest w <code>sources/_exam/skill-map.md</code>. Żaden punkt study guide nie jest orphanem, więc plik luk egzaminu nie jest potrzebny.</p>
+<h2 id="h2-uczciwie-o-egzaminie">H2. Uczciwie o egzaminie</h2>
+<p><em>Źródło: [autor]</em></p>
+<p>Moduł pokrywa umiejętność "Deploy containers to Azure App Service, including configuring App Service to supply environment variables and secrets" w części dotyczącej App Service: źródła obrazu, tożsamość zarządzana i AcrPull, port, trwały magazyn, Always On, health check, app settings, slot settings, odwołania do Key Vault i diagnostyka. Pełne zarządzanie sekretami (rotacja, odczyt przez SDK) uczy osobny moduł <code>manage-app-secrets-key-vault</code>, a App Configuration - <code>manage-app-settings-app-config</code>. Na egzaminie spodziewaj się pytań o: nazwy ustawień (<code>WEBSITES_PORT</code>, <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code>), wymagania (Always On = Basic+), rolę AcrPull, zachowanie przy tym samym tagu i slot settings. Moduł nie ma kodu SDK; kod aplikacji w ćwiczeniach jest autorski. Błędy w materiale Microsoftu opisane w tym pliku (B2, C1) sprawdź w dokumentacji, zanim zaufasz przykładom z modułu. Nie przerobiłeś jeszcze: sidecarów (moduł 03), Container Apps i AKS.</p></main></body></html>
