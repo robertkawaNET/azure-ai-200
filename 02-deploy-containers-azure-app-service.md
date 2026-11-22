@@ -17,6 +17,62 @@ W tekście "moduł N" znaczy plik tutoriala `0N-*.md` (moduł 01 = `01-store-man
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - WDRAŻANIE KONTENERA DO APP SERVICE](#część-a---wdrażanie-kontenera-do-app-service)**
+  - [A1. Czym jest App Service dla kontenerów i po co](#a1-czym-jest-app-service-dla-kontenerów-i-po-co)
+  - [A2. Źródła obrazu](#a2-źródła-obrazu)
+  - [A3. Wdrożenie przez portal Azure](#a3-wdrożenie-przez-portal-azure)
+  - [A4. Uwierzytelnianie do ACR: tożsamość zarządzana albo dane administratora](#a4-uwierzytelnianie-do-acr-tożsamość-zarządzana-albo-dane-administratora)
+  - [A5. Wdrożenie z CLI, z innych rejestrów i z VS Code](#a5-wdrożenie-z-cli-z-innych-rejestrów-i-z-vs-code)
+  - [A6. Aktualizacja obrazu, ciągłe wdrażanie, pobieranie warstw i weryfikacja](#a6-aktualizacja-obrazu-ciągłe-wdrażanie-pobieranie-warstw-i-weryfikacja)
+- **[CZĘŚĆ B - ZACHOWANIE KONTENERA W RUNTIME](#część-b---zachowanie-kontenera-w-runtime)**
+  - [B1. Polecenie startowe](#b1-polecenie-startowe)
+  - [B2. Port kontenera (`WEBSITES_PORT`)](#b2-port-kontenera-websites_port)
+  - [B3. Trwały magazyn (`WEBSITES_ENABLE_APP_SERVICE_STORAGE`)](#b3-trwały-magazyn-websites_enable_app_service_storage)
+  - [B4. Always On](#b4-always-on)
+  - [B5. Kontrola stanu (health check)](#b5-kontrola-stanu-health-check)
+- **[CZĘŚĆ C - USTAWIENIA APLIKACJI I SEKRETY](#część-c---ustawienia-aplikacji-i-sekrety)**
+  - [C1. Ustawienia aplikacji (app settings)](#c1-ustawienia-aplikacji-app-settings)
+  - [C2. Connection strings](#c2-connection-strings)
+  - [C3. Edycja zbiorcza](#c3-edycja-zbiorcza)
+  - [C4. Ustawienia slotów (slot settings)](#c4-ustawienia-slotów-slot-settings)
+  - [C5. Odwołania do Key Vault](#c5-odwołania-do-key-vault)
+  - [C6. Weryfikacja konfiguracji](#c6-weryfikacja-konfiguracji)
+- **[CZĘŚĆ D - OBSERWOWANIE I DIAGNOZOWANIE KONTENERA](#część-d---obserwowanie-i-diagnozowanie-kontenera)**
+  - [D1. Logi kontenera](#d1-logi-kontenera)
+  - [D2. Strumień logów (log stream)](#d2-strumień-logów-log-stream)
+  - [D3. Konsola diagnostyczna Kudu (SCM)](#d3-konsola-diagnostyczna-kudu-scm)
+  - [D4. Diagnostyka platformowa i Log Analytics](#d4-diagnostyka-platformowa-i-log-analytics)
+  - [D5. Dostęp SSH do kontenera](#d5-dostęp-ssh-do-kontenera)
+  - [D6. Typowe problemy i rozwiązania](#d6-typowe-problemy-i-rozwiązania)
+- **[CZĘŚĆ E - ĆWICZENIA](#część-e---ćwiczenia)**
+  - [I1. Wdrożenie kontenera z ACR do App Service z tożsamością zarządzaną - Python i C#](#i1-wdrożenie-kontenera-z-acr-do-app-service-z-tożsamością-zarządzaną---python-i-c)
+  - [I2. Ustawienia aplikacji, trwały magazyn, Always On, health check i slot settings](#i2-ustawienia-aplikacji-trwały-magazyn-always-on-health-check-i-slot-settings)
+  - [I3. Logi, strumień logów, Kudu i diagnoza błędnego portu](#i3-logi-strumień-logów-kudu-i-diagnoza-błędnego-portu)
+- **[CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia](#część-f---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia)**
+  - [F1. Obraz nasłuchuje na porcie 8000, po wdrożeniu żądania kończą się błędami połączenia](#f1-obraz-nasłuchuje-na-porcie-8000-po-wdrożeniu-żądania-kończą-się-błędami-połączenia)
+  - [F2. Pliki wyjściowe znikają po restarcie kontenera](#f2-pliki-wyjściowe-znikają-po-restarcie-kontenera)
+  - [F3. Inny adres API dla staging i produkcji, który nie ma się zamienić podczas swap](#f3-inny-adres-api-dla-staging-i-produkcji-który-nie-ma-się-zamienić-podczas-swap)
+  - [F4. Kontener startuje, ale health check zawodzi, a aplikacja ma endpoint `/healthz` zwracający 200](#f4-kontener-startuje-ale-health-check-zawodzi-a-aplikacja-ma-endpoint-healthz-zwracający-200)
+  - [F5. Sprawdzenie, czy ustawienia aplikacji trafiły do działającego kontenera](#f5-sprawdzenie-czy-ustawienia-aplikacji-trafiły-do-działającego-kontenera)
+- **[CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-g---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [G1. Jakie dwie metody uwierzytelniania do ACR obsługuje App Service i którą zalecasz na produkcji?](#g1-jakie-dwie-metody-uwierzytelniania-do-acr-obsługuje-app-service-i-którą-zalecasz-na-produkcji)
+  - [G2. Co się stanie, gdy wypchniesz nowy obraz pod ten sam tag, który App Service już wdrożył?](#g2-co-się-stanie-gdy-wypchniesz-nowy-obraz-pod-ten-sam-tag-który-app-service-już-wdrożył)
+  - [G3. Do czego służy `WEBSITES_PORT` i jaki jest port domyślny?](#g3-do-czego-służy-websites_port-i-jaki-jest-port-domyślny)
+  - [G4. Co robi `WEBSITES_ENABLE_APP_SERVICE_STORAGE` i jaki jest domyślny stan na Linuksie?](#g4-co-robi-websites_enable_app_service_storage-i-jaki-jest-domyślny-stan-na-linuksie)
+  - [G5. Jaki poziom cenowy jest potrzebny dla Always On i co to robi?](#g5-jaki-poziom-cenowy-jest-potrzebny-dla-always-on-i-co-to-robi)
+  - [G6. Jak działa health check w App Service?](#g6-jak-działa-health-check-w-app-service)
+  - [G7. Czym różnią się app settings od connection strings i które wybierzesz dla Pythona?](#g7-czym-różnią-się-app-settings-od-connection-strings-i-które-wybierzesz-dla-pythona)
+  - [G8. Jak zapewnić, że ustawienie nie zamieni się między slotami podczas swap, i jak odwołać się do sekretu z Key Vault?](#g8-jak-zapewnić-że-ustawienie-nie-zamieni-się-między-slotami-podczas-swap-i-jak-odwołać-się-do-sekretu-z-key-vault)
+  - [G9. Wymień narzędzia diagnostyczne App Service i do czego służy każde.](#g9-wymień-narzędzia-diagnostyczne-app-service-i-do-czego-służy-każde)
+- **[CZĘŚĆ H - CO DALEJ](#część-h---co-dalej)**
+  - [H1. Podsumowanie, następny krok i pokrycie egzaminu](#h1-podsumowanie-następny-krok-i-pokrycie-egzaminu)
+  - [H2. Uczciwie o egzaminie](#h2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - WDRAŻANIE KONTENERA DO APP SERVICE
 
 ## A1. Czym jest App Service dla kontenerów i po co

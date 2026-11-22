@@ -202,18 +202,73 @@ a{text-decoration:none}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
 }
 </style></head>
-<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-05-zarzadzanie-kontenerami-w-azure-container-apps-rewizje-cykl-zycia-logi-sondy-zdrowia-zasoby">Moduł 05: Zarządzanie kontenerami w Azure Container Apps (rewizje, cykl życia, logi, sondy zdrowia, zasoby)</h1>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="moduł-05-zarządzanie-kontenerami-w-azure-container-apps-rewizje-cykl-życia-logi-sondy-zdrowia-zasoby">Moduł 05: Zarządzanie kontenerami w Azure Container Apps (rewizje, cykl życia, logi, sondy zdrowia, zasoby)</h1>
 <p>Moduł Microsoft Learn: <strong>Manage containers in Azure Container Apps</strong> - https://learn.microsoft.com/en-us/training/modules/manage-containers-azure-container-apps/
 Cel: po tym module umiesz bezpiecznie aktualizować obraz i zarządzać rewizjami, uruchamiać, zatrzymywać i restartować aplikację, diagnozować nieudaną rewizję po logach, skonfigurować sondy zdrowia (liveness, readiness) oraz dobrać CPU i pamięć.
 Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 68 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą eksperymenty i ćwiczenie z SDK). Wymagania: Azure CLI, Python 3.12, ćwiczenie I1 korzysta z plików aplikacji z ćwiczenia I1 modułu 04 (<code>04-deploy-containers-azure-container-apps.md</code>). Koszt: ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze (ACR, środowisko Container Apps, Log Analytics) - szczegóły w polach <strong>Koszt</strong>.</p>
 <p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
 <hr />
-<h1 id="czesc-a-aktualizacja-obrazow-i-rewizje">CZĘŚĆ A - AKTUALIZACJA OBRAZÓW I REWIZJE</h1>
-<h2 id="a1-tagi-i-digesty-kiedy-ktore">A1. Tagi i digesty: kiedy które</h2>
+<!-- toc -->
+<p><strong>Spis treści</strong></p>
+<ul>
+<li><strong><a href="#część-a---aktualizacja-obrazów-i-rewizje">CZĘŚĆ A - AKTUALIZACJA OBRAZÓW I REWIZJE</a></strong></li>
+<li><a href="#a1-tagi-i-digesty-kiedy-które">A1. Tagi i digesty: kiedy które</a></li>
+<li><a href="#a2-aktualizacja-obrazu-tworzy-nową-rewizję">A2. Aktualizacja obrazu tworzy nową rewizję</a></li>
+<li><a href="#a3-tryby-rewizji-i-znaczenie-słowa-active">A3. Tryby rewizji i znaczenie słowa "active"</a></li>
+<li><a href="#a4-lista-szczegóły-dezaktywacja-i-porządki">A4. Lista, szczegóły, dezaktywacja i porządki</a></li>
+<li><a href="#a5-dobre-praktyki-bezpiecznego-rolloutu-i-retencja">A5. Dobre praktyki bezpiecznego rolloutu i retencja</a></li>
+<li><strong><a href="#część-b---cykl-życia-aplikacji">CZĘŚĆ B - CYKL ŻYCIA APLIKACJI</a></strong></li>
+<li><a href="#b1-stop-restart-czy-skalowanie-do-zera">B1. Stop, restart czy skalowanie do zera</a></li>
+<li><a href="#b2-start-i-stop-aplikacji">B2. Start i stop aplikacji</a></li>
+<li><a href="#b3-restart-aplikacji-po-złym-stanie-uruchomieniowym">B3. Restart aplikacji po złym stanie uruchomieniowym</a></li>
+<li><a href="#b4-powtarzalna-lista-kontrolna-dla-nieudanej-rewizji">B4. Powtarzalna lista kontrolna dla nieudanej rewizji</a></li>
+<li><strong><a href="#część-c---logi-i-rozwiązywanie-problemów">CZĘŚĆ C - LOGI I ROZWIĄZYWANIE PROBLEMÓW</a></strong></li>
+<li><a href="#c1-strumieniowanie-logów">C1. Strumieniowanie logów</a></li>
+<li><a href="#c2-logi-które-pomagają-przy-ai">C2. Logi, które pomagają przy AI</a></li>
+<li><a href="#c3-procedura-dla-awarii-związanej-z-jedną-rewizją">C3. Procedura dla awarii związanej z jedną rewizją</a></li>
+<li><a href="#c4-historia-logów-log-analytics-i-kql">C4. Historia logów: Log Analytics i KQL</a></li>
+<li><strong><a href="#część-d---sondy-zdrowia-health-probes">CZĘŚĆ D - SONDY ZDROWIA (HEALTH PROBES)</a></strong></li>
+<li><a href="#d1-readiness-kontra-liveness-i-startup">D1. Readiness kontra liveness (i startup)</a></li>
+<li><a href="#d2-typowe-przyczyny-porażek-sond">D2. Typowe przyczyny porażek sond</a></li>
+<li><a href="#d3-konfiguracja-sond-w-szablonie-aplikacji">D3. Konfiguracja sond w szablonie aplikacji</a></li>
+<li><a href="#d4-rozwiązywanie-problemów-z-sondami-podczas-rolloutu">D4. Rozwiązywanie problemów z sondami podczas rolloutu</a></li>
+<li><a href="#d5-domyślne-sondy-i-limity-z-dokumentacji">D5. Domyślne sondy i limity (z dokumentacji)</a></li>
+<li><strong><a href="#część-e---optymalizacja-zasobów-i-skalowania">CZĘŚĆ E - OPTYMALIZACJA ZASOBÓW I SKALOWANIA</a></strong></li>
+<li><a href="#e1-rozmiar-repliki-a-całkowity-koszt">E1. Rozmiar repliki a całkowity koszt</a></li>
+<li><a href="#e2-zmiana-cpu-i-pamięci">E2. Zmiana CPU i pamięci</a></li>
+<li><a href="#e3-skalowanie-synchroniczne-api-a-worker-w-tle">E3. Skalowanie: synchroniczne API a worker w tle</a></li>
+<li><a href="#e4-dobre-praktyki-kosztu-i-wydajności">E4. Dobre praktyki kosztu i wydajności</a></li>
+<li><strong><a href="#część-f---ćwiczenia">CZĘŚĆ F - ĆWICZENIA</a></strong></li>
+<li><a href="#i1-diagnoza-brakującej-zmiennej-złego-portu-i-historii-logów-lab-modułu">I1. Diagnoza brakującej zmiennej, złego portu i historii logów (lab modułu)</a></li>
+<li><a href="#i2-sondy-zdrowia-w-yaml-i-operacje-cyklu-życia">I2. Sondy zdrowia w YAML i operacje cyklu życia</a></li>
+<li><a href="#i3-rewizje-i-logi-kql-przez-sdk-python-i-odpowiednik-c-net">I3. Rewizje i logi KQL przez SDK: Python i odpowiednik C# (.NET)</a></li>
+<li><strong><a href="#część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</a></strong></li>
+<li><a href="#g1-najlepsza-identyfikowalność-nowego-obrazu-na-produkcji">G1. Najlepsza identyfikowalność nowego obrazu na produkcji</a></li>
+<li><a href="#g2-zdjęcie-rewizji-z-ruchu-bez-kasowania">G2. Zdjęcie rewizji z ruchu bez kasowania</a></li>
+<li><a href="#g3-rewizja-oblewa-readiness-zaraz-po-wdrożeniu---najczęstsza-przyczyna">G3. Rewizja oblewa readiness zaraz po wdrożeniu - najczęstsza przyczyna</a></li>
+<li><a href="#g4-podejrzewasz-wyjątek-tylko-w-jednej-rewizji---pierwszy-krok">G4. Podejrzewasz wyjątek tylko w jednej rewizji - pierwszy krok</a></li>
+<li><a href="#g5-wysokie-opóźnienie-i-throttling-cpu-w-szczycie">G5. Wysokie opóźnienie i throttling CPU w szczycie</a></li>
+<li><strong><a href="#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</a></strong></li>
+<li><a href="#h1-czym-różni-się-tag-od-digestu-i-którego-użyć-na-produkcji">H1. Czym różni się tag od digestu i którego użyć na produkcji?</a></li>
+<li><a href="#h2-czym-różni-się-revision-deactivate-od-revision-delete-i-containerapp-stop">H2. Czym różni się <code>revision deactivate</code> od <code>revision delete</code> i <code>containerapp stop</code>?</a></li>
+<li><a href="#h3-ile-nieaktywnych-rewizji-zachowuje-się-domyślnie-i-jak-zmienić-próg">H3. Ile nieaktywnych rewizji zachowuje się domyślnie i jak zmienić próg?</a></li>
+<li><a href="#h4-co-robi-platforma-gdy-oblewa-sonda-readiness-a-co-przy-liveness">H4. Co robi platforma, gdy oblewa sonda readiness, a co przy liveness?</a></li>
+<li><a href="#h5-wymień-pięć-typowych-wzorców-awarii-rewizji-z-modułu">H5. Wymień pięć typowych wzorców awarii rewizji z modułu.</a></li>
+<li><a href="#h6-które-limity-sond-warto-znać">H6. Które limity sond warto znać?</a></li>
+<li><a href="#h7-jak-sprawdzić-historię-logów-konsoli-aplikacji-sprzed-tygodnia">H7. Jak sprawdzić historię logów konsoli aplikacji sprzed tygodnia?</a></li>
+<li><a href="#h8-co-zwiększysz-przy-throttlingu-cpu-a-co-przy-restartach-z-braku-pamięci">H8. Co zwiększysz przy throttlingu CPU, a co przy restartach z braku pamięci?</a></li>
+<li><strong><a href="#część-j---co-dalej">CZĘŚĆ J - CO DALEJ</a></strong></li>
+<li><a href="#j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</a></li>
+<li><a href="#j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</a></li>
+</ul>
+<!-- /toc -->
+
+<h1 id="część-a---aktualizacja-obrazów-i-rewizje">CZĘŚĆ A - AKTUALIZACJA OBRAZÓW I REWIZJE</h1>
+<h2 id="a1-tagi-i-digesty-kiedy-które">A1. Tagi i digesty: kiedy które</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p><strong>Tag</strong> obrazu (np. <code>dev</code>, <code>v2</code>) to wygodna, ale <strong>zmienna</strong> etykieta: ten sam tag może z czasem wskazywać inny obraz. <strong>Digest</strong> (skrót <code>sha256:...</code>) to <strong>niezmienny</strong> identyfikator konkretnej zawartości obrazu. Dla AI ważna jest identyfikowalność: chcesz powiązać zachowanie usługi z konkretnym buildem modelu. Gdy odwołujesz się do digestu, możesz udowodnić, jaki artefakt obsługiwał żądania podczas incydentu. Tag traktuj jako wygodę, nie gwarancję niezmienności.</p>
 <p>(egzamin je lubi: produkcja = digest, np. <code>myregistry.azurecr.io/myapp@sha256:&lt;digest&gt;</code>; tag <code>latest</code> nie daje identyfikowalności)</p>
-<h2 id="a2-aktualizacja-obrazu-tworzy-nowa-rewizje">A2. Aktualizacja obrazu tworzy nową rewizję</h2>
+<h2 id="a2-aktualizacja-obrazu-tworzy-nową-rewizję">A2. Aktualizacja obrazu tworzy nową rewizję</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Zmiana obrazu tworzy nową rewizję z nowym szablonem. Zanim skierujesz na nią ruch, sprawdzasz jej zdrowie; dzięki temu ruch produkcyjny nie trafia do rewizji, która nie startuje, nie przechodzi sond albo pada pod obciążeniem.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp update \
@@ -229,7 +284,7 @@ az containerapp show \
 
 <p>Objaśnienie: (1) aktualizacja obrazu po digeście; (2) odczyt szablonu kontenerów, żeby potwierdzić, jaki obraz zapisała platforma.</p>
 <p>Przypomnienie z modułu 04 (szczegóły: <code>04-deploy-containers-azure-container-apps.md</code> §B4): nową rewizję tworzą tylko zmiany w sekcji <code>template</code> (revision-scope), a nie zmiany w <code>configuration</code> (np. ingress, wartości sekretów). [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
-<h2 id="a3-tryby-rewizji-i-znaczenie-sowa-active">A3. Tryby rewizji i znaczenie słowa "active"</h2>
+<h2 id="a3-tryby-rewizji-i-znaczenie-słowa-active">A3. Tryby rewizji i znaczenie słowa "active"</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p><strong>Tryb rewizji</strong> (revision mode) określa, ile rewizji może być aktywnych naraz:</p>
 <table>
@@ -255,7 +310,7 @@ az containerapp show \
 </table>
 <p><strong>Active</strong> to stan operacyjny: rewizja może przyjmować ruch. Rewizja może istnieć, ale nie być aktywna; nieaktywne warto trzymać do badania awarii i planowania wycofania (rollback). Podczas awarii często najpierw <strong>dezaktywujesz</strong> problematyczną rewizję, żeby nie dostawała ruchu.</p>
 <p>Wartości parametru CLI <code>--revisions-mode</code>: <code>labels</code>, <code>multiple</code>, <code>single</code>. Zmiana trybu rewizji to zmiana application-scope. Podział ruchu i etykiety omawia moduł 06. [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest] [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
-<h2 id="a4-lista-szczegoy-dezaktywacja-i-porzadki">A4. Lista, szczegóły, dezaktywacja i porządki</h2>
+<h2 id="a4-lista-szczegóły-dezaktywacja-i-porządki">A4. Lista, szczegóły, dezaktywacja i porządki</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Rewizje to jednostka, którą badasz podczas rolloutu. Lista pokazuje, która jest aktywna; <code>show</code> pozwala porównać konfigurację działającej rewizji z uszkodzoną.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp revision list --name &lt;app-name&gt; --resource-group &lt;resource-group&gt; -o table
@@ -278,7 +333,7 @@ az containerapp revision deactivate --name &lt;app-name&gt; --resource-group &lt
 <li><strong>Zdefiniuj retencję:</strong> Container Apps automatycznie czyści nieaktywne rewizje po przekroczeniu <strong>100</strong>; próg zmienisz parametrem <code>--max-inactive-revisions</code>. Dokumentacja potwierdza domyślne 100 nieaktywnych rewizji; w lokalnym teście (CLI 2.90.0, rozszerzenie 1.3.0b6) parametr jest oznaczony jako <strong>Preview</strong>. [docs: https://learn.microsoft.com/azure/container-apps/revisions] [autor: test 2026-11-22]</li>
 </ul>
 <hr />
-<h1 id="czesc-b-cykl-zycia-aplikacji">CZĘŚĆ B - CYKL ŻYCIA APLIKACJI</h1>
+<h1 id="część-b---cykl-życia-aplikacji">CZĘŚĆ B - CYKL ŻYCIA APLIKACJI</h1>
 <h2 id="b1-stop-restart-czy-skalowanie-do-zera">B1. Stop, restart czy skalowanie do zera</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>Zarządzanie cyklem życia wspiera kontrolę kosztów i reakcję na incydenty. Czasem trzeba wstrzymać usługę podczas awarii dostawcy, zrestartować po zmianie konfiguracji albo zawęzić skutki, badając złą rewizję.</p>
@@ -317,7 +372,7 @@ az containerapp start --name &lt;app-name&gt; --resource-group &lt;resource-grou
 </code></pre></div>
 
 <p>Przetestuj akcje cyklu życia w środowisku nieprodukcyjnym, zanim włączysz je do zautomatyzowanej reakcji na incydent.</p>
-<h2 id="b3-restart-aplikacji-po-zym-stanie-uruchomieniowym">B3. Restart aplikacji po złym stanie uruchomieniowym</h2>
+<h2 id="b3-restart-aplikacji-po-złym-stanie-uruchomieniowym">B3. Restart aplikacji po złym stanie uruchomieniowym</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>Restart wymusza restart replik i może wyczyścić chwilowe stany awarii. Nie zastępuje szukania przyczyny: połącz go z oglądaniem logów, żeby wiedzieć, czy naprawił problem, czy tylko odsunął następną awarię.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp restart --name &lt;app-name&gt; --resource-group &lt;resource-group&gt;
@@ -365,8 +420,8 @@ az containerapp start --name &lt;app-name&gt; --resource-group &lt;resource-grou
 </code></pre></div>
 
 <hr />
-<h1 id="czesc-c-logi-i-rozwiazywanie-problemow">CZĘŚĆ C - LOGI I ROZWIĄZYWANIE PROBLEMÓW</h1>
-<h2 id="c1-strumieniowanie-logow">C1. Strumieniowanie logów</h2>
+<h1 id="część-c---logi-i-rozwiązywanie-problemów">CZĘŚĆ C - LOGI I ROZWIĄZYWANIE PROBLEMÓW</h1>
+<h2 id="c1-strumieniowanie-logów">C1. Strumieniowanie logów</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Logi to główny sygnał diagnostyczny w zarządzanej platformie kontenerów: wiążą żądania z wersjami modelu, tłumaczą skoki opóźnień i pokazują błędy zależności bez dostępu do powłoki kontenera. Container Apps integruje się z Azure Monitor, a w trakcie incydentu możesz też oglądać logi na żywo (<strong>log streaming</strong>). Dostęp do logów zależy od konfiguracji środowiska: sprawdź, czy środowisko jest połączone z Log Analytics albo użyj strumieniowania.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp logs show \
@@ -376,7 +431,7 @@ az containerapp start --name &lt;app-name&gt; --resource-group &lt;resource-grou
 </code></pre></div>
 
 <p>Strumień jest przydatny, gdy da się szybko odtworzyć błąd (żądanie z wyjątkiem, pętla awarii nowej rewizji). Łącz go z logowaniem strukturalnym, żeby filtrować po identyfikatorach żądania i rewizji.</p>
-<h2 id="c2-logi-ktore-pomagaja-przy-ai">C2. Logi, które pomagają przy AI</h2>
+<h2 id="c2-logi-które-pomagają-przy-ai">C2. Logi, które pomagają przy AI</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Usługi AI zachowują się różnie dla różnych danych wejściowych, więc logi muszą mieć kontekst, ale bez wrażliwych treści: loguj <strong>identyfikatory i metadane</strong>, a nie surowe dokumenty czy prompty. Zalecane pola:</p>
 <ul>
@@ -385,7 +440,7 @@ az containerapp start --name &lt;app-name&gt; --resource-group &lt;resource-grou
 <li><strong>Model version:</strong> nazwa lub wersja wdrożenia modelu użytego w żądaniu.</li>
 <li><strong>Latency breakdown:</strong> czas całkowity i, jeśli się da, czasy kluczowych zależności.</li>
 </ul>
-<h2 id="c3-procedura-dla-awarii-zwiazanej-z-jedna-rewizja">C3. Procedura dla awarii związanej z jedną rewizją</h2>
+<h2 id="c3-procedura-dla-awarii-związanej-z-jedną-rewizją">C3. Procedura dla awarii związanej z jedną rewizją</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Awarie rewizji dzielą się na: błędy startu, błędy sond, błędy konfiguracji i wyjątki w czasie działania. Aplikacja może np. zakończyć się od razu przez brak zmiennej środowiskowej albo wystartować, ale nie przejść readiness przez złą ścieżkę. Procedura, która szybko zawęża zakres:</p>
 <ol>
@@ -394,7 +449,7 @@ az containerapp start --name &lt;app-name&gt; --resource-group &lt;resource-grou
 <li>Porównaj konfigurację działającej i uszkodzonej rewizji.</li>
 <li>Zastosuj celową poprawkę i sprawdź, czy kolejna rewizja staje się gotowa.</li>
 </ol>
-<h2 id="c4-historia-logow-log-analytics-i-kql">C4. Historia logów: Log Analytics i KQL</h2>
+<h2 id="c4-historia-logów-log-analytics-i-kql">C4. Historia logów: Log Analytics i KQL</h2>
 <p><em>Źródło: [unit 7] + [docs: https://learn.microsoft.com/azure/container-apps/log-monitoring]</em></p>
 <p><code>az containerapp logs show</code> pokazuje tylko niedawne logi konsoli. Historię trzymasz w obszarze <strong>Log Analytics</strong> środowiska i odpytujesz językiem <strong>KQL</strong> (Kusto Query Language, język zapytań do logów). [unit 7]</p>
 <p>Dokumentacja podaje trzy typy logów: <strong>console</strong> (stdout/stderr kontenerów), <strong>system</strong> (generowane przez usługę) i <strong>HTTP</strong> (warstwa ingress, po włączeniu diagnostic settings). Tabele (kategoria Custom logs): <code>ContainerAppConsoleLogs_CL</code> i <code>ContainerAppSystemLogs_CL</code>. W tabeli konsoli ważne kolumny to <code>ContainerAppName_s</code> (nazwa aplikacji), <code>RevisionName_s</code> (rewizja), <code>ContainerGroupName_g</code> (replika) i <code>Log_s</code> (komunikat). Nowe wpisy pojawiają się z opóźnieniem kilku minut. [docs: https://learn.microsoft.com/azure/container-apps/log-monitoring]</p>
@@ -408,7 +463,7 @@ az monitor log-analytics query -w $WORKSPACE_ID \
 
 <p>Objaśnienie: (1) <code>customerId</code> obszaru Log Analytics wzięty ze środowiska; (2) 20 ostatnich komunikatów aplikacji. [unit 7] Wariant z błędami: dodaj <code>and Log_s contains 'error'</code>. Do zapytań potrzebne jest rozszerzenie <code>log-analytics</code> (<code>az extension add --name log-analytics</code>). [unit 7]</p>
 <hr />
-<h1 id="czesc-d-sondy-zdrowia-health-probes">CZĘŚĆ D - SONDY ZDROWIA (HEALTH PROBES)</h1>
+<h1 id="część-d---sondy-zdrowia-health-probes">CZĘŚĆ D - SONDY ZDROWIA (HEALTH PROBES)</h1>
 <h2 id="d1-readiness-kontra-liveness-i-startup">D1. Readiness kontra liveness (i startup)</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</em></p>
 <p><strong>Sonda</strong> (probe) to cykliczne sprawdzenie repliki. Sondy chronią użytkowników podczas rolloutów, bo nie wpuszczają ruchu do niezdrowych replik.</p>
@@ -439,7 +494,7 @@ az monitor log-analytics query -w $WORKSPACE_ID \
 </tbody>
 </table>
 <p>Dla usługi AI readiness chroni ładowanie modelu i gotowość zależności; liveness to "zawór bezpieczeństwa" dla zakleszczeń i niekontrolowanego wzrostu pamięci. Zbyt agresywna liveness powoduje zbędne restarty i zimne starty. [unit 5] Typy sond w dokumentacji: <code>Liveness</code>, <code>Readiness</code>, <code>Startup</code>; protokół HTTP (<code>httpGet</code>) lub TCP (<code>tcpSocket</code>); <code>exec</code> nie jest wspierane. [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</p>
-<h2 id="d2-typowe-przyczyny-porazek-sond">D2. Typowe przyczyny porażek sond</h2>
+<h2 id="d2-typowe-przyczyny-porażek-sond">D2. Typowe przyczyny porażek sond</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Porażki sond to najczęściej błędy konfiguracji, nie kodu. Sprawdź najpierw: zły <strong>port</strong>, zła <strong>ścieżka</strong>, zbyt krótkie <strong>limity czasu</strong> (timeouts) dla ładowania modelu lub rozgrzewki oraz zależność od wywołania zewnętrznego przy starcie, które zawodzi lub jest wolne.</p>
 <h2 id="d3-konfiguracja-sond-w-szablonie-aplikacji">D3. Konfiguracja sond w szablonie aplikacji</h2>
@@ -470,10 +525,10 @@ az monitor log-analytics query -w $WORKSPACE_ID \
 <span class="w">        </span><span class="nt">failureThreshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
 </code></pre></div>
 
-<h2 id="d4-rozwiazywanie-problemow-z-sondami-podczas-rolloutu">D4. Rozwiązywanie problemów z sondami podczas rolloutu</h2>
+<h2 id="d4-rozwiązywanie-problemów-z-sondami-podczas-rolloutu">D4. Rozwiązywanie problemów z sondami podczas rolloutu</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Łącz status rewizji i logi: status mówi, czy platforma uważa rewizję za zdrową, a logi, czy aplikacja wystartowała i jaki endpoint wystawiła. Endpointy sond nie powinny zależeć od zewnętrznych systemów, które mogą być niedostępne podczas incydentu. Jeśli usługa ładuje model przy starcie, dostrój <code>initialDelaySeconds</code> i <code>failureThreshold</code>. Gdy liveness zawodzi krótko po starcie, jest albo zbyt agresywna, albo proces szybko pada przez złą konfigurację.</p>
-<h2 id="d5-domyslne-sondy-i-limity-z-dokumentacji">D5. Domyślne sondy i limity (z dokumentacji)</h2>
+<h2 id="d5-domyślne-sondy-i-limity-z-dokumentacji">D5. Domyślne sondy i limity (z dokumentacji)</h2>
 <p><em>Źródło: [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</em></p>
 <p>Gdy włączysz ingress i nie zdefiniujesz danego typu sondy, platforma dodaje <strong>domyślne sondy TCP</strong> na porcie docelowym ingress (poza profilami GPU). Przy sondach TCP porty muszą się zgadzać z <code>targetPort</code> ingress. [docs: https://learn.microsoft.com/azure/container-apps/health-probes]</p>
 <table>
@@ -504,11 +559,11 @@ az monitor log-analytics query -w $WORKSPACE_ID \
 </blockquote>
 <p>(egzamin je lubi: readiness = ruch, liveness = restart; limit <code>initialDelaySeconds</code> to 60; <code>successThreshold</code> musi być 1 dla liveness i startup)</p>
 <hr />
-<h1 id="czesc-e-optymalizacja-zasobow-i-skalowania">CZĘŚĆ E - OPTYMALIZACJA ZASOBÓW I SKALOWANIA</h1>
-<h2 id="e1-rozmiar-repliki-a-cakowity-koszt">E1. Rozmiar repliki a całkowity koszt</h2>
+<h1 id="część-e---optymalizacja-zasobów-i-skalowania">CZĘŚĆ E - OPTYMALIZACJA ZASOBÓW I SKALOWANIA</h1>
+<h2 id="e1-rozmiar-repliki-a-całkowity-koszt">E1. Rozmiar repliki a całkowity koszt</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <p>Zasoby i skalowanie decydują, czy usługa AI jest responsywna i mieści się w budżecie. Za mało CPU = ograniczanie (<strong>throttling</strong>) i skoki opóźnień; za mało pamięci = restarty i powtarzane zimne starty. Container Apps skaluje przez dodawanie i usuwanie replik. Koszt całkowity to rozmiar repliki (CPU i pamięć) razy liczba replik potrzebna w szczycie. Dla API mierz opóźnienie pod współbieżnością i obserwuj throttling; dla workerów mierz przepustowość i obserwuj presję pamięci.</p>
-<h2 id="e2-zmiana-cpu-i-pamieci">E2. Zmiana CPU i pamięci</h2>
+<h2 id="e2-zmiana-cpu-i-pamięci">E2. Zmiana CPU i pamięci</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <div class="codehilite"><pre><span></span><code>az containerapp update \
   --name &lt;app-name&gt; \
@@ -521,7 +576,7 @@ az monitor log-analytics query -w $WORKSPACE_ID \
 <h2 id="e3-skalowanie-synchroniczne-api-a-worker-w-tle">E3. Skalowanie: synchroniczne API a worker w tle</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <p>API synchroniczne potrzebuje stabilnej gotowości i przewidywalnych opóźnień, więc często ustawia się <strong>minimalną liczbę replik</strong> (mniej zimnych startów). Worker w tle zwykle zniesie skalowanie do zera, jeśli jest sterowany zdarzeniami i potrafi bezpiecznie dokończyć pracę przy zmniejszaniu liczby replik. Rollout tworzy nowe repliki; przy wolnym starcie mogą dłużej nie być gotowe, więc <strong>dopasuj skalowanie do konfiguracji sond</strong>, żeby rollout nie wyglądał na nieudany tylko dlatego, że rozgrzewka trwa. Szczegóły reguł skalowania: moduł 06.</p>
-<h2 id="e4-dobre-praktyki-kosztu-i-wydajnosci">E4. Dobre praktyki kosztu i wydajności</h2>
+<h2 id="e4-dobre-praktyki-kosztu-i-wydajności">E4. Dobre praktyki kosztu i wydajności</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <p>Optymalizacja jest iteracyjna: zmieniaj jedną zmienną naraz, żeby wiedzieć, co poprawiło przepustowość lub opóźnienie.</p>
 <ul>
@@ -531,12 +586,12 @@ az monitor log-analytics query -w $WORKSPACE_ID \
 <li><strong>Reassess after model changes:</strong> nowe wersje modeli zmieniają czas startu, zużycie pamięci i opóźnienia.</li>
 </ul>
 <hr />
-<h1 id="czesc-f-cwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
+<h1 id="część-f---ćwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
 <p>Przeczytaj części A-E. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze: rób je w osobnych grupach zasobów i zawsze wykonuj <strong>Sprzątanie</strong>. Kod aplikacji i SDK jest w Pythonie; odpowiednik C# jest w ćwiczeniu z kodem (I3).</p>
 <blockquote>
 <p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, <code>az version</code>, testy lokalne): Python 3.12; azure-mgmt-appcontainers 5.1.0; azure-identity 1.27.0; azure-monitor-query <strong>2.0.0</strong> (2025-07-30); C#: .NET SDK 10.0, Azure.ResourceManager.AppContainers 1.6.0, Azure.Identity 1.21.0, Azure.Monitor.Query.Logs <strong>1.0.0</strong> (nowy pakiet; starszy Azure.Monitor.Query ma 1.7.1); Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6 (beta). Przed użyciem sprawdź PyPI i NuGet.</p>
 </blockquote>
-<h2 id="i1-diagnoza-brakujacej-zmiennej-zego-portu-i-historii-logow-lab-moduu">I1. Diagnoza brakującej zmiennej, złego portu i historii logów (lab modułu)</h2>
+<h2 id="i1-diagnoza-brakującej-zmiennej-złego-portu-i-historii-logów-lab-modułu">I1. Diagnoza brakującej zmiennej, złego portu i historii logów (lab modułu)</h2>
 <p>(rozwinięcie jednostki 7; scenariusz: [unit 7])</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash), katalog z plikami <code>api/main.py</code>, <code>api/requirements.txt</code>, <code>api/Dockerfile</code> z ćwiczenia I1 w <code>04-deploy-containers-azure-container-apps.md</code> (pełny kod jest tam).</p>
 <blockquote>
@@ -599,7 +654,7 @@ az<span class="w"> </span>monitor<span class="w"> </span>log-analytics<span clas
 az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </span>--name<span class="w"> </span><span class="nv">$RG</span><span class="w">      </span><span class="c1"># po kilku minutach powinno wypisać false</span>
 </code></pre></div>
 
-<h2 id="i2-sondy-zdrowia-w-yaml-i-operacje-cyklu-zycia">I2. Sondy zdrowia w YAML i operacje cyklu życia</h2>
+<h2 id="i2-sondy-zdrowia-w-yaml-i-operacje-cyklu-życia">I2. Sondy zdrowia w YAML i operacje cyklu życia</h2>
 <p>(rozwinięcie sekcji A3-A4, B1-B3, D3-D5)</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash); plik <code>probes.yml</code>; publiczny obraz quickstart (nie potrzeba ACR).</p>
 <div class="codehilite"><pre><span></span><code><span class="nv">RG</span><span class="o">=</span>rg-aca-manage-i2<span class="p">;</span><span class="w"> </span><span class="nv">LOC</span><span class="o">=</span>westeurope
@@ -762,31 +817,31 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 <p><strong>Sprawdź:</strong> (a) te same rewizje i stan aktywności co w CLI; (b) błąd "nie znaleziono" dla nazwy rewizji (dokładny komunikat zależy od wersji SDK) [autor: niezweryfikowane]; (c) te same komunikaty <code>Log_s</code>; tabela może być pusta kilka minut po wdrożeniu [docs: https://learn.microsoft.com/azure/container-apps/log-monitoring].</p>
 <p><strong>Sprzątanie:</strong> brak (skrypty tylko czytają i restartują); po I3 wykonaj Sprzątanie I1.</p>
 <hr />
-<h1 id="czesc-g-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<h1 id="część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
 <p>Learn nie pokazuje poprawnych odpowiedzi w ocenie modułu, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
-<h2 id="g1-najlepsza-identyfikowalnosc-nowego-obrazu-na-produkcji">G1. Najlepsza identyfikowalność nowego obrazu na produkcji</h2>
+<h2 id="g1-najlepsza-identyfikowalność-nowego-obrazu-na-produkcji">G1. Najlepsza identyfikowalność nowego obrazu na produkcji</h2>
 <p>-&gt; <em>Odwołanie po digeście (<code>myregistry.azurecr.io/app@sha256:&lt;digest&gt;</code>).</em> Tag <code>latest</code> nie jest niezmienny, a przebudowa lokalnie w każdym środowisku nie gwarantuje tego samego artefaktu. <em>(odpowiedź wnioskowana: unit 2, sekcja "Use tags and digests intentionally")</em></p>
-<h2 id="g2-zdjecie-rewizji-z-ruchu-bez-kasowania">G2. Zdjęcie rewizji z ruchu bez kasowania</h2>
+<h2 id="g2-zdjęcie-rewizji-z-ruchu-bez-kasowania">G2. Zdjęcie rewizji z ruchu bez kasowania</h2>
 <p>-&gt; <em><code>az containerapp revision deactivate</code>.</em> <code>revision delete</code> kasuje rewizję, a <code>az containerapp stop</code> zatrzymuje całą aplikację. <em>(odpowiedź wnioskowana: unit 2, sekcja "List, investigate, and manage revisions")</em></p>
-<h2 id="g3-rewizja-oblewa-readiness-zaraz-po-wdrozeniu-najczestsza-przyczyna">G3. Rewizja oblewa readiness zaraz po wdrożeniu - najczęstsza przyczyna</h2>
+<h2 id="g3-rewizja-oblewa-readiness-zaraz-po-wdrożeniu---najczęstsza-przyczyna">G3. Rewizja oblewa readiness zaraz po wdrożeniu - najczęstsza przyczyna</h2>
 <p>-&gt; <em>Sonda readiness wskazuje zły port lub ścieżkę serwera HTTP kontenera.</em> Zbyt "mały" obraz i brak routingu do internetu nie są typowymi przyczynami porażki readiness. <em>(odpowiedź wnioskowana: unit 5, sekcja "Recognize common probe failure causes")</em></p>
-<h2 id="g4-podejrzewasz-wyjatek-tylko-w-jednej-rewizji-pierwszy-krok">G4. Podejrzewasz wyjątek tylko w jednej rewizji - pierwszy krok</h2>
+<h2 id="g4-podejrzewasz-wyjątek-tylko-w-jednej-rewizji---pierwszy-krok">G4. Podejrzewasz wyjątek tylko w jednej rewizji - pierwszy krok</h2>
 <p>-&gt; <em>Strumieniować logi aplikacji i filtrować po rewizji, odtwarzając żądanie.</em> Kasowanie starszych rewizji i zwiększanie CPU/pamięci przed badaniem to nie jest potwierdzenie problemu. <em>(odpowiedź wnioskowana: unit 4, sekcje "Use log streaming" i "Troubleshoot revision-specific failures")</em></p>
-<h2 id="g5-wysokie-opoznienie-i-throttling-cpu-w-szczycie">G5. Wysokie opóźnienie i throttling CPU w szczycie</h2>
+<h2 id="g5-wysokie-opóźnienie-i-throttling-cpu-w-szczycie">G5. Wysokie opóźnienie i throttling CPU w szczycie</h2>
 <p>-&gt; <em>Zwiększyć CPU na replikę, a potem ponownie ocenić reguły skalowania względem przepustowości.</em> Dezaktywacja najnowszej rewizji nie rozwiązuje throttlingu, a zamiana digestu na tag nie ma związku z CPU. <em>(odpowiedź wnioskowana: unit 6, sekcja "Best practices for cost and performance: Size for the bottleneck")</em></p>
 <hr />
-<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
-<h2 id="h1-czym-rozni-sie-tag-od-digestu-i-ktorego-uzyc-na-produkcji">H1. Czym różni się tag od digestu i którego użyć na produkcji?</h2>
+<h1 id="część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-czym-różni-się-tag-od-digestu-i-którego-użyć-na-produkcji">H1. Czym różni się tag od digestu i którego użyć na produkcji?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Tag jest zmienną etykietą (może wskazywać różne obrazy), digest (<code>sha256:...</code>) jest niezmiennym identyfikatorem zawartości. Na produkcji używaj digestu dla identyfikowalności.</p>
 </details>
-<h2 id="h2-czym-rozni-sie-revision-deactivate-od-revision-delete-i-containerapp-stop">H2. Czym różni się <code>revision deactivate</code> od <code>revision delete</code> i <code>containerapp stop</code>?</h2>
+<h2 id="h2-czym-różni-się-revision-deactivate-od-revision-delete-i-containerapp-stop">H2. Czym różni się <code>revision deactivate</code> od <code>revision delete</code> i <code>containerapp stop</code>?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>deactivate</code> zdejmuje rewizję z ruchu bez kasowania (zachowuje dowody i rollback); <code>delete</code> usuwa rewizję; <code>stop</code> zatrzymuje całą aplikację, więc jest zbyt szerokie, gdy zła jest jedna rewizja.</p>
 </details>
-<h2 id="h3-ile-nieaktywnych-rewizji-zachowuje-sie-domyslnie-i-jak-zmienic-prog">H3. Ile nieaktywnych rewizji zachowuje się domyślnie i jak zmienić próg?</h2>
+<h2 id="h3-ile-nieaktywnych-rewizji-zachowuje-się-domyślnie-i-jak-zmienić-próg">H3. Ile nieaktywnych rewizji zachowuje się domyślnie i jak zmienić próg?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Domyślnie 100; zmiana przez <code>--max-inactive-revisions</code> (w teście lokalnym oznaczone jako Preview).</p>
@@ -796,29 +851,29 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 <summary>Odpowiedź</summary>
 <p>Readiness: replika nie dostaje ruchu. Liveness: replika jest restartowana. Rewizja jest oznaczona jako niezdrowa, gdy jakakolwiek replika oblewa readiness.</p>
 </details>
-<h2 id="h5-wymien-piec-typowych-wzorcow-awarii-rewizji-z-moduu">H5. Wymień pięć typowych wzorców awarii rewizji z modułu.</h2>
+<h2 id="h5-wymień-pięć-typowych-wzorców-awarii-rewizji-z-modułu">H5. Wymień pięć typowych wzorców awarii rewizji z modułu.</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Błędy pobierania obrazu, niezgodność portów, brak konfiguracji (zmienne/sekrety), błędy sond, presja zasobów (limit pamięci, throttling CPU).</p>
 </details>
-<h2 id="h6-ktore-limity-sond-warto-znac">H6. Które limity sond warto znać?</h2>
+<h2 id="h6-które-limity-sond-warto-znać">H6. Które limity sond warto znać?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>initialDelaySeconds</code> 1-60; <code>periodSeconds</code> 1-240 (domyślnie 10); <code>timeoutSeconds</code> 1-240 (domyślnie 1); <code>failureThreshold</code> 1-10 (domyślnie 3); <code>successThreshold</code> musi wynosić 1 dla liveness i startup.</p>
 </details>
-<h2 id="h7-jak-sprawdzic-historie-logow-konsoli-aplikacji-sprzed-tygodnia">H7. Jak sprawdzić historię logów konsoli aplikacji sprzed tygodnia?</h2>
+<h2 id="h7-jak-sprawdzić-historię-logów-konsoli-aplikacji-sprzed-tygodnia">H7. Jak sprawdzić historię logów konsoli aplikacji sprzed tygodnia?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>W obszarze Log Analytics środowiska: tabela <code>ContainerAppConsoleLogs_CL</code> (kolumny <code>ContainerAppName_s</code>, <code>RevisionName_s</code>, <code>Log_s</code>), np. przez <code>az monitor log-analytics query</code>. <code>az containerapp logs show</code> pokazuje tylko niedawne logi.</p>
 </details>
-<h2 id="h8-co-zwiekszysz-przy-throttlingu-cpu-a-co-przy-restartach-z-braku-pamieci">H8. Co zwiększysz przy throttlingu CPU, a co przy restartach z braku pamięci?</h2>
+<h2 id="h8-co-zwiększysz-przy-throttlingu-cpu-a-co-przy-restartach-z-braku-pamięci">H8. Co zwiększysz przy throttlingu CPU, a co przy restartach z braku pamięci?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Throttling CPU: więcej CPU na replikę; restarty z braku pamięci: więcej pamięci. Zmieniaj jedną zmienną naraz i oceniaj ponownie reguły skalowania.</p>
 </details>
 <hr />
-<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
-<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<h1 id="część-j---co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
 <p><em>Źródło: [moduł kursu: scale-containers-azure-container-apps] + [moduł kursu: dynamic-sessions-azure-container-apps]</em></p>
 <p>Dalej: moduł 06 (reguły skalowania, KEDA, rewizje i podział ruchu), moduł 07 (dynamic sessions). Wróć do części D, gdy rozwiązujesz zadania o sondach, i do C4, gdy piszesz zapytania KQL o logi.</p>
 <p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30):</p>

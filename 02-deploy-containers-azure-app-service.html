@@ -202,7 +202,7 @@ a{text-decoration:none}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
 }
 </style></head>
-<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-02-kontenery-w-azure-app-service-zroda-obrazu-runtime-ustawienia-aplikacji-diagnostyka">Moduł 02: Kontenery w Azure App Service (źródła obrazu, runtime, ustawienia aplikacji, diagnostyka)</h1>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="moduł-02-kontenery-w-azure-app-service-źródła-obrazu-runtime-ustawienia-aplikacji-diagnostyka">Moduł 02: Kontenery w Azure App Service (źródła obrazu, runtime, ustawienia aplikacji, diagnostyka)</h1>
 <p>Moduł Microsoft Learn: <strong>Deploy containers to Azure App Service</strong> - https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-app-service/
 Ścieżka: Implement container application hosting on Azure (moduł 2 z 3), kurs AI-200T00, egzamin <strong>AI-200</strong> (Azure AI Cloud Developer Associate), domena 1 "Develop containerized solutions on Azure".
 Cel: po tym module umiesz wdrożyć własny kontener z rejestru do Azure App Service, ustawić port, polecenie startowe, trwały magazyn i kontrolę stanu, przekazać konfigurację przez ustawienia aplikacji (w tym sekrety z Key Vault) oraz diagnozować problemy logami i konsolą Kudu.
@@ -215,13 +215,69 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 - <code>[autor]</code> - dodane przez autora tutoriala; <code>[autor: test &lt;data&gt;]</code> - sprawdzone testem w danym dniu; <code>[autor: niezweryfikowane]</code> - jeszcze nie sprawdzone w Azure.</p>
 <p>W tekście "moduł N" znaczy plik tutoriala <code>0N-*.md</code> (moduł 01 = <code>01-store-manage-containers-azure-container-registry.md</code>).</p>
 <hr />
-<h1 id="czesc-a-wdrazanie-kontenera-do-app-service">CZĘŚĆ A - WDRAŻANIE KONTENERA DO APP SERVICE</h1>
-<h2 id="a1-czym-jest-app-service-dla-kontenerow-i-po-co">A1. Czym jest App Service dla kontenerów i po co</h2>
+<!-- toc -->
+<p><strong>Spis treści</strong></p>
+<ul>
+<li><strong><a href="#część-a---wdrażanie-kontenera-do-app-service">CZĘŚĆ A - WDRAŻANIE KONTENERA DO APP SERVICE</a></strong></li>
+<li><a href="#a1-czym-jest-app-service-dla-kontenerów-i-po-co">A1. Czym jest App Service dla kontenerów i po co</a></li>
+<li><a href="#a2-źródła-obrazu">A2. Źródła obrazu</a></li>
+<li><a href="#a3-wdrożenie-przez-portal-azure">A3. Wdrożenie przez portal Azure</a></li>
+<li><a href="#a4-uwierzytelnianie-do-acr-tożsamość-zarządzana-albo-dane-administratora">A4. Uwierzytelnianie do ACR: tożsamość zarządzana albo dane administratora</a></li>
+<li><a href="#a5-wdrożenie-z-cli-z-innych-rejestrów-i-z-vs-code">A5. Wdrożenie z CLI, z innych rejestrów i z VS Code</a></li>
+<li><a href="#a6-aktualizacja-obrazu-ciągłe-wdrażanie-pobieranie-warstw-i-weryfikacja">A6. Aktualizacja obrazu, ciągłe wdrażanie, pobieranie warstw i weryfikacja</a></li>
+<li><strong><a href="#część-b---zachowanie-kontenera-w-runtime">CZĘŚĆ B - ZACHOWANIE KONTENERA W RUNTIME</a></strong></li>
+<li><a href="#b1-polecenie-startowe">B1. Polecenie startowe</a></li>
+<li><a href="#b2-port-kontenera-websites_port">B2. Port kontenera (<code>WEBSITES_PORT</code>)</a></li>
+<li><a href="#b3-trwały-magazyn-websites_enable_app_service_storage">B3. Trwały magazyn (<code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code>)</a></li>
+<li><a href="#b4-always-on">B4. Always On</a></li>
+<li><a href="#b5-kontrola-stanu-health-check">B5. Kontrola stanu (health check)</a></li>
+<li><strong><a href="#część-c---ustawienia-aplikacji-i-sekrety">CZĘŚĆ C - USTAWIENIA APLIKACJI I SEKRETY</a></strong></li>
+<li><a href="#c1-ustawienia-aplikacji-app-settings">C1. Ustawienia aplikacji (app settings)</a></li>
+<li><a href="#c2-connection-strings">C2. Connection strings</a></li>
+<li><a href="#c3-edycja-zbiorcza">C3. Edycja zbiorcza</a></li>
+<li><a href="#c4-ustawienia-slotów-slot-settings">C4. Ustawienia slotów (slot settings)</a></li>
+<li><a href="#c5-odwołania-do-key-vault">C5. Odwołania do Key Vault</a></li>
+<li><a href="#c6-weryfikacja-konfiguracji">C6. Weryfikacja konfiguracji</a></li>
+<li><strong><a href="#część-d---obserwowanie-i-diagnozowanie-kontenera">CZĘŚĆ D - OBSERWOWANIE I DIAGNOZOWANIE KONTENERA</a></strong></li>
+<li><a href="#d1-logi-kontenera">D1. Logi kontenera</a></li>
+<li><a href="#d2-strumień-logów-log-stream">D2. Strumień logów (log stream)</a></li>
+<li><a href="#d3-konsola-diagnostyczna-kudu-scm">D3. Konsola diagnostyczna Kudu (SCM)</a></li>
+<li><a href="#d4-diagnostyka-platformowa-i-log-analytics">D4. Diagnostyka platformowa i Log Analytics</a></li>
+<li><a href="#d5-dostęp-ssh-do-kontenera">D5. Dostęp SSH do kontenera</a></li>
+<li><a href="#d6-typowe-problemy-i-rozwiązania">D6. Typowe problemy i rozwiązania</a></li>
+<li><strong><a href="#część-e---ćwiczenia">CZĘŚĆ E - ĆWICZENIA</a></strong></li>
+<li><a href="#i1-wdrożenie-kontenera-z-acr-do-app-service-z-tożsamością-zarządzaną---python-i-c">I1. Wdrożenie kontenera z ACR do App Service z tożsamością zarządzaną - Python i C#</a></li>
+<li><a href="#i2-ustawienia-aplikacji-trwały-magazyn-always-on-health-check-i-slot-settings">I2. Ustawienia aplikacji, trwały magazyn, Always On, health check i slot settings</a></li>
+<li><a href="#i3-logi-strumień-logów-kudu-i-diagnoza-błędnego-portu">I3. Logi, strumień logów, Kudu i diagnoza błędnego portu</a></li>
+<li><strong><a href="#część-f---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</a></strong></li>
+<li><a href="#f1-obraz-nasłuchuje-na-porcie-8000-po-wdrożeniu-żądania-kończą-się-błędami-połączenia">F1. Obraz nasłuchuje na porcie 8000, po wdrożeniu żądania kończą się błędami połączenia</a></li>
+<li><a href="#f2-pliki-wyjściowe-znikają-po-restarcie-kontenera">F2. Pliki wyjściowe znikają po restarcie kontenera</a></li>
+<li><a href="#f3-inny-adres-api-dla-staging-i-produkcji-który-nie-ma-się-zamienić-podczas-swap">F3. Inny adres API dla staging i produkcji, który nie ma się zamienić podczas swap</a></li>
+<li><a href="#f4-kontener-startuje-ale-health-check-zawodzi-a-aplikacja-ma-endpoint-healthz-zwracający-200">F4. Kontener startuje, ale health check zawodzi, a aplikacja ma endpoint <code>/healthz</code> zwracający 200</a></li>
+<li><a href="#f5-sprawdzenie-czy-ustawienia-aplikacji-trafiły-do-działającego-kontenera">F5. Sprawdzenie, czy ustawienia aplikacji trafiły do działającego kontenera</a></li>
+<li><strong><a href="#część-g---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</a></strong></li>
+<li><a href="#g1-jakie-dwie-metody-uwierzytelniania-do-acr-obsługuje-app-service-i-którą-zalecasz-na-produkcji">G1. Jakie dwie metody uwierzytelniania do ACR obsługuje App Service i którą zalecasz na produkcji?</a></li>
+<li><a href="#g2-co-się-stanie-gdy-wypchniesz-nowy-obraz-pod-ten-sam-tag-który-app-service-już-wdrożył">G2. Co się stanie, gdy wypchniesz nowy obraz pod ten sam tag, który App Service już wdrożył?</a></li>
+<li><a href="#g3-do-czego-służy-websites_port-i-jaki-jest-port-domyślny">G3. Do czego służy <code>WEBSITES_PORT</code> i jaki jest port domyślny?</a></li>
+<li><a href="#g4-co-robi-websites_enable_app_service_storage-i-jaki-jest-domyślny-stan-na-linuksie">G4. Co robi <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> i jaki jest domyślny stan na Linuksie?</a></li>
+<li><a href="#g5-jaki-poziom-cenowy-jest-potrzebny-dla-always-on-i-co-to-robi">G5. Jaki poziom cenowy jest potrzebny dla Always On i co to robi?</a></li>
+<li><a href="#g6-jak-działa-health-check-w-app-service">G6. Jak działa health check w App Service?</a></li>
+<li><a href="#g7-czym-różnią-się-app-settings-od-connection-strings-i-które-wybierzesz-dla-pythona">G7. Czym różnią się app settings od connection strings i które wybierzesz dla Pythona?</a></li>
+<li><a href="#g8-jak-zapewnić-że-ustawienie-nie-zamieni-się-między-slotami-podczas-swap-i-jak-odwołać-się-do-sekretu-z-key-vault">G8. Jak zapewnić, że ustawienie nie zamieni się między slotami podczas swap, i jak odwołać się do sekretu z Key Vault?</a></li>
+<li><a href="#g9-wymień-narzędzia-diagnostyczne-app-service-i-do-czego-służy-każde">G9. Wymień narzędzia diagnostyczne App Service i do czego służy każde.</a></li>
+<li><strong><a href="#część-h---co-dalej">CZĘŚĆ H - CO DALEJ</a></strong></li>
+<li><a href="#h1-podsumowanie-następny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</a></li>
+<li><a href="#h2-uczciwie-o-egzaminie">H2. Uczciwie o egzaminie</a></li>
+</ul>
+<!-- /toc -->
+
+<h1 id="część-a---wdrażanie-kontenera-do-app-service">CZĘŚĆ A - WDRAŻANIE KONTENERA DO APP SERVICE</h1>
+<h2 id="a1-czym-jest-app-service-dla-kontenerów-i-po-co">A1. Czym jest App Service dla kontenerów i po co</h2>
 <p><em>Źródło: [unit 1] + [unit 2]</em></p>
 <p><strong>Azure App Service</strong> to w pełni zarządzana platforma do hostowania aplikacji webowych. Możesz na niej uruchamiać <strong>własny kontener</strong> (Web App for Containers): przynosisz obraz z rejestru, a platforma zajmuje się przydzielaniem maszyn, równoważeniem obciążenia (load balancing) i skalowaniem. Dostajesz też sloty wdrożeń (deployment slots = osobne środowiska tej samej aplikacji, np. staging) i zintegrowaną diagnostykę. App Service uruchamia kontenery <strong>Linux</strong> (ten moduł dotyczy Linuksa).</p>
 <p>Scenariusz z modułu: serwis przetwarzania dokumentów (przyjmuje dokumenty, wyciąga tekst i metadane, zwraca ustrukturyzowany wynik) w kontenerze. Wymagania: inna konfiguracja w każdym środowisku (dev: lokalny magazyn i szczegółowe logi; produkcja: konto Azure Storage i klucze API) <strong>bez przebudowy obrazu</strong>; widoczność działania (czy błąd to start kontenera, zła zmienna środowiskowa czy błąd aplikacji); automatyczne skalowanie przy zmiennym obciążeniu i krótki zimny start (cold start = start po bezczynności lub nowej instancji). [unit 1]</p>
 <p>Cele modułu: wdrażać własne kontenery z rejestrów; konfigurować zachowanie runtime (polecenie startowe, port, trwały magazyn); konfigurować ustawienia aplikacji i connection strings; obserwować i diagnozować kontenery narzędziami diagnostycznymi App Service. [unit 1]</p>
-<h2 id="a2-zroda-obrazu">A2. Źródła obrazu</h2>
+<h2 id="a2-źródła-obrazu">A2. Źródła obrazu</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Przy tworzeniu Web App for Containers wybierasz skąd App Service pobierze obraz (portal oferuje dwie opcje):</p>
 <table>
@@ -245,7 +301,7 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 </tr>
 </tbody>
 </table>
-<h2 id="a3-wdrozenie-przez-portal-azure">A3. Wdrożenie przez portal Azure</h2>
+<h2 id="a3-wdrożenie-przez-portal-azure">A3. Wdrożenie przez portal Azure</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Utworzenie aplikacji:</p>
 <ol>
@@ -256,7 +312,7 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 <li>Karta <strong>Container</strong>: konfiguracja źródła obrazu.</li>
 </ol>
 <p>Dla ACR: <strong>Image Source</strong> = <strong>Azure Container Registry</strong>; wybierz <strong>Registry</strong> (rejestry z tej subskrypcji pojawiają się same); wybierz <strong>Authentication</strong> (<strong>Managed Identity</strong> albo <strong>Admin credentials</strong>); wybierz <strong>Image</strong> i <strong>Tag</strong>. Dla innych rejestrów: <strong>Image Source</strong> = <strong>Other container registries</strong>; dla prywatnych podaj <strong>Server URL</strong> (np. <code>https://index.docker.io/v1/</code> dla Docker Hub), <strong>Username</strong>, <strong>Password</strong>; podaj <strong>Full Image Name and Tag</strong> (np. <code>nginx:latest</code>, <code>myuser/myapp:v1</code>).</p>
-<h2 id="a4-uwierzytelnianie-do-acr-tozsamosc-zarzadzana-albo-dane-administratora">A4. Uwierzytelnianie do ACR: tożsamość zarządzana albo dane administratora</h2>
+<h2 id="a4-uwierzytelnianie-do-acr-tożsamość-zarządzana-albo-dane-administratora">A4. Uwierzytelnianie do ACR: tożsamość zarządzana albo dane administratora</h2>
 <p><em>Źródło: [unit 2] + [unit 6-lab] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container]</em></p>
 <ul>
 <li><strong>Tożsamość zarządzana (managed identity)</strong> - zalecana na produkcji. App Service uwierzytelnia się w ACR tożsamością Azure, a nie zapisanym hasłem: nie ma rotacji haseł i jest lepszy audyt. Tożsamość musi mieć w rejestrze rolę <strong>AcrPull</strong> (pobieranie obrazów; to zasada najmniejszych uprawnień: aplikacja może pobierać, ale nie wypychać ani administrować). Dwa rodzaje:</li>
@@ -268,7 +324,7 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 </code></pre></div>
 
 <p>Przypisanie roli po stronie CLI (z laboratorium Microsoftu): <code>az webapp identity assign</code>, potem <code>az role assignment create --assignee &lt;principalId&gt; --scope &lt;ID rejestru&gt; --role AcrPull</code> i <code>az webapp config set --acr-use-identity true --acr-identity [system]</code>. Propagacja roli trwa minutę lub dwie. Laboratorium tworzy rejestr z wyłączonym kontem admin, żeby aplikacja nie polegała na wspólnych poświadczeniach. [unit 6-lab] Podczas ustawiania kontenera może pojawić się komunikat o braku poświadczeń do ACR; przy tożsamości zarządzanej można go zignorować (nie włączaj konta admin). [unit 6-lab]</p>
-<h2 id="a5-wdrozenie-z-cli-z-innych-rejestrow-i-z-vs-code">A5. Wdrożenie z CLI, z innych rejestrów i z VS Code</h2>
+<h2 id="a5-wdrożenie-z-cli-z-innych-rejestrów-i-z-vs-code">A5. Wdrożenie z CLI, z innych rejestrów i z VS Code</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>CLI daje powtarzalny przepływ do skryptu lub CI. Zakłada, że obraz jest już w ACR, a App Service ma uprawnienie do jego pobrania (zwykle tożsamość zarządzana z rolą AcrPull). Podaj pełny adres obrazu <strong>z tagiem</strong>, żeby wdrożenie było deterministyczne (patrz moduł 01, C1 i C4).</p>
 <div class="codehilite"><pre><span></span><code>az webapp create \
@@ -292,7 +348,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 </code></pre></div>
 
 <p>Dla GitHub Container Registry użyj adresu serwera <code>https://ghcr.io</code>. <strong>VS Code</strong> z rozszerzeniami Docker i Azure App Service: zbuduj obraz lokalnie, wypchnij go do rejestru, w widoku REGISTRIES kliknij tag prawym przyciskiem -&gt; <strong>Deploy Image to Azure App Service</strong> i przejdź kreator. Na produkcji sprawdź osobno uwierzytelnianie i role, żeby aplikacja mogła pobierać obraz.</p>
-<h2 id="a6-aktualizacja-obrazu-ciage-wdrazanie-pobieranie-warstw-i-weryfikacja">A6. Aktualizacja obrazu, ciągłe wdrażanie, pobieranie warstw i weryfikacja</h2>
+<h2 id="a6-aktualizacja-obrazu-ciągłe-wdrażanie-pobieranie-warstw-i-weryfikacja">A6. Aktualizacja obrazu, ciągłe wdrażanie, pobieranie warstw i weryfikacja</h2>
 <p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container]</em></p>
 <p>Nowa wersja = nowy tag. Zmień skonfigurowany tag, a App Service sam zrestartuje aplikację i pobierze obraz na każdej instancji:</p>
 <div class="codehilite"><pre><span></span><code>az webapp config container set \
@@ -326,7 +382,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 
 <p>Otwórz adres w przeglądarce lub wywołaj <code>curl</code>; gdy kontener się nie uruchamia, użyj narzędzi z części D.</p>
 <hr />
-<h1 id="czesc-b-zachowanie-kontenera-w-runtime">CZĘŚĆ B - ZACHOWANIE KONTENERA W RUNTIME</h1>
+<h1 id="część-b---zachowanie-kontenera-w-runtime">CZĘŚĆ B - ZACHOWANIE KONTENERA W RUNTIME</h1>
 <h2 id="b1-polecenie-startowe">B1. Polecenie startowe</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>App Service uruchamia kontener według <code>ENTRYPOINT</code> i <code>CMD</code> z Dockerfile. <strong>Polecenie startowe (startup command)</strong> nadpisuje te domyślne wartości, gdy chcesz przekazać argumenty zależne od środowiska, uruchomić skrypt inicjalizujący (np. migracje bazy), wystartować wiele procesów albo zmienić domyślną konfigurację frameworka.</p>
@@ -390,7 +446,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 <p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 3): tabela podaje dla ASP.NET Core port domyślny 80 i "brak zmian" -&gt; od .NET 8 oficjalne obrazy kontenerów ASP.NET Core nasłuchują domyślnie na porcie <strong>8080</strong>, a App Service domyślnie zakłada port 80, więc taka aplikacja wymaga <code>WEBSITES_PORT=8080</code> (albo ustawienia portu aplikacji na 80 przez <code>ASPNETCORE_HTTP_PORTS=80</code>). Źródło: https://learn.microsoft.com/en-us/dotnet/core/compatibility/containers/8.0/aspnet-port oraz https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container.</p>
 <p>Uwaga o dokumentacji: moduł (unit 3) pisze, że App Service sam kieruje ruch, gdy kontener nasłuchuje na 80 lub 8080. Strona o kontenerach niestandardowych [docs: custom-container] mówi o domyślnym porcie 80 (wzmianka o 80 i 8080 dotyczy w niej opcji Docker Compose). Na egzaminie i w praktyce ustawiaj <code>WEBSITES_PORT</code> jawnie, gdy port jest inny niż 80.</p>
 </blockquote>
-<h2 id="b3-trway-magazyn-websites_enable_app_service_storage">B3. Trwały magazyn (<code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code>)</h2>
+<h2 id="b3-trwały-magazyn-websites_enable_app_service_storage">B3. Trwały magazyn (<code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code>)</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-custom-container]</em></p>
 <p>Domyślnie zapisy do systemu plików kontenera są <strong>ulotne (ephemeral)</strong>: giną po restarcie lub przeniesieniu aplikacji na inną infrastrukturę. App Service może zamontować <strong>trwały magazyn</strong> w katalogu <code>/home</code>. Dla niestandardowych kontenerów <strong>Linux</strong> jest on <strong>domyślnie wyłączony</strong>; włączasz go ustawieniem:</p>
 <div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
@@ -437,7 +493,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 
 <p>Objaśnienie: (1)-(2) sprawdzają zależności; (3) kod 5xx oznacza niezdrowy. Z dokumentacji [docs: health-check] (egzamin je lubi): ścieżka nie ma wartości domyślnej; ping co <strong>1 minutę</strong> na wszystkich instancjach; zdrowa odpowiedź to kod <strong>200-299</strong>; instancja jest uznana za niezdrową po <strong>10</strong> nieudanych żądaniach (wartość domyślna, konfigurowalna ustawieniem <code>WEBSITE_HEALTHCHECK_MAXPINGFAILURES</code> od 2 do 10) i usuwana z load balancera; ping jest nadal wysyłany i instancja wraca, gdy znów odpowie poprawnie; domyślnie nie więcej niż połowa instancji (<code>WEBSITE_HEALTHCHECK_MAXUNHEALTHYWORKERPERCENT</code>, domyślnie 50) jest wyłączana naraz; przy jednej instancji load balancer jej nie usuwa, ale po godzinie ciągłych niepowodzeń instancja jest zastępowana; do pełnego efektu potrzeba co najmniej dwóch instancji. Zmiana konfiguracji health check <strong>restartuje aplikację</strong>, więc na produkcji rób to ostrożnie. [unit 3]</p>
 <hr />
-<h1 id="czesc-c-ustawienia-aplikacji-i-sekrety">CZĘŚĆ C - USTAWIENIA APLIKACJI I SEKRETY</h1>
+<h1 id="część-c---ustawienia-aplikacji-i-sekrety">CZĘŚĆ C - USTAWIENIA APLIKACJI I SEKRETY</h1>
 <h2 id="c1-ustawienia-aplikacji-app-settings">C1. Ustawienia aplikacji (app settings)</h2>
 <p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-common]</em></p>
 <p><strong>App settings</strong> to pary nazwa-wartość, które App Service wstrzykuje do kontenera jako <strong>zmienne środowiskowe</strong> przy starcie. Dzięki temu ten sam obraz działa w różnych środowiskach z różną konfiguracją, bez przebudowy.</p>
@@ -524,7 +580,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 </code></pre></div>
 
 <p>Prefiks <code>@</code> oznacza odczyt z pliku. W portalu opcja <strong>Environment variables</strong> ma tryb <strong>Advanced edit</strong> z widokiem JSON.</p>
-<h2 id="c4-ustawienia-slotow-slot-settings">C4. Ustawienia slotów (slot settings)</h2>
+<h2 id="c4-ustawienia-slotów-slot-settings">C4. Ustawienia slotów (slot settings)</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p><strong>Sloty wdrożeń</strong> pozwalają uruchomić różne wersje aplikacji obok siebie w tym samym planie. Każdy slot ma własną nazwę hosta i konfigurację, ale współdzieli zasoby obliczeniowe planu. Możesz <strong>zamienić (swap)</strong> sloty, żeby awansować staging na produkcję. Ustawienia oznaczone jako <strong>slot settings</strong> zostają przy slocie podczas swap (egzamin je lubi):</p>
 <div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
@@ -543,7 +599,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
     --query "[?slotSetting==\`true\`].name"
 </code></pre></div>
 
-<h2 id="c5-odwoania-do-key-vault">C5. Odwołania do Key Vault</h2>
+<h2 id="c5-odwołania-do-key-vault">C5. Odwołania do Key Vault</h2>
 <p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/app-service/app-service-key-vault-references]</em></p>
 <p>Sekrety wymagające centralnego zarządzania, audytu lub automatycznej rotacji trzymaj w <strong>Azure Key Vault</strong> (magazyn sekretów). App Service pozwala w ustawieniu aplikacji wpisać <strong>odwołanie do Key Vault</strong>; aplikacja czyta zwykłą zmienną środowiskową i nie wie, że wartość pochodzi z Key Vault:</p>
 <div class="codehilite"><pre><span></span><code>az webapp config appsettings set \
@@ -558,7 +614,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 <p><em>Źródło: [unit 4]</em></p>
 <p>Strona <strong>SCM (Kudu)</strong> pod <code>https://&lt;nazwa-aplikacji&gt;.scm.azurewebsites.net</code> -&gt; <strong>Environment</strong> (lub bezpośrednio <code>.../Env</code>) pokazuje zmienne środowiskowe zastosowane do aplikacji: Twoje ustawienia i zmienne systemowe. Możesz też dodać endpoint diagnostyczny, który zwraca <strong>niewrażliwe</strong> wartości konfiguracji, albo sprawdzić logi startowe aplikacji.</p>
 <hr />
-<h1 id="czesc-d-obserwowanie-i-diagnozowanie-kontenera">CZĘŚĆ D - OBSERWOWANIE I DIAGNOZOWANIE KONTENERA</h1>
+<h1 id="część-d---obserwowanie-i-diagnozowanie-kontenera">CZĘŚĆ D - OBSERWOWANIE I DIAGNOZOWANIE KONTENERA</h1>
 <h2 id="d1-logi-kontenera">D1. Logi kontenera</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs]</em></p>
 <p>App Service przechwytuje wyjście <strong>stdout</strong> i <strong>stderr</strong> kontenera. Włącz zapisywanie logów:</p>
@@ -569,7 +625,7 @@ az webapp create --resource-group myResourceGroup --plan myAppServicePlan --name
 </code></pre></div>
 
 <p>Opcja <code>filesystem</code> zapisuje logi w systemie plików App Service (<code>/home/LogFiles/</code>). Logi obejmują: wyjście aplikacji (stdout), błędy (stderr), logi frameworka (start serwera WWW, żądania) i komunikaty platformy o cyklu życia kontenera. Aplikacja ma pisać sensowne logi na stdout; większość bibliotek logowania ma wyjście konsolowe.</p>
-<h2 id="d2-strumien-logow-log-stream">D2. Strumień logów (log stream)</h2>
+<h2 id="d2-strumień-logów-log-stream">D2. Strumień logów (log stream)</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs]</em></p>
 <p>Log stream pokazuje wyjście kontenera na żywo; przydaje się do diagnozy startu i obserwacji ruchu.</p>
 <div class="codehilite"><pre><span></span><code>az webapp log tail \
@@ -635,7 +691,7 @@ az monitor diagnostic-settings create \
 </code></pre></div>
 
 <p>Alerty i dashboardy budujesz na takich zapytaniach (KQL: moduł <code>analyze-telemetry-logs-metrics</code>).</p>
-<h2 id="d5-dostep-ssh-do-kontenera">D5. Dostęp SSH do kontenera</h2>
+<h2 id="d5-dostęp-ssh-do-kontenera">D5. Dostęp SSH do kontenera</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-linux-open-ssh-session]</em></p>
 <p>Do interaktywnej diagnozy możesz połączyć się z działającym kontenerem przez SSH. Moduł podaje klasyczną konfigurację: obraz zawiera serwer OpenSSH (<code>openssh-server</code>), nasłuchuje na porcie <strong>2222</strong>, hasło użytkownika root to <strong><code>Docker!</code></strong> (wymagane przez App Service) i demon SSH startuje razem z aplikacją.</p>
 <div class="codehilite"><pre><span></span><code><span class="k">RUN</span><span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>openssh-server<span class="w"> </span><span class="se">\</span>
@@ -652,19 +708,19 @@ az monitor diagnostic-settings create \
 <blockquote>
 <p>Uwaga o dokumentacji: nowsze opcje (terminal w przeglądarce i <code>az webapp exec</code>, podgląd) łączą się przez Kudu jako uwierzytelniony proxy i <strong>nie wymagają</strong> serwera SSH w obrazie; klasyczne Kudu WebSSH i <code>az webapp ssh</code> mogą go nadal wymagać. Do terminala w przeglądarce potrzebny jest <code>/bin/bash</code> w obrazie; obrazy bez powłoki (distroless) nie otworzą sesji interaktywnej. [docs: custom-container] Przy SSH w obrazach niestandardowych <code>env</code> może pokazać tylko część zmiennych; do pełnej listy użyj widoku SCM <code>/Env</code>.</p>
 </blockquote>
-<h2 id="d6-typowe-problemy-i-rozwiazania">D6. Typowe problemy i rozwiązania</h2>
+<h2 id="d6-typowe-problemy-i-rozwiązania">D6. Typowe problemy i rozwiązania</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p><strong>Kontener się nie uruchamia.</strong> Objawy: adres zwraca błąd, logi pokazują błędy startu. Diagnoza: logi (log stream); czy obraz istnieje w rejestrze i poświadczenia są poprawne; czy kontener działa lokalnie z tą konfiguracją. Przyczyny: brak wymaganych zmiennych środowiskowych; niezgodność <code>WEBSITES_PORT</code> z portem, na którym nasłuchuje kontener; awaria aplikacji przy inicjalizacji (brak zależności).</p>
 <p><strong>404 po wdrożeniu.</strong> Kontener wygląda na uruchomiony, ale żądania zwracają 404. Diagnoza: <code>WEBSITES_PORT</code> zgodny z portem aplikacji; aplikacja nasłuchuje na <code>0.0.0.0</code>, a nie <code>localhost</code>; aplikacja obsługuje ścieżkę główną lub oczekiwane trasy. Przyczyny: nasłuch tylko na localhost, zły port, brak tras.</p>
 <p><strong>Brakujące zmienne środowiskowe.</strong> Aplikacja loguje brak konfiguracji. Diagnoza: ustawienia zapisane w portalu lub CLI; zmienne w Kudu (Environment); przy SSH użyj widoku SCM <code>/Env</code>, gdy wynik powłoki jest niepełny. Przyczyny: niezapisane zmiany, literówki w nazwach, aplikacja sprawdza zmienną, zanim App Service ją wstrzyknie.</p>
 <p><strong>Wolne zimne starty.</strong> Pierwsze żądania po bezczynności są wolniejsze. Diagnoza: rozmiar obrazu (<code>docker images</code>), czas startu w logach, ustawienie Always On. Rozwiązania: włącz Always On; zmniejsz obraz (mniejsze obrazy bazowe, budowa wieloetapowa - multi-stage builds); odrocz ciężką inicjalizację.</p>
 <hr />
-<h1 id="czesc-e-cwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
+<h1 id="część-e---ćwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
 <p>Przed ćwiczeniami przeczytaj części A-D. Układ ćwiczeń: Gdzie / Plik, kod lub kroki, Koszt, Zadania, Sprawdź, Sprzątanie. I1 odpowiada laboratorium z modułu (unit 6), ale używa mniejszej aplikacji podanej w całości (zamiast archiwum ze starterem); I2 i I3 są autorskie i korzystają z zasobów z I1 (zmienne <code>RG</code>, <code>ACR_NAME</code>, <code>APP_PLAN</code>, <code>APP_NAME</code>). Wszystkie ćwiczenia tworzą płatne zasoby; wykonaj Sprzątanie z ostatniego ćwiczenia, które robisz.</p>
 <blockquote>
 <p>Niesprawdzone: dokładne ceny rejestru ACR Basic i planu App Service B1 (Linux) za dzień - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/ i https://azure.microsoft.com/pricing/details/app-service/linux/. Laboratorium Microsoftu używa planu P0v3 (droższy od B1) [unit 6-starter]; Always On wymaga Basic lub wyższego [docs: configure-common].</p>
 </blockquote>
-<h2 id="i1-wdrozenie-kontenera-z-acr-do-app-service-z-tozsamoscia-zarzadzana-python-i-c">I1. Wdrożenie kontenera z ACR do App Service z tożsamością zarządzaną - Python i C</h2>
+<h2 id="i1-wdrożenie-kontenera-z-acr-do-app-service-z-tożsamością-zarządzaną---python-i-c">I1. Wdrożenie kontenera z ACR do App Service z tożsamością zarządzaną - Python i C</h2>
 <p><em>Źródło: [unit 6] + [unit 6-lab] + [unit 6-starter] + [autor: niezweryfikowane]</em>
 (rozwinięte w <code>02-deploy-containers-azure-app-service.md</code> §A4, §A5, §B2)</p>
 <p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash), katalog <code>appsvc-lab</code>. Pliki aplikacji: <code>appsvc-lab/api/app.py</code>, <code>appsvc-lab/api/requirements.txt</code>, <code>appsvc-lab/api/Dockerfile</code>. Wymaga subskrypcji płatnej (ACR Tasks nie działają na darmowych kredytach).</p>
@@ -850,7 +906,7 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <p>Usunięcie grupy usuwa rejestr, plan i aplikację. Zasoby z I1 są używane w I2 i I3, więc wykonaj sprzątanie po ostatnim ćwiczeniu, które robisz.</p>
-<h2 id="i2-ustawienia-aplikacji-trway-magazyn-always-on-health-check-i-slot-settings">I2. Ustawienia aplikacji, trwały magazyn, Always On, health check i slot settings</h2>
+<h2 id="i2-ustawienia-aplikacji-trwały-magazyn-always-on-health-check-i-slot-settings">I2. Ustawienia aplikacji, trwały magazyn, Always On, health check i slot settings</h2>
 <p><em>Źródło: [unit 3] + [unit 4] + [docs: https://learn.microsoft.com/en-us/azure/app-service/configure-common] + [autor: niezweryfikowane]</em></p>
 <p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash); zasoby z I1 (<code>RG</code>, <code>APP_NAME</code>, <code>APP_URL</code>), aplikacja Pythona (<code>docprocessor:v1</code>, <code>WEBSITES_PORT=8000</code>).</p>
 <div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-appsvc-i1
@@ -896,7 +952,7 @@ az<span class="w"> </span>webapp<span class="w"> </span>config<span class="w"> <
 <p><strong>Zadania:</strong> (a) ustaw <code>ENVIRONMENT=production</code> i potwierdź w odpowiedzi <code>/</code>; (b) pokaż, że bez trwałego magazynu dokument ginie po restarcie; (c) włącz magazyn i pokaż, że dokument przetrwa restart; (d) włącz Always On i health check i odczytaj konfigurację; (e) oznacz <code>ENVIRONMENT</code> jako slot setting; (f) <strong>zepsuj to:</strong> ustaw <code>healthCheckPath</code> na nieistniejącą ścieżkę <code>/healthz</code> (<code>--generic-configurations '{"healthCheckPath": "/healthz"}'</code>) i obserwuj stan aplikacji przez kilka minut, potem przywróć <code>/health</code>.</p>
 <p><strong>Sprawdź:</strong> (a) <code>"environment": "production"</code>; (b) po restarcie lista <code>documents</code> jest pusta (lub nie zawiera dokumentu z (3)); (c) po restarcie lista zawiera dokument zapisany po włączeniu magazynu; (d) <code>alwaysOn: true</code>, <code>healthCheckPath: "/health"</code>; (e) polecenie <code>list</code> zwraca <code>ENVIRONMENT</code>; (f) ścieżka zwraca 404, więc ping nie dostaje kodu 200-299 i po kilkunastu nieudanych pingach instancja jest uznana za niezdrową; przy jednej instancji load balancer jej nie usuwa (patrz B5), ale status w portalu (Health check) pokazuje niezdrowy stan. [autor: niezweryfikowane]</p>
 <p><strong>Sprzątanie:</strong> przywróć <code>/health</code>: <code>az webapp config set --resource-group $RG --name $APP_NAME --generic-configurations '{"healthCheckPath": "/health"}'</code>. Jeśli to ostatnie ćwiczenie: <code>az group delete --name rg-appsvc-i1 --yes --no-wait</code>, potem <code>az group exists --name rg-appsvc-i1</code> (po kilku minutach: <code>false</code>).</p>
-<h2 id="i3-logi-strumien-logow-kudu-i-diagnoza-bednego-portu">I3. Logi, strumień logów, Kudu i diagnoza błędnego portu</h2>
+<h2 id="i3-logi-strumień-logów-kudu-i-diagnoza-błędnego-portu">I3. Logi, strumień logów, Kudu i diagnoza błędnego portu</h2>
 <p><em>Źródło: [unit 5] + [unit 6-lab] + [docs: https://learn.microsoft.com/en-us/azure/app-service/troubleshoot-diagnostic-logs] + [autor: niezweryfikowane]</em></p>
 <p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash) i przeglądarka; zasoby z I1 i I2.</p>
 <div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-appsvc-i1
@@ -925,82 +981,73 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <hr />
-<h1 id="czesc-f-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<h1 id="część-f---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
 <p>Learn pokazuje pytania, ale nie pokazuje poprawnych odpowiedzi, więc każda odpowiedź poniżej jest <strong>wnioskowana</strong> z treści jednostek.</p>
-<h2 id="f1-obraz-nasuchuje-na-porcie-8000-po-wdrozeniu-zadania-koncza-sie-bedami-poaczenia">F1. Obraz nasłuchuje na porcie 8000, po wdrożeniu żądania kończą się błędami połączenia</h2>
+<h2 id="f1-obraz-nasłuchuje-na-porcie-8000-po-wdrożeniu-żądania-kończą-się-błędami-połączenia">F1. Obraz nasłuchuje na porcie 8000, po wdrożeniu żądania kończą się błędami połączenia</h2>
 <p>-&gt; <em>Ustaw ustawienie aplikacji <code>WEBSITES_PORT</code> na 8000.</em> (B2). Pułapki: zmiana <code>EXPOSE</code> w Dockerfile nie wpływa na to, gdzie App Service kieruje ruch; HTTP/2 nie ma związku z portem.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Port configuration")</em></p>
-<h2 id="f2-pliki-wyjsciowe-znikaja-po-restarcie-kontenera">F2. Pliki wyjściowe znikają po restarcie kontenera</h2>
+<h2 id="f2-pliki-wyjściowe-znikają-po-restarcie-kontenera">F2. Pliki wyjściowe znikają po restarcie kontenera</h2>
 <p>-&gt; <em>Ustaw <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> na <code>true</code> i zapisuj pliki w <code>/home</code>.</em> (B3). Pułapki: większy obraz nie daje trwałości zapisów; Always On zapobiega zimnym startom, ale nie chroni systemu plików przed restartem.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Persistent storage")</em></p>
-<h2 id="f3-inny-adres-api-dla-staging-i-produkcji-ktory-nie-ma-sie-zamienic-podczas-swap">F3. Inny adres API dla staging i produkcji, który nie ma się zamienić podczas swap</h2>
+<h2 id="f3-inny-adres-api-dla-staging-i-produkcji-który-nie-ma-się-zamienić-podczas-swap">F3. Inny adres API dla staging i produkcji, który nie ma się zamienić podczas swap</h2>
 <p>-&gt; <em>Skonfiguruj <code>API_ENDPOINT</code> jako slot setting.</em> (C4). Pułapki: adres w obrazie wymaga przebudowy dla każdego środowiska; connection strings nie rozwiązują problemu swap.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcja "Slot settings")</em></p>
-<h2 id="f4-kontener-startuje-ale-health-check-zawodzi-a-aplikacja-ma-endpoint-healthz-zwracajacy-200">F4. Kontener startuje, ale health check zawodzi, a aplikacja ma endpoint <code>/healthz</code> zwracający 200</h2>
+<h2 id="f4-kontener-startuje-ale-health-check-zawodzi-a-aplikacja-ma-endpoint-healthz-zwracający-200">F4. Kontener startuje, ale health check zawodzi, a aplikacja ma endpoint <code>/healthz</code> zwracający 200</h2>
 <p>-&gt; <em>Ścieżka health check w App Service jest skonfigurowana inaczej niż endpoint aplikacji.</em> (B5). Pułapki: health check nie wymaga HTTPS; ścieżka nie ma wartości domyślnej, więc trzeba ją ustawić jawnie.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Health checks")</em></p>
-<h2 id="f5-sprawdzenie-czy-ustawienia-aplikacji-trafiy-do-dziaajacego-kontenera">F5. Sprawdzenie, czy ustawienia aplikacji trafiły do działającego kontenera</h2>
+<h2 id="f5-sprawdzenie-czy-ustawienia-aplikacji-trafiły-do-działającego-kontenera">F5. Sprawdzenie, czy ustawienia aplikacji trafiły do działającego kontenera</h2>
 <p>-&gt; <em>Strona Environment w konsoli diagnostycznej Kudu.</em> (C6, D3). Pułapki: log stream pokazuje wyjście kontenera, a nie listę zmiennych; metryki nie pokazują wartości ustawień.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcja "Verify configuration" i unit 5, sekcja "Diagnostic console (Kudu)")</em></p>
 <hr />
-<h1 id="czesc-g-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
-<h2 id="g1-jakie-dwie-metody-uwierzytelniania-do-acr-obsuguje-app-service-i-ktora-zalecasz-na-produkcji">G1. Jakie dwie metody uwierzytelniania do ACR obsługuje App Service i którą zalecasz na produkcji?</h2>
-<details><summary>Odpowiedź</summary>
-
-Tożsamość zarządzana (zalecana na produkcji; wymaga roli AcrPull w rejestrze; system-assigned lub user-assigned) i dane administratora ACR (prostsze w development, ale hasło trafia do konfiguracji i wymaga ręcznej rotacji; trzeba włączyć konto admin).
+<h1 id="część-g---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="g1-jakie-dwie-metody-uwierzytelniania-do-acr-obsługuje-app-service-i-którą-zalecasz-na-produkcji">G1. Jakie dwie metody uwierzytelniania do ACR obsługuje App Service i którą zalecasz na produkcji?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Tożsamość zarządzana (zalecana na produkcji; wymaga roli AcrPull w rejestrze; system-assigned lub user-assigned) i dane administratora ACR (prostsze w development, ale hasło trafia do konfiguracji i wymaga ręcznej rotacji; trzeba włączyć konto admin).</p>
 </details>
-
-<h2 id="g2-co-sie-stanie-gdy-wypchniesz-nowy-obraz-pod-ten-sam-tag-ktory-app-service-juz-wdrozy">G2. Co się stanie, gdy wypchniesz nowy obraz pod ten sam tag, który App Service już wdrożył?</h2>
-<details><summary>Odpowiedź</summary>
-
-App Service tego nie wykryje. Obraz zostanie pobrany dopiero przy restarcie (pobierane są tylko zmienione warstwy); żeby nowy obraz był przejęty automatycznie, włącz ciągłe wdrażanie (`--enable-cd true`) i webhook w ACR. Lepsze rozwiązanie: nowy, unikalny tag i `az webapp config container set`.
+<h2 id="g2-co-się-stanie-gdy-wypchniesz-nowy-obraz-pod-ten-sam-tag-który-app-service-już-wdrożył">G2. Co się stanie, gdy wypchniesz nowy obraz pod ten sam tag, który App Service już wdrożył?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>App Service tego nie wykryje. Obraz zostanie pobrany dopiero przy restarcie (pobierane są tylko zmienione warstwy); żeby nowy obraz był przejęty automatycznie, włącz ciągłe wdrażanie (<code>--enable-cd true</code>) i webhook w ACR. Lepsze rozwiązanie: nowy, unikalny tag i <code>az webapp config container set</code>.</p>
 </details>
-
-<h2 id="g3-do-czego-suzy-websites_port-i-jaki-jest-port-domyslny">G3. Do czego służy <code>WEBSITES_PORT</code> i jaki jest port domyślny?</h2>
-<details><summary>Odpowiedź</summary>
-
-Wskazuje port wewnątrz kontenera, na który App Service kieruje ruch HTTP; domyślnie zakłada port 80. Obsługiwany jest tylko jeden port HTTP. Ustawiaj go, gdy kontener nasłuchuje gdzie indziej (np. 8000 dla Gunicorn, 8080 dla ASP.NET Core od .NET 8).
+<h2 id="g3-do-czego-służy-websites_port-i-jaki-jest-port-domyślny">G3. Do czego służy <code>WEBSITES_PORT</code> i jaki jest port domyślny?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Wskazuje port wewnątrz kontenera, na który App Service kieruje ruch HTTP; domyślnie zakłada port 80. Obsługiwany jest tylko jeden port HTTP. Ustawiaj go, gdy kontener nasłuchuje gdzie indziej (np. 8000 dla Gunicorn, 8080 dla ASP.NET Core od .NET 8).</p>
 </details>
-
-<h2 id="g4-co-robi-websites_enable_app_service_storage-i-jaki-jest-domyslny-stan-na-linuksie">G4. Co robi <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> i jaki jest domyślny stan na Linuksie?</h2>
-<details><summary>Odpowiedź</summary>
-
-Włącza trwały magazyn zamontowany w `/home`, współdzielony przez wszystkie instancje i przeżywający restarty. Dla niestandardowych kontenerów Linux domyślnie jest wyłączony (na Windows domyślnie włączony).
+<h2 id="g4-co-robi-websites_enable_app_service_storage-i-jaki-jest-domyślny-stan-na-linuksie">G4. Co robi <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> i jaki jest domyślny stan na Linuksie?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Włącza trwały magazyn zamontowany w <code>/home</code>, współdzielony przez wszystkie instancje i przeżywający restarty. Dla niestandardowych kontenerów Linux domyślnie jest wyłączony (na Windows domyślnie włączony).</p>
 </details>
-
 <h2 id="g5-jaki-poziom-cenowy-jest-potrzebny-dla-always-on-i-co-to-robi">G5. Jaki poziom cenowy jest potrzebny dla Always On i co to robi?</h2>
-<details><summary>Odpowiedź</summary>
-
-Basic lub wyższy. Aplikacja bez ruchu jest wyładowywana po ok. 20 minutach; Always On wysyła okresowe żądania (co 5 minut), aby ją utrzymać i uniknąć zimnych startów.
+<details>
+<summary>Odpowiedź</summary>
+<p>Basic lub wyższy. Aplikacja bez ruchu jest wyładowywana po ok. 20 minutach; Always On wysyła okresowe żądania (co 5 minut), aby ją utrzymać i uniknąć zimnych startów.</p>
 </details>
-
-<h2 id="g6-jak-dziaa-health-check-w-app-service">G6. Jak działa health check w App Service?</h2>
-<details><summary>Odpowiedź</summary>
-
-Ping co minutę na ścieżkę, którą wskażesz (brak wartości domyślnej); zdrowa odpowiedź to 200-299; domyślnie po 10 nieudanych pingach instancja jest usuwana z load balancera (konfigurowalne od 2 do 10), a po dłuższym braku poprawy zastępowana. Zmiana konfiguracji restartuje aplikację.
+<h2 id="g6-jak-działa-health-check-w-app-service">G6. Jak działa health check w App Service?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Ping co minutę na ścieżkę, którą wskażesz (brak wartości domyślnej); zdrowa odpowiedź to 200-299; domyślnie po 10 nieudanych pingach instancja jest usuwana z load balancera (konfigurowalne od 2 do 10), a po dłuższym braku poprawy zastępowana. Zmiana konfiguracji restartuje aplikację.</p>
 </details>
-
-<h2 id="g7-czym-roznia-sie-app-settings-od-connection-strings-i-ktore-wybierzesz-dla-pythona">G7. Czym różnią się app settings od connection strings i które wybierzesz dla Pythona?</h2>
-<details><summary>Odpowiedź</summary>
-
-Obie są wstrzykiwane jako zmienne środowiskowe i szyfrowane w spoczynku, ale connection strings dostają prefiks typu (np. `SQLAZURECONNSTR_`). Dla aplikacji spoza .NET, np. Pythona, wybieraj zwykłe app settings.
+<h2 id="g7-czym-różnią-się-app-settings-od-connection-strings-i-które-wybierzesz-dla-pythona">G7. Czym różnią się app settings od connection strings i które wybierzesz dla Pythona?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Obie są wstrzykiwane jako zmienne środowiskowe i szyfrowane w spoczynku, ale connection strings dostają prefiks typu (np. <code>SQLAZURECONNSTR_</code>). Dla aplikacji spoza .NET, np. Pythona, wybieraj zwykłe app settings.</p>
 </details>
-
-<h2 id="g8-jak-zapewnic-ze-ustawienie-nie-zamieni-sie-miedzy-slotami-podczas-swap-i-jak-odwoac-sie-do-sekretu-z-key-vault">G8. Jak zapewnić, że ustawienie nie zamieni się między slotami podczas swap, i jak odwołać się do sekretu z Key Vault?</h2>
-<details><summary>Odpowiedź</summary>
-
-Oznacz je jako slot setting (`--slot-settings`). Do sekretu użyj w wartości ustawienia składni `@Microsoft.KeyVault(SecretUri=...)`; wymaga to tożsamości zarządzanej z dostępem do odczytu sekretów. Bez wersji odwołanie bierze najnowszą, a po rotacji wartość odświeża się w ciągu 24 godzin.
+<h2 id="g8-jak-zapewnić-że-ustawienie-nie-zamieni-się-między-slotami-podczas-swap-i-jak-odwołać-się-do-sekretu-z-key-vault">G8. Jak zapewnić, że ustawienie nie zamieni się między slotami podczas swap, i jak odwołać się do sekretu z Key Vault?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Oznacz je jako slot setting (<code>--slot-settings</code>). Do sekretu użyj w wartości ustawienia składni <code>@Microsoft.KeyVault(SecretUri=...)</code>; wymaga to tożsamości zarządzanej z dostępem do odczytu sekretów. Bez wersji odwołanie bierze najnowszą, a po rotacji wartość odświeża się w ciągu 24 godzin.</p>
 </details>
-
-<h2 id="g9-wymien-narzedzia-diagnostyczne-app-service-i-do-czego-suzy-kazde">G9. Wymień narzędzia diagnostyczne App Service i do czego służy każde.</h2>
-<details><summary>Odpowiedź</summary>
-
-Logi kontenera (`az webapp log config`, stdout/stderr w `/home/LogFiles`), log stream (`az webapp log tail`, na żywo), Kudu/SCM (Environment, pliki, diagnostic dump; nie pokazuje procesów w kontenerze), ustawienia diagnostyczne do Log Analytics (kategorie np. `AppServiceConsoleLogs`) z zapytaniami KQL oraz SSH do interaktywnej diagnozy kontenera.
+<h2 id="g9-wymień-narzędzia-diagnostyczne-app-service-i-do-czego-służy-każde">G9. Wymień narzędzia diagnostyczne App Service i do czego służy każde.</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Logi kontenera (<code>az webapp log config</code>, stdout/stderr w <code>/home/LogFiles</code>), log stream (<code>az webapp log tail</code>, na żywo), Kudu/SCM (Environment, pliki, diagnostic dump; nie pokazuje procesów w kontenerze), ustawienia diagnostyczne do Log Analytics (kategorie np. <code>AppServiceConsoleLogs</code>) z zapytaniami KQL oraz SSH do interaktywnej diagnozy kontenera.</p>
 </details>
-
 <hr />
-<h1 id="czesc-h-co-dalej">CZĘŚĆ H - CO DALEJ</h1>
-<h2 id="h1-podsumowanie-nastepny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</h2>
+<h1 id="część-h---co-dalej">CZĘŚĆ H - CO DALEJ</h1>
+<h2 id="h1-podsumowanie-następny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</h2>
 <p><em>Źródło: [unit 8] + [docs: https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200]</em></p>
 <p><strong>Podsumowanie modułu.</strong> Wdrożyłeś własny kontener z ACR do App Service z uwierzytelnianiem tożsamością zarządzaną (bez zapisanych poświadczeń do rejestru), skonfigurowałeś zachowanie runtime (polecenie startowe, port, trwały magazyn), przekazałeś konfigurację specyficzną dla środowiska przez ustawienia aplikacji bez przebudowy obrazu oraz użyłeś logowania kontenera, log stream i Kudu do diagnozy. [unit 8]</p>
 <p><strong>Co dalej:</strong> moduł 03 - <code>deploy-sidecar-azure-app-service</code> (https://learn.microsoft.com/en-us/training/modules/deploy-sidecar-azure-app-service/): sidecary (kontenery pomocnicze obok głównego) na App Service, bezpieczne pobieranie obrazów, komunikacja lokalna, pliki współdzielone i diagnostyka. Wróć do A4 (tożsamość i AcrPull) i B2 (port) przy konfiguracji wielu kontenerów.</p>

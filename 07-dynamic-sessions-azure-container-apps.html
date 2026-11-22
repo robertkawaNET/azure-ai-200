@@ -202,7 +202,7 @@ a{text-decoration:none}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
 }
 </style></head>
-<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-07-bezpieczne-uruchamianie-kodu-generowanego-przez-ai-w-sesjach-dynamicznych-azure-container-apps-pule-sesji-interpreter-kodu-identyfikatory-sesji-bedy-wykonania">Moduł 07: Bezpieczne uruchamianie kodu generowanego przez AI w sesjach dynamicznych Azure Container Apps (pule sesji, interpreter kodu, identyfikatory sesji, błędy wykonania)</h1>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="moduł-07-bezpieczne-uruchamianie-kodu-generowanego-przez-ai-w-sesjach-dynamicznych-azure-container-apps-pule-sesji-interpreter-kodu-identyfikatory-sesji-błędy-wykonania">Moduł 07: Bezpieczne uruchamianie kodu generowanego przez AI w sesjach dynamicznych Azure Container Apps (pule sesji, interpreter kodu, identyfikatory sesji, błędy wykonania)</h1>
 <p>Moduł Microsoft Learn: <strong>Run AI-generated code securely in Azure Container Apps dynamic sessions</strong> - https://learn.microsoft.com/en-us/training/modules/dynamic-sessions-azure-container-apps/
 Cel: po tym module rozumiesz, po co izoluje się kod generowany przez model AI, umiesz wybrać między wbudowanym interpreterem kodu a pulą z własnym kontenerem, skonfigurować pulę (pojemność, cooldown, ruch wychodzący), wykonać kod i wymienić pliki przez REST z identyfikatorem sesji oraz obsłużyć wygaśnięcie sesji, limity czasu i błędy wykonania.
 Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 84 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą eksperymenty i ćwiczenie z SDK zarządzania). Wymagania: Azure CLI, Python 3.12, konto z prawem tworzenia puli sesji i przypisywania ról, region obsługujący sesje dynamiczne. Koszt: ćwiczenia I1-I2 tworzą pulę sesji (płatną za czas trwania sesji) - szczegóły w polach <strong>Koszt</strong>.</p>
@@ -211,8 +211,63 @@ Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 84 min wg katalogu, w tym ć
 <p>Uwaga o zakresie egzaminu: study guide AI-200 (stan z 2026-10-30) nie ma osobnej umiejętności o sesjach dynamicznych, ale moduł należy do kursu AI-200T00 i sąsiaduje z umiejętnościami domeny 1 (Container Apps). Traktuj go jako wiedzę pokrewną i uzupełniającą.</p>
 </blockquote>
 <hr />
-<h1 id="czesc-a-granica-wykonania-i-wybor-puli">CZĘŚĆ A - GRANICA WYKONANIA I WYBÓR PULI</h1>
-<h2 id="a1-po-co-granica-wykonania-i-jak-dziaa-pula-sesji">A1. Po co granica wykonania i jak działa pula sesji</h2>
+<!-- toc -->
+<p><strong>Spis treści</strong></p>
+<ul>
+<li><strong><a href="#część-a---granica-wykonania-i-wybór-puli">CZĘŚĆ A - GRANICA WYKONANIA I WYBÓR PULI</a></strong></li>
+<li><a href="#a1-po-co-granica-wykonania-i-jak-działa-pula-sesji">A1. Po co granica wykonania i jak działa pula sesji</a></li>
+<li><a href="#a2-wbudowany-interpreter-kodu-code-interpreter">A2. Wbudowany interpreter kodu (code interpreter)</a></li>
+<li><a href="#a3-integracja-rest-bezpośrednio-czy-adapter-frameworka">A3. Integracja: REST bezpośrednio czy adapter frameworka</a></li>
+<li><a href="#a4-pula-z-własnym-kontenerem-custom-container">A4. Pula z własnym kontenerem (custom container)</a></li>
+<li><a href="#a5-dopasowanie-puli-do-zadania">A5. Dopasowanie puli do zadania</a></li>
+<li><strong><a href="#część-b---bezpieczna-konfiguracja-puli">CZĘŚĆ B - BEZPIECZNA KONFIGURACJA PULI</a></strong></li>
+<li><a href="#b1-pojemność-puli-i-gotowe-instancje">B1. Pojemność puli i gotowe instancje</a></li>
+<li><a href="#b2-cooldown-okres-bezczynności-i-cykl-życia">B2. Cooldown (okres bezczynności) i cykl życia</a></li>
+<li><a href="#b3-ruch-wychodzący-egress-i-tworzenie-puli">B3. Ruch wychodzący (egress) i tworzenie puli</a></li>
+<li><a href="#b4-tożsamości-i-dane-w-sesji">B4. Tożsamości i dane w sesji</a></li>
+<li><a href="#b5-praktyki-dla-produkcyjnych-pul">B5. Praktyki dla produkcyjnych pul</a></li>
+<li><strong><a href="#część-c---wykonywanie-kodu-i-wymiana-plików">CZĘŚĆ C - WYKONYWANIE KODU I WYMIANA PLIKÓW</a></strong></li>
+<li><a href="#c1-uwierzytelnianie-backendu">C1. Uwierzytelnianie backendu</a></li>
+<li><a href="#c2-bezpieczne-identyfikatory-sesji">C2. Bezpieczne identyfikatory sesji</a></li>
+<li><a href="#c3-wysłanie-kodu-do-wykonania">C3. Wysłanie kodu do wykonania</a></li>
+<li><a href="#c4-wymiana-plików-z-sesją">C4. Wymiana plików z sesją</a></li>
+<li><a href="#c5-ponowne-użycie-sesji-w-wielu-operacjach">C5. Ponowne użycie sesji w wielu operacjach</a></li>
+<li><a href="#c6-integracja-z-agentem-langchain">C6. Integracja z agentem LangChain</a></li>
+<li><strong><a href="#część-d---cykl-życia-i-błędy-wykonania">CZĘŚĆ D - CYKL ŻYCIA I BŁĘDY WYKONANIA</a></strong></li>
+<li><a href="#d1-efemeryczny-stan-sesji">D1. Efemeryczny stan sesji</a></li>
+<li><a href="#d2-kategorie-błędów">D2. Kategorie błędów</a></li>
+<li><a href="#d3-terminy-wykonania-deadlines">D3. Terminy wykonania (deadlines)</a></li>
+<li><a href="#d4-bezpieczne-ponawianie-retry">D4. Bezpieczne ponawianie (retry)</a></li>
+<li><a href="#d5-zwalnianie-zakończonych-sesji">D5. Zwalnianie zakończonych sesji</a></li>
+<li><a href="#d6-niezawodne-operowanie-przepływami-sesji">D6. Niezawodne operowanie przepływami sesji</a></li>
+<li><strong><a href="#część-e---ćwiczenia">CZĘŚĆ E - ĆWICZENIA</a></strong></li>
+<li><a href="#i1-pula-interpretera-rola-session-executor-i-klient-rest-w-pythonie-lab-modułu">I1. Pula interpretera, rola Session Executor i klient REST w Pythonie (lab modułu)</a></li>
+<li><a href="#i2-egress-i-cooldown-eksperymenty-z-konfiguracją-puli">I2. Egress i cooldown: eksperymenty z konfiguracją puli</a></li>
+<li><a href="#i3-odczyt-konfiguracji-pul-przez-sdk-zarządzania-python-i-odpowiednik-c-net">I3. Odczyt konfiguracji pul przez SDK zarządzania: Python i odpowiednik C# (.NET)</a></li>
+<li><strong><a href="#część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</a></strong></li>
+<li><a href="#g1-zastrzeżony-konwerter-z-natywnymi-binariami---jaka-pula">G1. Zastrzeżony konwerter z natywnymi binariami - jaka pula?</a></li>
+<li><a href="#g2-niezaufany-python-na-wgranych-plikach---jak-ograniczyć-ryzyko-wycieku-danych">G2. Niezaufany Python na wgranych plikach - jak ograniczyć ryzyko wycieku danych?</a></li>
+<li><a href="#g3-wielodostępny-backend---jak-zarządzać-identyfikatorami-sesji">G3. Wielodostępny backend - jak zarządzać identyfikatorami sesji?</a></li>
+<li><a href="#g4-api-zwraca-sukces-http-ale-python-zgłosił-wyjątek---jak-sklasyfikować">G4. API zwraca sukces HTTP, ale Python zgłosił wyjątek - jak sklasyfikować?</a></li>
+<li><a href="#g5-timeout-po-stronie-backendu-nie-wiadomo-czy-kod-miał-skutki-uboczne---najbezpieczniejsza-polityka">G5. Timeout po stronie backendu, nie wiadomo, czy kod miał skutki uboczne - najbezpieczniejsza polityka</a></li>
+<li><strong><a href="#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</a></strong></li>
+<li><a href="#h1-co-daje-pula-sesji-i-jaka-jest-granica-izolacji">H1. Co daje pula sesji i jaka jest granica izolacji?</a></li>
+<li><a href="#h2-kiedy-wbudowany-interpreter-a-kiedy-własny-kontener">H2. Kiedy wbudowany interpreter, a kiedy własny kontener?</a></li>
+<li><a href="#h3-wymień-limity-i-wartości-puli-które-warto-znać">H3. Wymień limity i wartości puli, które warto znać.</a></li>
+<li><a href="#h4-jakiej-roli-i-jakiego-odbiorcy-tokenu-wymaga-wywołanie-api-zarządzania-puli">H4. Jakiej roli i jakiego odbiorcy tokenu wymaga wywołanie API zarządzania puli?</a></li>
+<li><a href="#h5-jak-bezpiecznie-obsługiwać-identyfikatory-sesji">H5. Jak bezpiecznie obsługiwać identyfikatory sesji?</a></li>
+<li><a href="#h6-gdzie-lądują-wgrane-pliki-i-jak-wygląda-ścieżka-pobrania">H6. Gdzie lądują wgrane pliki i jak wygląda ścieżka pobrania?</a></li>
+<li><a href="#h7-jak-odróżnić-transport-failure-od-execution-failure">H7. Jak odróżnić transport failure od execution failure?</a></li>
+<li><a href="#h8-kiedy-wolno-ponawiać-żądanie-wykonania-kodu">H8. Kiedy wolno ponawiać żądanie wykonania kodu?</a></li>
+<li><a href="#h9-co-zwróci-udane-usunięcie-sesji-i-po-co-je-robić">H9. Co zwróci udane usunięcie sesji i po co je robić?</a></li>
+<li><strong><a href="#część-j---co-dalej">CZĘŚĆ J - CO DALEJ</a></strong></li>
+<li><a href="#j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</a></li>
+<li><a href="#j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</a></li>
+</ul>
+<!-- /toc -->
+
+<h1 id="część-a---granica-wykonania-i-wybór-puli">CZĘŚĆ A - GRANICA WYKONANIA I WYBÓR PULI</h1>
+<h2 id="a1-po-co-granica-wykonania-i-jak-działa-pula-sesji">A1. Po co granica wykonania i jak działa pula sesji</h2>
 <p><em>Źródło: [unit 1] + [unit 2]</em></p>
 <p>Aplikacje AI często generują kod (analiza danych, obliczenia, pliki). <strong>Kodu wygenerowanego przez model nie można z góry uznać za bezpieczny</strong>: uruchomiony w kontenerze aplikacji mógłby wykraść poświadczenia, zużyć wspólne zasoby albo wpłynąć na innych użytkowników. Rozwiązanie z modułu to <strong>sesje dynamiczne</strong> (dynamic sessions) w Azure Container Apps: gotowe, izolowane i <strong>efemeryczne</strong> (krótkotrwałe) środowiska do wykonywania takiego kodu.</p>
 <p><strong>Pula sesji</strong> (session pool) zawiera wstępnie rozgrzane środowiska, które platforma przydziela w milisekundach. Każda przydzielona sesja działa we własnej piaskownicy izolowanej przez <strong>Hyper-V</strong> (wirtualizacja sprzętowa), która oddziela procesy i system plików od hosta i od innych sesji. Dzięki temu backend wykonuje kod, nie uruchamiając go we własnym procesie. [unit 2]</p>
@@ -241,10 +296,10 @@ Isolated session ---- execution result and generated files
 </code></pre></div>
 
 <p>API jest celowo ograniczone: gdy potrzebujesz nieobsługiwanego języka, natywnego programu wykonywalnego, zastrzeżonej biblioteki lub własnego protokołu, wbudowany interpreter nie jest właściwym wyborem. [unit 2] Dokumentacja dodaje: wersja Pythona zawiera popularne pakiety (m.in. NumPy, pandas, scikit-learn); typy puli interpretera to <code>PythonLTS</code>, <code>NodeLTS</code> i <code>Shell</code>. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter] [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
-<h2 id="a3-integracja-rest-bezposrednio-czy-adapter-frameworka">A3. Integracja: REST bezpośrednio czy adapter frameworka</h2>
+<h2 id="a3-integracja-rest-bezpośrednio-czy-adapter-frameworka">A3. Integracja: REST bezpośrednio czy adapter frameworka</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Po wyborze interpretera zdecyduj, czy aplikacja woła REST bezpośrednio, czy używa adaptera frameworka orkiestracji AI. Bezpośrednie API daje jawną kontrolę nad uwierzytelnianiem, identyfikatorami sesji, żądaniami wykonania i plikami. Adapter zmniejsza ilość kodu, gdy model narzędzi frameworka pasuje do projektu. Dla agenta <strong>LangChain</strong> pakiet <code>langchain-azure-dynamic-sessions</code> dostarcza <code>SessionsPythonREPLTool</code>, czyli narzędzie wykonujące Python w sesji interpretera bez własnego kodu REST. Adapter <strong>nie tworzy innego typu puli ani innej granicy bezpieczeństwa</strong>: używa tych samych sesji, więc nadal potrzebna jest tożsamość z dostępem do puli i strategia instancji narzędzia oraz stanu na użytkownika. REST wybierz, gdy backend potrzebuje pełnej kontroli nad wymianą plików, odpowiedziami i mapowaniem identyfikatorów; LangChain, gdy istniejący agent potrzebuje głównie narzędzia do Pythona. Znajomość kontraktu REST przydaje się też do diagnozowania błędów, które raportuje adapter.</p>
-<h2 id="a4-pula-z-wasnym-kontenerem-custom-container">A4. Pula z własnym kontenerem (custom container)</h2>
+<h2 id="a4-pula-z-własnym-kontenerem-custom-container">A4. Pula z własnym kontenerem (custom container)</h2>
 <p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
 <p>W puli <strong>custom container</strong> dostarczasz własny obraz. Platforma nadal daje pulę, szybki przydział, izolację Hyper-V i automatyczne sprzątanie, ale to <strong>Twój obraz definiuje runtime i API</strong> przyjmujące żądania. Wybierz ją dla specjalnych pakietów systemowych, zastrzeżonych narzędzi do dokumentów, języka niedostępnego w interpreterze albo usługi z własnym protokołem. Wymaga środowiska Container Apps z <strong>profilami obciążeń</strong> (workload profiles). Odpowiadasz za: <strong>konserwację obrazu</strong>, <strong>ingress</strong> aplikacji na skonfigurowanym porcie docelowym, <strong>logowanie</strong> na standardowe wyjście lub błędów oraz <strong>sprawdzenia zdrowia</strong> (sondy). [unit 2]</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
@@ -317,8 +372,8 @@ Isolated session ---- execution result and generated files
 </table>
 <p>Niezależnie od typu traktuj sesję jako <strong>efemeryczną</strong>: może zachować pliki i stan procesu dla powiązanych wywołań, ale cooldown w końcu usunie środowisko. Dokumenty źródłowe, zaakceptowane wyniki i zapisy audytowe trzymaj w trwałym magazynie aplikacji.</p>
 <hr />
-<h1 id="czesc-b-bezpieczna-konfiguracja-puli">CZĘŚĆ B - BEZPIECZNA KONFIGURACJA PULI</h1>
-<h2 id="b1-pojemnosc-puli-i-gotowe-instancje">B1. Pojemność puli i gotowe instancje</h2>
+<h1 id="część-b---bezpieczna-konfiguracja-puli">CZĘŚĆ B - BEZPIECZNA KONFIGURACJA PULI</h1>
+<h2 id="b1-pojemność-puli-i-gotowe-instancje">B1. Pojemność puli i gotowe instancje</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
 <p>Ustawienie <strong>maksymalnej liczby równoległych sesji</strong> (max concurrent sessions) ogranicza, ile przydzielonych sesji może działać naraz. Zależy od przewidywanej współbieżności, nie od liczby zarejestrowanych użytkowników; to też granica bezpieczeństwa dla kosztów i zasobów zależnych. Przykład: jeśli 50 osób jest online, ale 10 naraz analizuje dokumenty, sensowny start to około 10. Test obciążeniowy pokaże, czy żądania czekają lub zawodzą po osiągnięciu limitu. W CLI parametr to <code>--max-sessions</code>, a <strong>maksimum wynosi 600</strong>. [unit 3] [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
 <p>Pula z własnym kontenerem może też utrzymywać <strong>gotowe instancje sesji</strong> (<code>readySessionInstances</code>, w CLI <code>--ready-sessions</code>). Skracają opóźnienie przydziału, bo obraz i aplikacja już działają, ale utrzymują obliczenia także przy małym ruchu, więc najpierw zmierz czas startu i opóźnienie interaktywne. Fragment: dwie gotowe instancje i do 20 równoległych sesji; sondy pomagają zliczać jako gotowe tylko zdrowe środowiska. [unit 3]</p>
@@ -363,11 +418,11 @@ Isolated session ---- execution result and generated files
 <span class="p">}</span>
 </code></pre></div>
 
-<h2 id="b2-cooldown-okres-bezczynnosci-i-cykl-zycia">B2. Cooldown (okres bezczynności) i cykl życia</h2>
+<h2 id="b2-cooldown-okres-bezczynności-i-cykl-życia">B2. Cooldown (okres bezczynności) i cykl życia</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
 <p>Cykl życia <strong>timed</strong> usuwa sesję po skonfigurowanym okresie bez żądań (<strong>cooldown</strong>); <strong>każde żądanie zeruje licznik bezczynności</strong>. Dłuższy cooldown daje wieloetapowej interakcji AI więcej czasu na ponowne użycie plików i stanu; krótszy szybciej zwalnia pojemność i usuwa dane tymczasowe. Dobierz go do przewidywanej przerwy między powiązanymi operacjami (analiza dokumentu może wymagać kilku minut na obejrzenie wyniku i prośbę o kolejny wykres). Nie traktuj cooldownu jako trwałej retencji: sesja może zniknąć po bezczynności albo po awarii. Dla niezaufanego kodu krótsza retencja zwykle zmniejsza ryzyko; źródło dokumentu i zaakceptowane wyniki zapisuj w magazynie aplikacji, żeby po nowej, pustej sesji odtworzyć dane wejściowe. [unit 3]</p>
 <p>Wartości z dokumentacji (egzamin je lubi): <code>--cooldown-period</code> <strong>300-3600 s</strong>, domyślnie <strong>300</strong>; typ cyklu życia <code>Timed</code> (domyślny) lub <code>OnContainerExit</code> (dla własnego kontenera: sesja działa, aż kontener zakończy działanie lub minie <code>--max-alive-period</code>, domyślnie 3600 s; <code>cooldownPeriodInSeconds</code> nie jest wtedy wspierany). [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
-<h2 id="b3-ruch-wychodzacy-egress-i-tworzenie-puli">B3. Ruch wychodzący (egress) i tworzenie puli</h2>
+<h2 id="b3-ruch-wychodzący-egress-i-tworzenie-puli">B3. Ruch wychodzący (egress) i tworzenie puli</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</em></p>
 <p>Sesje <strong>domyślnie blokują ruch wychodzący</strong>. To uniemożliwia wygenerowanemu kodowi pobieranie dodatkowych programów, wysyłanie wgranej treści na zewnętrzny adres lub użycie sesji do ataku typu DoS. Zostaw egress wyłączony, jeśli zadanie działa tylko na dostarczonym kodzie i plikach. Włączaj tylko przy konkretnej zależności zewnętrznej i akceptowalnym ryzyku. <strong>Egress to ustawienie całej puli</strong>, więc dotyczy każdej sesji w niej; lepiej rozdzielić obciążenia zaufane (z dostępem do sieci) od niezaufanych, niż osłabiać wspólną pulę.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp sessionpool create \
@@ -392,7 +447,7 @@ Isolated session ---- execution result and generated files
 <blockquote>
 <p>Wersje sprawdzone 2026-11-22 (źródło: strony session-pool i sessions-code-interpreter w docs, <code>az containerapp sessionpool -h</code>): komendy <code>az containerapp sessionpool create|show|update|list|delete</code> istnieją w rozszerzeniu <code>containerapp</code> (1.3.0b6); w lab Microsoftu rozszerzenie instalowane jest z <code>--allow-preview true</code>; parametr <code>--probe-yaml</code> jest oznaczony jako Preview. Przed użyciem sprawdź https://learn.microsoft.com/azure/container-apps/session-pool.</p>
 </blockquote>
-<h2 id="b4-tozsamosci-i-dane-w-sesji">B4. Tożsamości i dane w sesji</h2>
+<h2 id="b4-tożsamości-i-dane-w-sesji">B4. Tożsamości i dane w sesji</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p><strong>Izolacja Hyper-V oddziela sesje od siebie, ale kod w jednej sesji ma dostęp do plików, zmiennych środowiskowych i dostępnych w niej poświadczeń.</strong> Umieszczaj sekret lub dokument w sesji tylko wtedy, gdy zezwalasz kodowi sesji na dostęp do tych danych: izolacja między sesjami nie czyni danych bezpiecznymi przed kodem, który sam wykonujesz.</p>
 <p>Tożsamość backendu i tożsamość sesji mają inne cele. Backend używa roli <strong>Azure ContainerApps Session Executor</strong>, by wołać API zarządzania puli; użytkownicy końcowi nigdy nie dostają tokenu tej tożsamości, a wygenerowany kod jej nie potrzebuje. Pula z własnym kontenerem może mieć <strong>tożsamość zarządzaną</strong> do pobierania obrazu lub dostępu do zasobów chronionych przez Entra. Dostęp w czasie działania jest ryzykowniejszy, bo niezaufany kod w sesji może zażądać tokenów tej tożsamości; jeśli jest nieunikniony, użyj osobnej tożsamości o najmniejszym zakresie, nie szerszej tożsamości backendu.</p>
@@ -407,7 +462,7 @@ Isolated session ---- execution result and generated files
 <li><strong>Monitoruj wykorzystanie:</strong> dla pul custom śledź liczbę sesji wykonywanych, tworzonych i gotowych.</li>
 </ul>
 <hr />
-<h1 id="czesc-c-wykonywanie-kodu-i-wymiana-plikow">CZĘŚĆ C - WYKONYWANIE KODU I WYMIANA PLIKÓW</h1>
+<h1 id="część-c---wykonywanie-kodu-i-wymiana-plików">CZĘŚĆ C - WYKONYWANIE KODU I WYMIANA PLIKÓW</h1>
 <h2 id="c1-uwierzytelnianie-backendu">C1. Uwierzytelnianie backendu</h2>
 <p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
 <p>Każde żądanie do API zarządzania wymaga tokenu nośnika (bearer) Microsoft Entra. Tożsamość wywołująca potrzebuje roli <strong>Azure ContainerApps Session Executor</strong> na puli sesji, a <strong>odbiorca tokenu (audience) musi mieć wartość <code>https://dynamicsessions.io</code></strong>. Tożsamość zarządzana daje uwierzytelnianie bez haseł, gdy backend działa w Azure. Rolę przypisz na zakresie puli, żeby tożsamość nie mogła wykonywać kodu w obcych pulach. [unit 4]</p>
@@ -434,7 +489,7 @@ Isolated session ---- execution result and generated files
 </code></pre></div>
 
 <p>Sam identyfikator nie uwierzytelnia wywołującego: backend nadal autoryzuje użytkownika przed użyciem zapisanego powiązania i uwierzytelnia każde żądanie do puli własnym tokenem; użytkownik nie może zmienić parametru żądania, by wskazać cudzą rozmowę. Dokumentacja opisuje identyfikator jako dowolny ciąg unikalny w puli (np. identyfikator użytkownika lub rozmowy) i podkreśla, że jest to informacja wrażliwa, a aplikacja musi dopilnować dostępu użytkowników tylko do własnych sesji. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
-<h2 id="c3-wysanie-kodu-do-wykonania">C3. Wysłanie kodu do wykonania</h2>
+<h2 id="c3-wysłanie-kodu-do-wykonania">C3. Wysłanie kodu do wykonania</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Punkt końcowy <code>executions</code> przyjmuje kod inline i zwraca odpowiedź wykonania. W produkcyjnej aplikacji AI kod może dostarczyć warstwa orkiestracji, ale backend <strong>waliduje żądanie względem własnej polityki</strong> przed wysłaniem: izolacja zmniejsza skutki niezaufanego kodu, ale nie rozstrzyga, czy żądana akcja jest właściwa.</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">azure.identity</span><span class="w"> </span><span class="kn">import</span> <span class="n">DefaultAzureCredential</span>
@@ -485,7 +540,7 @@ Isolated session ---- execution result and generated files
 </code></pre></div>
 
 <p><code>raise_for_status()</code> sprawia, że błędy uwierzytelniania, walidacji, pojemności i usługi nie wyglądają na udane wykonania, ale <strong>wywołujący musi jeszcze sprawdzić dane wykonania</strong>, czy kod Pythona nie zgłosił błędu. Wersję API trzymaj w konfiguracji, nie rozproszoną po metodach, i testuj kontrakt odpowiedzi przy jej zmianie. Ciało żądania z <code>properties</code> odpowiada przykładowi w dokumentacji (<code>api-version=2025-10-02-preview</code>). [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
-<h2 id="c4-wymiana-plikow-z-sesja">C4. Wymiana plików z sesją</h2>
+<h2 id="c4-wymiana-plików-z-sesją">C4. Wymiana plików z sesją</h2>
 <p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
 <p>Operacje na plikach pozwalają kodowi przetwarzać pliki użytkownika i tworzyć artefakty (wykresy, przekształcone dokumenty). Backend wgrywa <strong>tylko pliki autoryzowane dla bieżącego zadania</strong>. Sesje interpretera zapisują wgrane pliki w <strong><code>/mnt/data</code></strong>, gdzie kolejne wykonania z tym samym identyfikatorem mogą po nie sięgnąć.</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -540,7 +595,7 @@ Isolated session ---- execution result and generated files
 </code></pre></div>
 
 <p><strong>Limit wgrywania pliku w interpreterze: 128 MB</strong> (przy przekroczeniu możliwy HTTP 413); dla większych danych zmień zadanie tak, by sesja dostawała mniejszy, zatwierdzony zestaw. [unit 4] [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter] Lista plików w odpowiedzi ma postać <code>value[].properties.filename</code> (wraz z <code>size</code> i <code>lastModifiedTime</code>); dozwolone znaki nazw to m.in. litery, cyfry, <code>- _ . @ $ &amp; = ; , # % ^ ( )</code> i znaki Unicode. [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
-<h2 id="c5-ponowne-uzycie-sesji-w-wielu-operacjach">C5. Ponowne użycie sesji w wielu operacjach</h2>
+<h2 id="c5-ponowne-użycie-sesji-w-wielu-operacjach">C5. Ponowne użycie sesji w wielu operacjach</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Powiązane wywołania z tym samym identyfikatorem trafiają do tego samego środowiska, dopóki sesja nie wygaśnie: wgrywasz dokument raz, wykonujesz analizę i tworzysz kolejną wizualizację bez ponownego wgrywania. Inny identyfikator tworzy lub adresuje osobne środowisko.</p>
 <div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
@@ -572,7 +627,7 @@ Isolated session ---- execution result and generated files
 <p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org): <code>langchain-azure-dynamic-sessions</code> 1.0.4 (2026-09-24, wymaga Pythona &gt;= 3.11), <code>requests</code> 2.34.2, <code>azure-identity</code> 1.27.0; API danych: <code>executions</code> i <code>files</code> z <code>api-version=2025-10-02-preview</code>, <code>session</code> (get/delete) z <code>2025-02-02-preview</code> (jak w dokumentacji code interpreter). Wersje API zmieniają się; przed użyciem sprawdź https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter.</p>
 </blockquote>
 <hr />
-<h1 id="czesc-d-cykl-zycia-i-bedy-wykonania">CZĘŚĆ D - CYKL ŻYCIA I BŁĘDY WYKONANIA</h1>
+<h1 id="część-d---cykl-życia-i-błędy-wykonania">CZĘŚĆ D - CYKL ŻYCIA I BŁĘDY WYKONANIA</h1>
 <h2 id="d1-efemeryczny-stan-sesji">D1. Efemeryczny stan sesji</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
 <p>Sesja timed pozostaje przydzielona, dopóki otrzymuje żądania; każde żądanie zeruje licznik bezczynności. Po cooldownie bez aktywności Azure Container Apps <strong>niszczy sesję i jej pliki tymczasowe</strong>. Późniejsze żądanie z tym samym identyfikatorem może dostać <strong>nową, pustą sesję</strong>: identyfikator zachowuje routing tylko dopóki oryginalna sesja istnieje. Zaprojektuj przepływ tak, by rozpoznawał brak stanu tymczasowego: jeśli kod analizy zgłasza, że <code>/mnt/data/operational-data.csv</code> nie istnieje, backend pobiera autoryzowane źródło z trwałego magazynu, wgrywa je do nowej sesji i uruchamia ponownie idempotentny krok analizy.</p>
@@ -582,7 +637,7 @@ Isolated session ---- execution result and generated files
 </code></pre></div>
 
 <p>Odpowiedź (<code>SessionView</code>) zawiera <code>identifier</code>, <code>etag</code>, <code>expiresAt</code>, <code>createdAt</code> i <code>lastAccessedAt</code>; <code>listSessions</code> listuje sesje stronami po 300 (paginacja <code>skip</code>). [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</p>
-<h2 id="d2-kategorie-bedow">D2. Kategorie błędów</h2>
+<h2 id="d2-kategorie-błędów">D2. Kategorie błędów</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p><strong>Sukces HTTP nie oznacza, że kod dał poprawny wynik biznesowy.</strong> Transport może się udać, a Python zgłosić wyjątek albo zwrócić dane niespełniające kontraktu. Backend waliduje obie warstwy, zanim przekaże wynik warstwie orkiestracji. Cztery kategorie:</p>
 <table>
@@ -687,7 +742,7 @@ Isolated session ---- execution result and generated files
 </code></pre></div>
 
 <p>Stosuj ograniczone liczbą próby z rosnącymi opóźnieniami i jitterem (losowym rozrzutem). W telemetrii zachowuj trace ID usługi i identyfikator sesji aplikacji, ale <strong>nie loguj tokenów i nie ujawniaj identyfikatorów sesji użytkownikom końcowym</strong>.</p>
-<h2 id="d5-zwalnianie-zakonczonych-sesji">D5. Zwalnianie zakończonych sesji</h2>
+<h2 id="d5-zwalnianie-zakończonych-sesji">D5. Zwalnianie zakończonych sesji</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/sessions-code-interpreter]</em></p>
 <p>Cooldown sprząta nieaktywne sesje automatycznie, ale backend może usunąć sesję interpretera wcześniej: to zwalnia pojemność i usuwa dane tymczasowe, gdy przepływ się kończy lub użytkownik kończy rozmowę. <strong>Nie usuwaj sesji, gdy inne żądanie tej rozmowy jeszcze trwa.</strong> Usuwanie to uwierzytelnione <code>DELETE</code>; odpowiedź <strong><code>204 No Content</code></strong> potwierdza, że środowiska już nie ma.</p>
 <div class="codehilite"><pre><span></span><code><span class="err">DELETE &lt;POOL_MANAGEMENT_ENDPOINT&gt;/session?api-version=2025-02-02-preview&amp;identifier=&lt;SESSION_ID&gt;</span>
@@ -698,7 +753,7 @@ Isolated session ---- execution result and generated files
 <blockquote>
 <p>Uwaga o dokumentacji: strona "Use session pools" w tabeli punktów końcowych interpretera nadal wymienia starsze ścieżki (<code>code/execute</code>, <code>files/upload</code>) i <code>api-version=2024-02-02-preview</code>, podczas gdy strona "code interpreter" (i moduł) używa <code>/executions</code> i <code>/files</code> z <code>2025-10-02-preview</code>; trzymaj się wersji ze strony code interpreter i sprawdzaj aktualne API. [docs: https://learn.microsoft.com/azure/container-apps/session-pool]</p>
 </blockquote>
-<h2 id="d6-niezawodne-operowanie-przepywami-sesji">D6. Niezawodne operowanie przepływami sesji</h2>
+<h2 id="d6-niezawodne-operowanie-przepływami-sesji">D6. Niezawodne operowanie przepływami sesji</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Sandbox sesji ogranicza wpływ kodu, a walidacja, autoryzacja, limity czasu i sprawdzanie wyniku w backendzie decydują, co aplikacja akceptuje; <strong>żadna z warstw nie zastępuje drugiej</strong>.</p>
 <ul>
@@ -711,12 +766,12 @@ Isolated session ---- execution result and generated files
 <li><strong>Loguj bezpiecznie:</strong> czasy, statusy i trace ID, bez tokenów, wrażliwego kodu i surowych dokumentów.</li>
 </ul>
 <hr />
-<h1 id="czesc-e-cwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
+<h1 id="część-e---ćwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
 <p>Przeczytaj części A-D. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatną pulę sesji (rozliczaną za czas trwania sesji): rób je w jednej grupie zasobów i wykonaj <strong>Sprzątanie</strong> po I2 (I2 kontynuuje I1). Kod klienta i SDK jest w Pythonie; odpowiedniki C# są w ćwiczeniach z kodem.</p>
 <blockquote>
 <p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, <code>az version</code>, testy lokalne): Python 3.12; requests 2.34.2; azure-identity 1.27.0; azure-mgmt-appcontainers 5.1.0; C#: .NET SDK 10.0, Azure.Identity 1.21.0, Azure.ResourceManager.AppContainers 1.6.0 (pule sesji: <code>SessionPoolResource</code>); Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6 (beta). Przed użyciem sprawdź PyPI i NuGet.</p>
 </blockquote>
-<h2 id="i1-pula-interpretera-rola-session-executor-i-klient-rest-w-pythonie-lab-moduu">I1. Pula interpretera, rola Session Executor i klient REST w Pythonie (lab modułu)</h2>
+<h2 id="i1-pula-interpretera-rola-session-executor-i-klient-rest-w-pythonie-lab-modułu">I1. Pula interpretera, rola Session Executor i klient REST w Pythonie (lab modułu)</h2>
 <p>(rozwinięcie jednostki 6; scenariusz: [unit 6])</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) w pustym katalogu; pliki <code>sessions_client.py</code> i <code>demo.py</code>.</p>
 <blockquote>
@@ -927,7 +982,7 @@ python<span class="w"> </span>demo.py<span class="w">                           
 <p><strong>Zadania:</strong> (a) uruchom <code>python demo.py</code> i potwierdź kroki 1-7; (b) <strong>zepsuj to - limit czasu:</strong> wykonaj kod <code>import time; time.sleep(120)</code> z <code>timeoutInSeconds</code> 60 (zmień wartość w <code>execute_code</code>) i zobacz, jak klient to klasyfikuje; (c) <strong>zepsuj to - wygaśnięcie sesji:</strong> po kroku 1 odczekaj ponad 300 s bez żądań, potem wylistuj pliki tym samym identyfikatorem (w osobnym skrypcie albo przez pozostawienie klienta w <code>python -i</code>); (d) <strong>zepsuj to - zła rola:</strong> w osobnym koncie (bez roli Session Executor na puli) wykonaj upload i przeczytaj błąd.</p>
 <p><strong>Sprawdź:</strong> (a) kroki wypisują: odpowiedź uploadu, wynik z <code>stdout</code> równy <code>{"months": 4, "total": 1000, "average": 250.0}</code>, listę plików <code>operational-data.csv</code> i <code>summary.json</code>, treść <code>summary.json</code>, komunikat <code>RuntimeError</code>/"celowy blad", metadane sesji i <code>204</code> [unit 6]; (b) wykonanie nie kończy się statusem <code>Succeeded</code>, więc klient zgłasza <code>CodeExecutionError</code> albo timeout transportu (dokładny status zależy od usługi) [autor: niezweryfikowane]; (c) po wygaśnięciu sesji lista plików jest pusta, bo identyfikator wskazuje już nową, pustą sesję [unit 5]; (d) błąd HTTP 401/403 (brak uprawnień), zgłoszony jako <code>SessionTransportError</code> [autor: niezweryfikowane].</p>
 <p><strong>Sprzątanie:</strong> pula jest potrzebna jeszcze w I2 i I3, więc usuń ją po nich (Sprzątanie z I2). Jeśli kończysz na I1: <code>az group delete --name $RG --yes --no-wait</code>, a potem <code>az group exists --name $RG</code> (po kilku minutach powinno wypisać <code>false</code>).</p>
-<h2 id="i2-egress-i-cooldown-eksperymenty-z-konfiguracja-puli">I2. Egress i cooldown: eksperymenty z konfiguracją puli</h2>
+<h2 id="i2-egress-i-cooldown-eksperymenty-z-konfiguracją-puli">I2. Egress i cooldown: eksperymenty z konfiguracją puli</h2>
 <p>(rozwinięcie sekcji B2-B3, D1; kontynuacja I1: ta sama grupa <code>rg-aca-sessions-i1</code>, pula <code>ai-document-sessions</code>, plik <code>sessions_client.py</code> i zmienne z I1)</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) i Python w katalogu z I1; plik <code>egress_test.py</code>.</p>
 <p><code>egress_test.py</code>:</p>
@@ -965,7 +1020,7 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <p>Usuwa pulę z I1 i I2. Wykonaj dopiero po I3.</p>
-<h2 id="i3-odczyt-konfiguracji-pul-przez-sdk-zarzadzania-python-i-odpowiednik-c-net">I3. Odczyt konfiguracji pul przez SDK zarządzania: Python i odpowiednik C# (.NET)</h2>
+<h2 id="i3-odczyt-konfiguracji-pul-przez-sdk-zarządzania-python-i-odpowiednik-c-net">I3. Odczyt konfiguracji pul przez SDK zarządzania: Python i odpowiednik C# (.NET)</h2>
 <p>(rozwinięcie sekcji B1-B3; wymaga puli z I1 przed jej Sprzątaniem w I2)</p>
 <p><strong>Gdzie / Plik:</strong> <code>list_pools.py</code> (Python) i <code>Program.cs</code> (C#); <code>az login</code>.</p>
 <div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>azure-mgmt-appcontainers<span class="o">==</span><span class="m">5</span>.1.0<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
@@ -1022,68 +1077,68 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 <p><strong>Sprawdź:</strong> (a) te same wartości: typ <code>PythonLTS</code>, maksimum 5 (lub 1, jeśli nie przywróciłeś), cooldown 300, egress <code>EgressDisabled</code>; (b) błąd "grupa zasobów nie istnieje" (ResourceGroupNotFound); dokładny komunikat zależy od wersji SDK [autor: niezweryfikowane]; (c) te same wartości w formacie C#.</p>
 <p><strong>Sprzątanie:</strong> brak (odczyt metadanych); po I3 wykonaj Sprzątanie z I2.</p>
 <hr />
-<h1 id="czesc-g-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<h1 id="część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
 <p>Learn nie pokazuje poprawnych odpowiedzi w sprawdzianie wiedzy, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
-<h2 id="g1-zastrzezony-konwerter-z-natywnymi-binariami-jaka-pula">G1. Zastrzeżony konwerter z natywnymi binariami - jaka pula?</h2>
+<h2 id="g1-zastrzeżony-konwerter-z-natywnymi-binariami---jaka-pula">G1. Zastrzeżony konwerter z natywnymi binariami - jaka pula?</h2>
 <p>-&gt; <em>Pula z własnym kontenerem (custom container) z konwerterem w obrazie.</em> Wbudowany interpreter (przez REST lub <code>SessionsPythonREPLTool</code>) nie obsługuje natywnych programów ani własnych bibliotek. <em>(odpowiedź wnioskowana: unit 2, sekcje "Choose the built-in code interpreter" i "Choose a custom container")</em></p>
-<h2 id="g2-niezaufany-python-na-wgranych-plikach-jak-ograniczyc-ryzyko-wycieku-danych">G2. Niezaufany Python na wgranych plikach - jak ograniczyć ryzyko wycieku danych?</h2>
+<h2 id="g2-niezaufany-python-na-wgranych-plikach---jak-ograniczyć-ryzyko-wycieku-danych">G2. Niezaufany Python na wgranych plikach - jak ograniczyć ryzyko wycieku danych?</h2>
 <p>-&gt; <em>Ustawić <code>--network-status EgressDisabled</code> na puli.</em> <code>EgressEnabled</code> z ograniczeniem przez tożsamość backendu nie blokuje ruchu z sesji; dłuższy cooldown tylko wydłuża retencję plików. <em>(odpowiedź wnioskowana: unit 3, sekcja "Control outbound network access")</em></p>
-<h2 id="g3-wielodostepny-backend-jak-zarzadzac-identyfikatorami-sesji">G3. Wielodostępny backend - jak zarządzać identyfikatorami sesji?</h2>
+<h2 id="g3-wielodostępny-backend---jak-zarządzać-identyfikatorami-sesji">G3. Wielodostępny backend - jak zarządzać identyfikatorami sesji?</h2>
 <p>-&gt; <em>Generować nieprzewidywalny identyfikator po stronie serwera i przechowywać jego powiązanie z użytkownikiem lub rozmową w stanie backendu.</em> E-mail jako identyfikator jest przewidywalny, a akceptowanie identyfikatora z klienta pozwala adresować cudzą sesję. <em>(odpowiedź wnioskowana: unit 4, sekcja "Create secure session identifiers")</em></p>
-<h2 id="g4-api-zwraca-sukces-http-ale-python-zgosi-wyjatek-jak-sklasyfikowac">G4. API zwraca sukces HTTP, ale Python zgłosił wyjątek - jak sklasyfikować?</h2>
+<h2 id="g4-api-zwraca-sukces-http-ale-python-zgłosił-wyjątek---jak-sklasyfikować">G4. API zwraca sukces HTTP, ale Python zgłosił wyjątek - jak sklasyfikować?</h2>
 <p>-&gt; <em>Jako execution failure (błąd wykonania).</em> To nie jest błąd transportu (HTTP się udał) ani sukces. <em>(odpowiedź wnioskowana: unit 5, sekcja "Separate failure categories")</em></p>
-<h2 id="g5-timeout-po-stronie-backendu-nie-wiadomo-czy-kod-mia-skutki-uboczne-najbezpieczniejsza-polityka">G5. Timeout po stronie backendu, nie wiadomo, czy kod miał skutki uboczne - najbezpieczniejsza polityka</h2>
+<h2 id="g5-timeout-po-stronie-backendu-nie-wiadomo-czy-kod-miał-skutki-uboczne---najbezpieczniejsza-polityka">G5. Timeout po stronie backendu, nie wiadomo, czy kod miał skutki uboczne - najbezpieczniejsza polityka</h2>
 <p>-&gt; <em>Ponawiać tylko wtedy, gdy operacja jest idempotentna, a backend potrafi ocenić wynikowy stan.</em> Natychmiastowe ponawianie każdego timeoutu z tym samym identyfikatorem może zdublować skutki, a nowy identyfikator nie rozwiązuje niejednoznaczności. <em>(odpowiedź wnioskowana: unit 5, sekcja "Apply retries safely")</em></p>
 <hr />
-<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h1 id="część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
 <h2 id="h1-co-daje-pula-sesji-i-jaka-jest-granica-izolacji">H1. Co daje pula sesji i jaka jest granica izolacji?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Wstępnie rozgrzane środowiska przydzielane w milisekundach; każda sesja działa w osobnej piaskownicy izolowanej przez Hyper-V (procesy i system plików oddzielone od hosta i innych sesji). Sesja jest efemeryczna.</p>
 </details>
-<h2 id="h2-kiedy-wbudowany-interpreter-a-kiedy-wasny-kontener">H2. Kiedy wbudowany interpreter, a kiedy własny kontener?</h2>
+<h2 id="h2-kiedy-wbudowany-interpreter-a-kiedy-własny-kontener">H2. Kiedy wbudowany interpreter, a kiedy własny kontener?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Interpreter: analiza CSV, obliczenia, wizualizacje, krótkie skrypty agenta, gdy wystarczy obsługiwany runtime. Własny kontener: specjalne pakiety systemowe, binaria natywne, język spoza interpretera, własny protokół (wymaga środowiska z profilami obciążeń; odpowiadasz za obraz, ingress, logi i sondy).</p>
 </details>
-<h2 id="h3-wymien-limity-i-wartosci-puli-ktore-warto-znac">H3. Wymień limity i wartości puli, które warto znać.</h2>
+<h2 id="h3-wymień-limity-i-wartości-puli-które-warto-znać">H3. Wymień limity i wartości puli, które warto znać.</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>--max-sessions</code> maks. 600; <code>--cooldown-period</code> 300-3600 s (domyślnie 300); <code>--network-status</code> domyślnie <code>EgressDisabled</code>; typy <code>PythonLTS</code> (domyślny), <code>NodeLTS</code>, <code>Shell</code>, <code>CustomContainer</code>; wykonanie maks. 220 s; wgrywanie pliku do 128 MB.</p>
 </details>
-<h2 id="h4-jakiej-roli-i-jakiego-odbiorcy-tokenu-wymaga-wywoanie-api-zarzadzania-puli">H4. Jakiej roli i jakiego odbiorcy tokenu wymaga wywołanie API zarządzania puli?</h2>
+<h2 id="h4-jakiej-roli-i-jakiego-odbiorcy-tokenu-wymaga-wywołanie-api-zarządzania-puli">H4. Jakiej roli i jakiego odbiorcy tokenu wymaga wywołanie API zarządzania puli?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Roli Azure ContainerApps Session Executor (dokumentacja: także Contributor) na puli; token Entra z odbiorcą (audience) <code>https://dynamicsessions.io</code> (zakres <code>https://dynamicsessions.io/.default</code>).</p>
 </details>
-<h2 id="h5-jak-bezpiecznie-obsugiwac-identyfikatory-sesji">H5. Jak bezpiecznie obsługiwać identyfikatory sesji?</h2>
+<h2 id="h5-jak-bezpiecznie-obsługiwać-identyfikatory-sesji">H5. Jak bezpiecznie obsługiwać identyfikatory sesji?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Generować je po stronie serwera (nieprzewidywalnie, np. UUID) dla uwierzytelnionego użytkownika lub rozmowy, trzymać powiązanie w stanie backendu, nie przyjmować identyfikatora od klienta i nie ujawniać go użytkownikom; sam identyfikator nie uwierzytelnia.</p>
 </details>
-<h2 id="h6-gdzie-laduja-wgrane-pliki-i-jak-wyglada-sciezka-pobrania">H6. Gdzie lądują wgrane pliki i jak wygląda ścieżka pobrania?</h2>
+<h2 id="h6-gdzie-lądują-wgrane-pliki-i-jak-wygląda-ścieżka-pobrania">H6. Gdzie lądują wgrane pliki i jak wygląda ścieżka pobrania?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>W <code>/mnt/data</code> sesji; wgranie: <code>POST /files</code> (multipart); lista: <code>GET /files</code>; pobranie: <code>GET /files/{nazwa}/content</code> (nazwa kodowana jako jeden segment URL i walidowana przed zapisem lokalnym).</p>
 </details>
-<h2 id="h7-jak-odroznic-transport-failure-od-execution-failure">H7. Jak odróżnić transport failure od execution failure?</h2>
+<h2 id="h7-jak-odróżnić-transport-failure-od-execution-failure">H7. Jak odróżnić transport failure od execution failure?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Transport failure: żądanie API nie zostało zrealizowane (uwierzytelnianie, autoryzacja, pojemność, sieć, usługa). Execution failure: HTTP się udał, ale kod w sesji zgłosił wyjątek lub zwrócił nieudany status wykonania. Dodatkowo validation failure: wynik niezgodny z kontraktem aplikacji.</p>
 </details>
-<h2 id="h8-kiedy-wolno-ponawiac-zadanie-wykonania-kodu">H8. Kiedy wolno ponawiać żądanie wykonania kodu?</h2>
+<h2 id="h8-kiedy-wolno-ponawiać-żądanie-wykonania-kodu">H8. Kiedy wolno ponawiać żądanie wykonania kodu?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Tylko dla operacji idempotentnych, gdy backend umie zweryfikować wynik; ograniczona liczba prób, rosnące opóźnienia z jitterem; timeout jest niejednoznaczny (wykonanie mogło się zakończyć). Odczyty (GET/HEAD) i zapytania o status są naturalnymi kandydatami.</p>
 </details>
-<h2 id="h9-co-zwroci-udane-usuniecie-sesji-i-po-co-je-robic">H9. Co zwróci udane usunięcie sesji i po co je robić?</h2>
+<h2 id="h9-co-zwróci-udane-usunięcie-sesji-i-po-co-je-robić">H9. Co zwróci udane usunięcie sesji i po co je robić?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>DELETE .../session</code> odpowiada <code>204 No Content</code>. Zwalnia pojemność i natychmiast usuwa dane tymczasowe (zamiast czekać na cooldown); nie usuwaj sesji, gdy trwa inne żądanie tej rozmowy.</p>
 </details>
 <hr />
-<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
-<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<h1 id="część-j---co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
 <p><em>Źródło: [docs: https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200]</em></p>
 <p>To ostatni moduł ścieżki "Deploy and manage apps on Azure Container Apps" (moduły 04-07). Dalej w kursie AI-200T00: moduły o Kubernetes (AKS) - wdrażanie, konfiguracja i monitorowanie - oraz moduły o bazach danych (Cosmos DB, PostgreSQL, Redis). Wróć do części B i D, gdy projektujesz bezpieczną pulę i obsługę błędów.</p>
 <p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30; dla tego modułu nie ma odpowiadającej umiejętności):</p>

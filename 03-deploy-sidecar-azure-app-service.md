@@ -17,6 +17,60 @@ W tekście "moduł N" znaczy plik tutoriala `0N-*.md` (moduł 01 = `01-store-man
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - WZORZEC SIDECAR: CO TO JEST I KIEDY GO UŻYĆ](#część-a---wzorzec-sidecar-co-to-jest-i-kiedy-go-użyć)**
+  - [A1. Czym jest sidecar w App Service i scenariusz](#a1-czym-jest-sidecar-w-app-service-i-scenariusz)
+  - [A2. Model wykonania: jeden kontener główny i do dziewięciu sidecarów](#a2-model-wykonania-jeden-kontener-główny-i-do-dziewięciu-sidecarów)
+  - [A3. Sprzężenie i izolacja: kiedy sidecar, a kiedy osobna usługa](#a3-sprzężenie-i-izolacja-kiedy-sidecar-a-kiedy-osobna-usługa)
+  - [A4. Dwa modele konfiguracji: sitecontainers a klasyczny kontener niestandardowy](#a4-dwa-modele-konfiguracji-sitecontainers-a-klasyczny-kontener-niestandardowy)
+  - [A5. Planowanie pojemności i granic awarii](#a5-planowanie-pojemności-i-granic-awarii)
+- **[CZĘŚĆ B - KONFIGURACJA KONTENERA GŁÓWNEGO I SIDECARÓW](#część-b---konfiguracja-kontenera-głównego-i-sidecarów)**
+  - [B1. Tworzenie aplikacji obsługującej sidecary](#b1-tworzenie-aplikacji-obsługującej-sidecary)
+  - [B2. Role kontenerów i porty](#b2-role-kontenerów-i-porty)
+  - [B3. Konfiguracja wspólna i specyficzna dla kontenera](#b3-konfiguracja-wspólna-i-specyficzna-dla-kontenera)
+  - [B4. Uwierzytelnianie pobierania obrazów tożsamością zarządzaną](#b4-uwierzytelnianie-pobierania-obrazów-tożsamością-zarządzaną)
+  - [B5. Weryfikacja wdrożonych definicji](#b5-weryfikacja-wdrożonych-definicji)
+- **[CZĘŚĆ C - KOMUNIKACJA MIĘDZY KONTENERAMI I WSPÓŁDZIELONE PLIKI](#część-c---komunikacja-między-kontenerami-i-współdzielone-pliki)**
+  - [C1. Połączenie przez wspólną przestrzeń sieci](#c1-połączenie-przez-wspólną-przestrzeń-sieci)
+  - [C2. Niezawodne żądania lokalne](#c2-niezawodne-żądania-lokalne)
+  - [C3. Współdzielony wolumen `/home`](#c3-współdzielony-wolumen-home)
+  - [C4. Unikaj niepotrzebnych własnych montowań](#c4-unikaj-niepotrzebnych-własnych-montowań)
+  - [C5. Wybór granicy magazynu](#c5-wybór-granicy-magazynu)
+  - [C6. Walidacja komunikacji i dostępu do plików](#c6-walidacja-komunikacji-i-dostępu-do-plików)
+- **[CZĘŚĆ D - DIAGNOZA AWARII SIDECARA](#część-d---diagnoza-awarii-sidecara)**
+  - [D1. Przepływ "od objawu"](#d1-przepływ-od-objawu)
+  - [D2. Awarie pobrania obrazu i startu](#d2-awarie-pobrania-obrazu-i-startu)
+  - [D3. Presja zasobów](#d3-presja-zasobów)
+  - [D4. Diagnoza łączności lokalnej](#d4-diagnoza-łączności-lokalnej)
+  - [D5. Awarie współdzielonych plików](#d5-awarie-współdzielonych-plików)
+  - [D6. Diagnostyka platformowa i zapis incydentu](#d6-diagnostyka-platformowa-i-zapis-incydentu)
+- **[CZĘŚĆ E - ĆWICZENIA](#część-e---ćwiczenia)**
+  - [I1. Aplikacja z kontenerem głównym i sidecarem modelu, pobieranie obrazów tożsamością zarządzaną - Python i C#](#i1-aplikacja-z-kontenerem-głównym-i-sidecarem-modelu-pobieranie-obrazów-tożsamością-zarządzaną---python-i-c)
+  - [I2. Komunikacja przez `localhost` i współdzielony `/home`: kontrola i awarie](#i2-komunikacja-przez-localhost-i-współdzielony-home-kontrola-i-awarie)
+  - [I3. Diagnoza: nieistniejący tag obrazu sidecara, status i logi](#i3-diagnoza-nieistniejący-tag-obrazu-sidecara-status-i-logi)
+- **[CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia](#część-f---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia)**
+  - [F1. Kompaktowy model dla każdej instancji API, który ma startować i skalować się razem z API](#f1-kompaktowy-model-dla-każdej-instancji-api-który-ma-startować-i-skalować-się-razem-z-api)
+  - [F2. Ruch zewnętrzny ma trafiać tylko do API, a API wywołuje serwer modelu lokalnie](#f2-ruch-zewnętrzny-ma-trafiać-tylko-do-api-a-api-wywołuje-serwer-modelu-lokalnie)
+  - [F3. Prywatne obrazy z ACR (RBAC Registry Permissions) bez haseł w konfiguracji](#f3-prywatne-obrazy-z-acr-rbac-registry-permissions-bez-haseł-w-konfiguracji)
+  - [F4. Artefakty sidecara mają przetrwać niezależnie od cyklu życia aplikacji i służyć innym aplikacjom jako system rekordów](#f4-artefakty-sidecara-mają-przetrwać-niezależnie-od-cyklu-życia-aplikacji-i-służyć-innym-aplikacjom-jako-system-rekordów)
+  - [F5. Błąd odmowy połączenia przy wywołaniu `http://localhost:11434` z API](#f5-błąd-odmowy-połączenia-przy-wywołaniu-httplocalhost11434-z-api)
+- **[CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-g---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [G1. Ile kontenerów może mieć aplikacja z sidecarami i który dostaje ruch zewnętrzny?](#g1-ile-kontenerów-może-mieć-aplikacja-z-sidecarami-i-który-dostaje-ruch-zewnętrzny)
+  - [G2. Na jakim porcie musi nasłuchiwać kontener główny i jak łączą się kontenery między sobą?](#g2-na-jakim-porcie-musi-nasłuchiwać-kontener-główny-i-jak-łączą-się-kontenery-między-sobą)
+  - [G3. Czym jest port docelowy (target port) w definicji site container?](#g3-czym-jest-port-docelowy-target-port-w-definicji-site-container)
+  - [G4. Jak działają zmienne środowiskowe w definicji site container?](#g4-jak-działają-zmienne-środowiskowe-w-definicji-site-container)
+  - [G5. Co jest potrzebne, żeby aplikacja pobierała prywatne obrazy z ACR tożsamością zarządzaną?](#g5-co-jest-potrzebne-żeby-aplikacja-pobierała-prywatne-obrazy-z-acr-tożsamością-zarządzaną)
+  - [G6. Czy sidecary mają osobny wolumen na pliki i jakie są ograniczenia?](#g6-czy-sidecary-mają-osobny-wolumen-na-pliki-i-jakie-są-ograniczenia)
+  - [G7. Kiedy wybrać osobną usługę zamiast sidecara?](#g7-kiedy-wybrać-osobną-usługę-zamiast-sidecara)
+  - [G8. Jak odróżnić odmowę połączenia, timeout i błąd HTTP przy wywołaniu sidecara?](#g8-jak-odróżnić-odmowę-połączenia-timeout-i-błąd-http-przy-wywołaniu-sidecara)
+- **[CZĘŚĆ H - CO DALEJ](#część-h---co-dalej)**
+  - [H1. Podsumowanie, następny krok i pokrycie egzaminu](#h1-podsumowanie-następny-krok-i-pokrycie-egzaminu)
+  - [H2. Uczciwie o egzaminie](#h2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - WZORZEC SIDECAR: CO TO JEST I KIEDY GO UŻYĆ
 
 ## A1. Czym jest sidecar w App Service i scenariusz

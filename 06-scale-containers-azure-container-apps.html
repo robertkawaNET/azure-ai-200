@@ -202,14 +202,80 @@ a{text-decoration:none}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
 }
 </style></head>
-<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-06-skalowanie-kontenerow-w-azure-container-apps-reguy-skalowania-keda-zasoby-tryby-rewizji-podzia-ruchu">Moduł 06: Skalowanie kontenerów w Azure Container Apps (reguły skalowania, KEDA, zasoby, tryby rewizji, podział ruchu)</h1>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="moduł-06-skalowanie-kontenerów-w-azure-container-apps-reguły-skalowania-keda-zasoby-tryby-rewizji-podział-ruchu">Moduł 06: Skalowanie kontenerów w Azure Container Apps (reguły skalowania, KEDA, zasoby, tryby rewizji, podział ruchu)</h1>
 <p>Moduł Microsoft Learn: <strong>Scale containers in Azure Container Apps</strong> - https://learn.microsoft.com/en-us/training/modules/scale-containers-azure-container-apps/
 Cel: po tym module umiesz skonfigurować reguły skalowania HTTP, TCP, CPU i pamięci oraz oparte na KEDA reguły zdarzeniowe (Service Bus, Storage Queue, Event Hubs, Kafka, Redis, cron, Prometheus), uwierzytelnić je tożsamością zarządzaną, dobrać CPU i pamięć repliki oraz użyć trybów rewizji, podziału ruchu i etykiet.
 Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą eksperymenty i ćwiczenie z SDK). Wymagania: Azure CLI, Python 3.12; ćwiczenia I1-I2 tworzą płatne zasoby w chmurze (ACR, środowisko Container Apps, Log Analytics); koszty w polach <strong>Koszt</strong> przy ćwiczeniach.</p>
 <p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
 <hr />
-<h1 id="czesc-a-reguy-skalowania">CZĘŚĆ A - REGUŁY SKALOWANIA</h1>
-<h2 id="a1-definicja-skalowania-limity-reguy-zachowanie">A1. Definicja skalowania: limity, reguły, zachowanie</h2>
+<!-- toc -->
+<p><strong>Spis treści</strong></p>
+<ul>
+<li><strong><a href="#część-a---reguły-skalowania">CZĘŚĆ A - REGUŁY SKALOWANIA</a></strong></li>
+<li><a href="#a1-definicja-skalowania-limity-reguły-zachowanie">A1. Definicja skalowania: limity, reguły, zachowanie</a></li>
+<li><a href="#a2-reguła-http">A2. Reguła HTTP</a></li>
+<li><a href="#a3-reguła-tcp">A3. Reguła TCP</a></li>
+<li><a href="#a4-reguły-cpu-i-pamięci">A4. Reguły CPU i pamięci</a></li>
+<li><a href="#a5-zachowanie-skalowania-odstępy-okna-i-kroki">A5. Zachowanie skalowania: odstępy, okna i kroki</a></li>
+<li><a href="#a6-dobre-praktyki">A6. Dobre praktyki</a></li>
+<li><strong><a href="#część-b---skalowanie-zdarzeniowe-keda">CZĘŚĆ B - SKALOWANIE ZDARZENIOWE (KEDA)</a></strong></li>
+<li><a href="#b1-integracja-z-keda-i-scalery-microsoftu">B1. Integracja z KEDA i scalery Microsoftu</a></li>
+<li><a href="#b2-azure-service-bus">B2. Azure Service Bus</a></li>
+<li><a href="#b3-azure-storage-queue">B3. Azure Storage Queue</a></li>
+<li><a href="#b4-azure-event-hubs">B4. Azure Event Hubs</a></li>
+<li><a href="#b5-uwierzytelnianie-reguł-skalowania">B5. Uwierzytelnianie reguł skalowania</a></li>
+<li><a href="#b6-dobre-praktyki">B6. Dobre praktyki</a></li>
+<li><strong><a href="#część-c---scalery-keda-dla-niestandardowych-obciążeń">CZĘŚĆ C - SCALERY KEDA DLA NIESTANDARDOWYCH OBCIĄŻEŃ</a></strong></li>
+<li><a href="#c1-dostępne-scalery">C1. Dostępne scalery</a></li>
+<li><a href="#c2-apache-kafka">C2. Apache Kafka</a></li>
+<li><a href="#c3-redis">C3. Redis</a></li>
+<li><a href="#c4-skalowanie-według-harmonogramu-cron">C4. Skalowanie według harmonogramu (cron)</a></li>
+<li><a href="#c5-prometheus">C5. Prometheus</a></li>
+<li><a href="#c6-konwersja-specyfikacji-keda-na-reguły-container-apps">C6. Konwersja specyfikacji KEDA na reguły Container Apps</a></li>
+<li><a href="#c7-dobre-praktyki">C7. Dobre praktyki</a></li>
+<li><strong><a href="#część-d---zasoby-obliczeniowe-wydajność-i-koszt">CZĘŚĆ D - ZASOBY OBLICZENIOWE: WYDAJNOŚĆ I KOSZT</a></strong></li>
+<li><a href="#d1-alokacja-cpu-i-pamięci">D1. Alokacja CPU i pamięci</a></li>
+<li><a href="#d2-konfiguracja-kontenera-i-limity">D2. Konfiguracja kontenera i limity</a></li>
+<li><a href="#d3-profile-obciążeń-workload-profiles">D3. Profile obciążeń (workload profiles)</a></li>
+<li><a href="#d4-optymalizacja-kosztu">D4. Optymalizacja kosztu</a></li>
+<li><a href="#d5-optymalizacja-wydajności">D5. Optymalizacja wydajności</a></li>
+<li><a href="#d6-balans-limitów-skalowania-i-zasobów">D6. Balans limitów skalowania i zasobów</a></li>
+<li><a href="#d7-dobre-praktyki">D7. Dobre praktyki</a></li>
+<li><strong><a href="#część-e---tryby-rewizji-i-podział-ruchu">CZĘŚĆ E - TRYBY REWIZJI I PODZIAŁ RUCHU</a></strong></li>
+<li><a href="#e1-rewizje-a-skalowanie">E1. Rewizje a skalowanie</a></li>
+<li><a href="#e2-tryb-single-domyślny">E2. Tryb Single (domyślny)</a></li>
+<li><a href="#e3-tryb-multiple">E3. Tryb Multiple</a></li>
+<li><a href="#e4-podział-ruchu-traffic-splitting">E4. Podział ruchu (traffic splitting)</a></li>
+<li><a href="#e5-etykiety-rewizji-labels">E5. Etykiety rewizji (labels)</a></li>
+<li><a href="#e6-skalowanie-przy-wielu-rewizjach">E6. Skalowanie przy wielu rewizjach</a></li>
+<li><a href="#e7-dobre-praktyki">E7. Dobre praktyki</a></li>
+<li><strong><a href="#część-f---ćwiczenia">CZĘŚĆ F - ĆWICZENIA</a></strong></li>
+<li><a href="#i1-skalowanie-http-pod-obciążeniem-i-konfiguracja-w-yaml-lab-modułu">I1. Skalowanie HTTP pod obciążeniem i konfiguracja w YAML (lab modułu)</a></li>
+<li><a href="#i2-tryb-multiple-podział-ruchu-8020-i-etykiety">I2. Tryb Multiple, podział ruchu 80/20 i etykiety</a></li>
+<li><a href="#i3-liczba-replik-przez-sdk-i-generator-obciążenia-python-i-odpowiednik-c-net">I3. Liczba replik przez SDK i generator obciążenia: Python i odpowiednik C# (.NET)</a></li>
+<li><strong><a href="#część-g---quiz-z-modułu-microsoftu-4-pytania--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (4 pytania) + wyjaśnienia</a></strong></li>
+<li><a href="#g1-przetwarzanie-wiadomości-z-kolejki-service-bus-i-skalowanie-do-zera">G1. Przetwarzanie wiadomości z kolejki Service Bus i skalowanie do zera</a></li>
+<li><a href="#g2-pięć-replik-przed-szczytem-o-800-i-skalowanie-do-zera-nocą">G2. Pięć replik przed szczytem o 8:00 i skalowanie do zera nocą</a></li>
+<li><a href="#g3-10-ruchu-na-nową-wersję-przed-pełnym-wdrożeniem">G3. 10% ruchu na nową wersję przed pełnym wdrożeniem</a></li>
+<li><a href="#g4-zalecana-metoda-uwierzytelniania-reguł-keda-na-produkcji">G4. Zalecana metoda uwierzytelniania reguł KEDA na produkcji</a></li>
+<li><strong><a href="#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</a></strong></li>
+<li><a href="#h1-jakie-są-domyślne-limity-skalowania-i-co-się-stanie-bez-ingress-i-bez-reguł">H1. Jakie są domyślne limity skalowania i co się stanie bez ingress i bez reguł?</a></li>
+<li><a href="#h2-który-typ-reguły-nie-potrafi-skalować-do-zera-i-dlaczego">H2. Który typ reguły nie potrafi skalować do zera i dlaczego?</a></li>
+<li><a href="#h3-podaj-wartości-zachowania-skalowania">H3. Podaj wartości zachowania skalowania.</a></li>
+<li><a href="#h4-ile-replik-zażąda-scaler-service-bus-przy-50-wiadomościach-i-messagecount-5-jaki-jest-ogólny-wzór">H4. Ile replik zażąda scaler Service Bus przy 50 wiadomościach i <code>messageCount</code> 5? Jaki jest ogólny wzór?</a></li>
+<li><a href="#h5-dlaczego-maxreplicas-powyżej-liczby-partycji-event-hubs-nic-nie-daje">H5. Dlaczego <code>maxReplicas</code> powyżej liczby partycji Event Hubs nic nie daje?</a></li>
+<li><a href="#h6-jak-uwierzytelnić-regułę-skalowania-bez-sekretów">H6. Jak uwierzytelnić regułę skalowania bez sekretów?</a></li>
+<li><a href="#h7-jakie-parametry-cli-i-pary-cpupamięć-są-poprawne-w-planie-consumption">H7. Jakie parametry CLI i pary CPU/pamięć są poprawne w planie Consumption?</a></li>
+<li><a href="#h8-czym-różnią-się-tryby-single-i-multiple-oraz-jaki-parametr-je-ustawia">H8. Czym różnią się tryby Single i Multiple oraz jaki parametr je ustawia?</a></li>
+<li><a href="#h9-jak-działają-etykiety-względem-podziału-ruchu">H9. Jak działają etykiety względem podziału ruchu?</a></li>
+<li><strong><a href="#część-j---co-dalej">CZĘŚĆ J - CO DALEJ</a></strong></li>
+<li><a href="#j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</a></li>
+<li><a href="#j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</a></li>
+</ul>
+<!-- /toc -->
+
+<h1 id="część-a---reguły-skalowania">CZĘŚĆ A - REGUŁY SKALOWANIA</h1>
+<h2 id="a1-definicja-skalowania-limity-reguły-zachowanie">A1. Definicja skalowania: limity, reguły, zachowanie</h2>
 <p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
 <p><strong>Skalowanie poziome</strong> (horizontal scaling) to dodawanie i usuwanie <strong>replik</strong> (kopii kontenera), a nie powiększanie jednej kopii. Definicja skalowania ma trzy części:</p>
 <table>
@@ -237,7 +303,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <p>Pod spodem pracuje <strong>KEDA</strong> (Kubernetes Event-driven Autoscaling, czyli skalowanie sterowane zdarzeniami): platforma tłumaczy Twoje ustawienia na specyfikacje KEDA, które obserwują wyzwalacze i zmieniają liczbę replik. [unit 2]</p>
 <p><strong>Wartości domyślne</strong> (egzamin je lubi): gdy ingress jest włączony i nie ma własnych reguł, aplikacja skaluje się od <strong>0 do 10</strong> replik (domyślna reguła HTTP). Gdy ingress jest <strong>wyłączony</strong>, a nie ustawisz ani minimum, ani własnej reguły, aplikacja skaluje się do zera i <strong>nie ma jak się ponownie uruchomić</strong> (brak wyzwalacza). Aby tego uniknąć, ustaw minimum na 1 lub więcej albo dodaj regułę. [unit 2] [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</p>
 <p>Rozliczanie zależy od liczby replik: przy skalowaniu do zera nie płacisz za obliczenia, repliki działające bez przetwarzania żądań są liczone niższą stawką <strong>idle</strong>, a minimum &gt;= 1 zapewnia dostępność kosztem wyższego kosztu bazowego. [unit 2]</p>
-<h2 id="a2-regua-http">A2. Reguła HTTP</h2>
+<h2 id="a2-reguła-http">A2. Reguła HTTP</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Skalowanie HTTP zmienia liczbę replik według liczby <strong>równoległych żądań HTTP</strong> (concurrent requests). Platforma liczy żądania z ostatnich 15 sekund i dzieli przez 15; gdy wynik przekracza próg, tworzy kolejne repliki. Domyślny próg to <strong>10 żądań na replikę</strong>. Niższy próg skaluje wcześniej (więcej zapasu, ale może powstać zbędnych replik), wyższy lepiej wykorzystuje replikę, ale zwiększa opóźnienia, zanim pojawią się nowe repliki.</p>
 <p>Reguła HTTP pasuje do synchronicznych API i aplikacji webowych, <strong>obsługuje skalowanie do zera</strong>. Zadania (jobs) Container Apps nie mogą jej używać, bo nie wystawiają HTTP.</p>
@@ -253,10 +319,10 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
   --scale-rule-http-concurrency 50
 </code></pre></div>
 
-<h2 id="a3-regua-tcp">A3. Reguła TCP</h2>
+<h2 id="a3-reguła-tcp">A3. Reguła TCP</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Skalowanie TCP opiera się na liczbie <strong>równoległych połączeń TCP</strong>; jest przeznaczone dla aplikacji z trwałymi połączeniami (zamiast krótkich cykli żądanie-odpowiedź). Lepsze niż HTTP dla serwerów WebSocket, usług gRPC i aplikacji z pulami połączeń do baz danych. Okno uśredniania to te same 15 sekund. Parametr: <code>--scale-rule-tcp-concurrency</code>. Reguła TCP także obsługuje skalowanie do zera: gdy wszystkie połączenia się zamkną, po okresie cool-down aplikacja może zejść do zera, a nowe połączenia uruchamiają skalowanie w górę.</p>
-<h2 id="a4-reguy-cpu-i-pamieci">A4. Reguły CPU i pamięci</h2>
+<h2 id="a4-reguły-cpu-i-pamięci">A4. Reguły CPU i pamięci</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Reguły CPU i pamięci zmieniają liczbę replik według <strong>średniego wykorzystania</strong> zasobów (próg w procentach). Są zaimplementowane jako niestandardowe scalery KEDA. <strong>Ograniczenie krytyczne (egzamin je lubi):</strong> reguły CPU i pamięci <strong>nie potrafią skalować do zera</strong>, bo potrzeba co najmniej jednej działającej repliki, żeby zmierzyć wykorzystanie. Gdy potrzebujesz skalowania do zera, połącz je z regułą HTTP lub zdarzeniową albo użyj HTTP jako głównego wyzwalacza.</p>
 <p>CPU pasuje do zadań obliczeniowych (obrazy, wideo, inferencja ML), pamięć do cache'owania i agregacji dużych zbiorów. Fragment YAML łączący HTTP i CPU (skalowanie, gdy współbieżność HTTP &gt; 100 <strong>lub</strong> CPU &gt; 70%):</p>
@@ -277,7 +343,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <span class="w">          </span><span class="nt">value</span><span class="p">:</span><span class="w"> </span><span class="s">"70"</span>
 </code></pre></div>
 
-<h2 id="a5-zachowanie-skalowania-odstepy-okna-i-kroki">A5. Zachowanie skalowania: odstępy, okna i kroki</h2>
+<h2 id="a5-zachowanie-skalowania-odstępy-okna-i-kroki">A5. Zachowanie skalowania: odstępy, okna i kroki</h2>
 <p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
 <table>
 <thead>
@@ -335,7 +401,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <li><strong>Uwzględnij cool-down:</strong> 300 s przed zejściem do zera podnosi koszt przy krótkich impulsach.</li>
 </ul>
 <hr />
-<h1 id="czesc-b-skalowanie-zdarzeniowe-keda">CZĘŚĆ B - SKALOWANIE ZDARZENIOWE (KEDA)</h1>
+<h1 id="część-b---skalowanie-zdarzeniowe-keda">CZĘŚĆ B - SKALOWANIE ZDARZENIOWE (KEDA)</h1>
 <h2 id="b1-integracja-z-keda-i-scalery-microsoftu">B1. Integracja z KEDA i scalery Microsoftu</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>Skalowanie zdarzeniowe reaguje na sygnały spoza HTTP: kolejki wiadomości, strumienie zdarzeń. KEDA obserwuje źródło (głębokość kolejki, opóźnienie partycji, własne metryki), a Container Apps tłumaczy konfigurację scalera na regułę. <strong>Scalery niestandardowe</strong> (custom) wzorują się na specyfikacji KEDA <code>ScaledObject</code>: podajesz typ scalera, metadane (połączenie i progi) oraz uwierzytelnianie; platforma odpytuje źródło co 30 s.</p>
@@ -384,7 +450,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <span class="w">            </span><span class="nt">triggerParameter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">connection</span>
 </code></pre></div>
 
-<h2 id="b5-uwierzytelnianie-regu-skalowania">B5. Uwierzytelnianie reguł skalowania</h2>
+<h2 id="b5-uwierzytelnianie-reguł-skalowania">B5. Uwierzytelnianie reguł skalowania</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
 <p>Scalery niestandardowe muszą mieć dostęp do monitorowanych źródeł. Dwie metody:</p>
 <table>
@@ -434,8 +500,8 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <li><strong>Obserwuj głębokość kolejki obok liczby replik</strong> (Azure Monitor): gdy kolejka rośnie szybciej niż repliki, obniż próg; gdy repliki stoją bezczynne, podnieś.</li>
 </ul>
 <hr />
-<h1 id="czesc-c-scalery-keda-dla-niestandardowych-obciazen">CZĘŚĆ C - SCALERY KEDA DLA NIESTANDARDOWYCH OBCIĄŻEŃ</h1>
-<h2 id="c1-dostepne-scalery">C1. Dostępne scalery</h2>
+<h1 id="część-c---scalery-keda-dla-niestandardowych-obciążeń">CZĘŚĆ C - SCALERY KEDA DLA NIESTANDARDOWYCH OBCIĄŻEŃ</h1>
+<h2 id="c1-dostępne-scalery">C1. Dostępne scalery</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Container Apps obsługuje <strong>dowolny scaler oparty na ScaledObject</strong>: m.in. Apache Kafka, Redis Lists i Streams, Prometheus, Cron, PostgreSQL, MySQL, MongoDB, zewnętrzne API metryk. Wybierając scaler, sprawdź obsługiwane metody uwierzytelniania, wystawiane metryki i sposób przeliczania na repliki (dokumentacja KEDA scalers). Scalery dzielą się na utrzymywane przez Microsoft (Azure), społecznościowe (różna jakość dokumentacji) i <strong>zewnętrzne</strong> (osobne komponenty, wymagają dodatkowego wdrożenia poza wbudowaną konfiguracją).</p>
 <h2 id="c2-apache-kafka">C2. Apache Kafka</h2>
@@ -462,7 +528,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <h2 id="c3-redis">C3. Redis</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Dwa rodzaje scalerów: <strong>Redis Lists</strong> (długość listy przez <code>LLEN</code>; metadane <code>address</code>, <code>listName</code>, <code>listLength</code> jako próg; proste wzorce producent-konsument) i <strong>Redis Streams</strong> (liczba oczekujących wpisów (pending entries) dla grupy konsumentów, z uwzględnieniem wiadomości dostarczonych, ale niepotwierdzonych, więc lepiej radzi sobie z awariami). Obsługiwane są wdrożenia standardowe, Redis Cluster i Redis Sentinel; każdy wariant ma własny format połączenia.</p>
-<h2 id="c4-skalowanie-wedug-harmonogramu-cron">C4. Skalowanie według harmonogramu (cron)</h2>
+<h2 id="c4-skalowanie-według-harmonogramu-cron">C4. Skalowanie według harmonogramu (cron)</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Scaler <strong>cron</strong> działa według czasu, nie metryk: w oknie czasowym żąda stałej liczby replik, poza oknem nie wpływa na skalowanie. Metadane: <code>timezone</code>, <code>start</code>, <code>end</code> (wyrażenia cron) i <code>desiredReplicas</code>. Najlepiej łączyć z innymi regułami: cron daje bazę przed znanym szczytem, a HTTP lub zdarzenia obsługują nieoczekiwane skoki. Gdy aktywnych jest wiele scalerów, używana jest <strong>najwyższa</strong> żądana liczba replik.</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on cron scaler configuration</span>
@@ -488,7 +554,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <h2 id="c5-prometheus">C5. Prometheus</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Scaler Prometheus odpytuje serwer Prometheus i porównuje wynik z progiem. Metadane: <code>serverAddress</code>, <code>metricName</code>, <code>query</code> (wyrażenie PromQL zwracające liczbę) i <code>threshold</code>; wartość dzielona przez próg daje żądaną liczbę replik. Używaj, gdy metryki standardowe (współbieżność HTTP, głębokość kolejki) nie oddają obciążenia: np. aktywne sesje użytkowników lub oczekujące transakcje.</p>
-<h2 id="c6-konwersja-specyfikacji-keda-na-reguy-container-apps">C6. Konwersja specyfikacji KEDA na reguły Container Apps</h2>
+<h2 id="c6-konwersja-specyfikacji-keda-na-reguły-container-apps">C6. Konwersja specyfikacji KEDA na reguły Container Apps</h2>
 <p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/scale-app]</em></p>
 <ol>
 <li><strong>Typ</strong> z <code>triggers[].type</code> -&gt; <code>--scale-rule-type</code> albo <code>custom.type</code> w YAML.</li>
@@ -506,8 +572,8 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <li><strong>Dokumentuj konfiguracje:</strong> metadane scalera nie są samoopisujące się.</li>
 </ul>
 <hr />
-<h1 id="czesc-d-zasoby-obliczeniowe-wydajnosc-i-koszt">CZĘŚĆ D - ZASOBY OBLICZENIOWE: WYDAJNOŚĆ I KOSZT</h1>
-<h2 id="d1-alokacja-cpu-i-pamieci">D1. Alokacja CPU i pamięci</h2>
+<h1 id="część-d---zasoby-obliczeniowe-wydajność-i-koszt">CZĘŚĆ D - ZASOBY OBLICZENIOWE: WYDAJNOŚĆ I KOSZT</h1>
+<h2 id="d1-alokacja-cpu-i-pamięci">D1. Alokacja CPU i pamięci</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/containers]</em></p>
 <p>CPU podajesz w rdzeniach (także ułamkach), pamięć w GiB. Każda replika dostaje skonfigurowane zasoby, a platforma pilnuje limitów. Rozliczanie jest w <strong>vCPU-sekundach</strong> i <strong>GiB-sekundach</strong>. Przekroczenie limitu pamięci kończy się <strong>zabiciem i restartem</strong> repliki; przekroczenie CPU kończy się <strong>throttlingiem</strong> (spowolnieniem) bez zabijania. Czyli limit pamięci to twarda awaria, limit CPU to degradacja wydajności. [unit 5]</p>
 <blockquote>
@@ -530,7 +596,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <blockquote>
 <p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 5): moduł mówi, że limity dotyczą "per container, not per replica" i że każdy kontener w aplikacji (np. główny i sidecar) ma własną alokację -&gt; dokumentacja mówi, że w planie Consumption <strong>suma</strong> CPU i pamięci wszystkich kontenerów aplikacji musi dawać jedną z dozwolonych kombinacji (czyli limit dotyczy łącznie całej repliki). Dodatkowo w środowisku <strong>Consumption only</strong> (legacy) maksimum to 2 rdzenie i 4Gi. Źródło: https://learn.microsoft.com/azure/container-apps/containers.</p>
 </blockquote>
-<h2 id="d3-profile-obciazen-workload-profiles">D3. Profile obciążeń (workload profiles)</h2>
+<h2 id="d3-profile-obciążeń-workload-profiles">D3. Profile obciążeń (workload profiles)</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/azure/container-apps/workload-profiles-overview]</em></p>
 <table>
 <thead>
@@ -555,10 +621,10 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <h2 id="d4-optymalizacja-kosztu">D4. Optymalizacja kosztu</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Płacisz za aktywne repliki według zaalokowanych zasobów; repliki bezczynne mają niższą stawkę idle; przy skalowaniu do zera nie ma kosztu obliczeń. <strong>Skalowanie do zera</strong> to najskuteczniejsza optymalizacja dla obciążeń sporadycznych, w połączeniu z wyzwalaczami, które niezawodnie budzą repliki. Dobieraj rozmiar do rzeczywistego użycia: zacznij od domyślnych 0.25 / 0.5 GiB i zwiększaj tylko przy throttlingu, błędach braku pamięci (OOM) lub degradacji wydajności. Consumption zwykle jest tańszy dla zmiennego ruchu; Dedicated ma sens, gdy stałe wykorzystanie uzasadnia rezerwację.</p>
-<h2 id="d5-optymalizacja-wydajnosci">D5. Optymalizacja wydajności</h2>
+<h2 id="d5-optymalizacja-wydajności">D5. Optymalizacja wydajności</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Za mało zasobów to większe opóźnienia, timeouty i gorsze doświadczenie w szczycie. CPU dla pracy obliczeniowej (serializacja JSON, obrazy), pamięć dla cache'y, dużych ładunków i agregacji. <strong>Minimalna liczba replik</strong> eliminuje zimny start (opóźnienie pierwszego żądania po skalowaniu z zera). Profile Dedicated dają bardziej przewidywalną wydajność, bo zasoby nie są dzielone z innymi najemcami. Monitoruj użycie CPU i pamięci w Azure Monitor.</p>
-<h2 id="d6-balans-limitow-skalowania-i-zasobow">D6. Balans limitów skalowania i zasobów</h2>
+<h2 id="d6-balans-limitów-skalowania-i-zasobów">D6. Balans limitów skalowania i zasobów</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Pojemność = zasoby repliki x maksymalna liczba replik. Jeśli replika (0.5 rdzenia) obsługuje 100 żądań/s, a szczyt to 2000 żądań/s, potrzebujesz maksymalnie 20 replik (<code>--max-replicas 20</code>, <code>--cpu 0.5</code>). <strong>Kompromis:</strong> większe repliki to mniej skalowań, ale grubsza ziarnistość (możliwy nadmiar mocy między krokami); mniejsze repliki skalują precyzyjniej, ale generują więcej zdarzeń skalowania. Maksymalna liczba replik to <strong>1000 na rewizję</strong>. [unit 5]</p>
 <h2 id="d7-dobre-praktyki">D7. Dobre praktyki</h2>
@@ -570,12 +636,12 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <li>Weź pod uwagę łączny koszt skalowania: małe kontenery skalują się częściej, co daje narzut i możliwy wpływ na żądania.</li>
 </ul>
 <hr />
-<h1 id="czesc-e-tryby-rewizji-i-podzia-ruchu">CZĘŚĆ E - TRYBY REWIZJI I PODZIAŁ RUCHU</h1>
+<h1 id="część-e---tryby-rewizji-i-podział-ruchu">CZĘŚĆ E - TRYBY REWIZJI I PODZIAŁ RUCHU</h1>
 <h2 id="e1-rewizje-a-skalowanie">E1. Rewizje a skalowanie</h2>
 <p><em>Źródło: [unit 6] + [docs: https://learn.microsoft.com/azure/container-apps/revisions]</em></p>
 <p>Rewizja to niezmienna migawka wersji aplikacji (niemodyfikowalna; zmiana = nowa rewizja, co daje pewny cel wycofania). Zmiany <strong>revision-scope</strong> (sekcja <code>template</code>: obrazy, reguły skalowania, zmienne środowiskowe) tworzą rewizję; zmiany <strong>application-scope</strong> (sekretów, ingress, reguł podziału ruchu) nie. [unit 6] (szczegóły: <code>04-deploy-containers-azure-container-apps.md</code> §B4)</p>
 <p><strong>Każda aktywna rewizja skaluje się niezależnie</strong> według własnych reguł i swojego udziału w ruchu. Dwie rewizje z tymi samymi regułami i podziałem ruchu skalują się każda od swojej części ruchu, więc łączne zużycie może być większe niż jednej rewizji przy tym samym ruchu. Repliki są instancjami konkretnej rewizji. [unit 6]</p>
-<h2 id="e2-tryb-single-domyslny">E2. Tryb Single (domyślny)</h2>
+<h2 id="e2-tryb-single-domyślny">E2. Tryb Single (domyślny)</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <p>W trybie <strong>Single</strong> (domyślnym dla nowych aplikacji) aktywna jest jedna rewizja. Po wdrożeniu zmian platforma tworzy nową rewizję i czeka, aż będzie gotowa, zanim przeniesie ruch: <strong>wdrożenie bez przestoju</strong> (zero-downtime). Stara rewizja działa, dopóki nowa nie przejdzie testów zdrowia i nie osiągnie liczby replik poprzedniej; potem stara się dezaktywuje. Zaleta: prostota, brak ręcznych dezaktywacji. Wada: brak podziału ruchu i stopniowych wdrożeń; do testów na części ruchu potrzebny jest tryb Multiple.</p>
 <h2 id="e3-tryb-multiple">E3. Tryb Multiple</h2>
@@ -590,7 +656,7 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <blockquote>
 <p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 6): przykład używa parametru <code>--revision-mode multiple</code> -&gt; poprawna nazwa parametru w <code>az containerapp create</code>/<code>update</code> to <code>--revisions-mode</code> (wartości <code>labels</code>, <code>multiple</code>, <code>single</code>); alternatywa to <code>az containerapp revision set-mode --mode multiple</code>. Źródło: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest (lokalny test pomocy CLI 2026-11-22: w <code>az containerapp update -h</code> jest tylko <code>--revisions-mode</code>).</p>
 </blockquote>
-<h2 id="e4-podzia-ruchu-traffic-splitting">E4. Podział ruchu (traffic splitting)</h2>
+<h2 id="e4-podział-ruchu-traffic-splitting">E4. Podział ruchu (traffic splitting)</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <p>Podział ruchu rozdziela żądania między aktywne rewizje według <strong>wag w procentach, sumujących się do 100</strong>. Rozkład jest losowy per żądanie, więc rzeczywiste proporcje mogą lekko odbiegać. Przykład: 80% na pierwszą wersję, 20% na drugą:</p>
 <div class="codehilite"><pre><span></span><code>az containerapp ingress traffic set \
@@ -615,12 +681,12 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 <li><strong>Najpierw etykiety, potem podział ruchu:</strong> walidacja nowej rewizji bez wpływu na ruch produkcyjny.</li>
 </ul>
 <hr />
-<h1 id="czesc-f-cwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
+<h1 id="część-f---ćwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
 <p>Przeczytaj części A-E. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze: robisz je w jednej grupie zasobów i wykonujesz <strong>Sprzątanie</strong> po I2 (I2 kontynuuje I1). Kod aplikacji i SDK jest w Pythonie; odpowiednik C# jest w ćwiczeniu z kodem (I3).</p>
 <blockquote>
 <p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, <code>az version</code>, testy lokalne): Python 3.12 (<code>python:3.12-slim</code>), Flask 3.1.3, gunicorn 27.0.1, requests 2.34.2, azure-mgmt-appcontainers 5.1.0, azure-identity 1.27.0; C#: .NET SDK 10.0, Azure.ResourceManager.AppContainers 1.6.0, Azure.Identity 1.21.0; Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6 (beta). Starter laboratorium Microsoftu pinuje starsze flask==3.0.0 i gunicorn==22.0.0. Przed użyciem sprawdź PyPI i NuGet.</p>
 </blockquote>
-<h2 id="i1-skalowanie-http-pod-obciazeniem-i-konfiguracja-w-yaml-lab-moduu">I1. Skalowanie HTTP pod obciążeniem i konfiguracja w YAML (lab modułu)</h2>
+<h2 id="i1-skalowanie-http-pod-obciążeniem-i-konfiguracja-w-yaml-lab-modułu">I1. Skalowanie HTTP pod obciążeniem i konfiguracja w YAML (lab modułu)</h2>
 <p>(rozwinięcie jednostki 7; scenariusz: [unit 7])</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash); pliki <code>api/main.py</code>, <code>api/requirements.txt</code>, <code>api/Dockerfile</code>, <code>load.py</code>.</p>
 <blockquote>
@@ -768,7 +834,7 @@ az<span class="w"> </span>containerapp<span class="w"> </span>show<span class="w
 <p><strong>Zadania:</strong> (a) wdróż aplikację i obserwuj liczbę replik w czasie testu obciążeniowego; (b) po zakończeniu obciążenia obserwuj, jak długo repliki zostają przy minimum 0 (cool-down); (c) <strong>zepsuj to:</strong> ustaw wysoki próg <code>az containerapp update -n $APP -g $RG --scale-rule-name http-scaling --scale-rule-type http --scale-rule-http-concurrency 1000</code>, uruchom obciążenie ponownie i porównaj liczbę replik; (d) zastosuj YAML ze zmianą <code>cooldownPeriod</code>, <code>minReplicas</code>, <code>maxReplicas</code> i sprawdź, czy powstała nowa rewizja (<code>az containerapp revision list -n $APP -g $RG -o table</code>).</p>
 <p><strong>Sprawdź:</strong> (a) liczba replik rośnie ponad 1 w trakcie obciążenia (przy 40 równoległych żądaniach i progu 10 wzór <code>ceil(40/10)</code> daje rząd 4 replik; dokładna liczba zależy od uśredniania 15 s) [docs: https://learn.microsoft.com/azure/container-apps/scale-app] [autor: niezweryfikowane]; (b) po ustaniu obciążenia zejście do zera następuje po okresie cool-down (domyślnie 300 s) [unit 2]; (c) przy progu 1000 pojedyncza replika obsługuje cały ruch, więc nie ma skalowania w górę (uwaga: 40 żądań to mniej niż 1000) [autor: niezweryfikowane]; (d) zmiana sekcji <code>scale</code> jest zmianą w <code>template</code>, więc powstaje nowa rewizja [unit 7] [docs: https://learn.microsoft.com/azure/container-apps/revisions].</p>
 <p><strong>Sprzątanie:</strong> zasoby (grupa <code>rg-aca-scale-i1</code>) są potrzebne jeszcze w I2 i I3, więc usuń je dopiero po nich (Sprzątanie z I2). Jeśli kończysz na I1, wykonaj od razu: <code>az group delete --name $RG --yes --no-wait</code>, a potem <code>az group exists --name $RG</code> (po kilku minutach powinno wypisać <code>false</code>).</p>
-<h2 id="i2-tryb-multiple-podzia-ruchu-8020-i-etykiety">I2. Tryb Multiple, podział ruchu 80/20 i etykiety</h2>
+<h2 id="i2-tryb-multiple-podział-ruchu-8020-i-etykiety">I2. Tryb Multiple, podział ruchu 80/20 i etykiety</h2>
 <p>(rozwinięcie sekcji E3-E5; kontynuacja I1: ta sama grupa <code>rg-aca-scale-i1</code>, aplikacja <code>ai-agent</code>, zmienne <code>RG</code>, <code>APP</code> i <code>APP_URL</code> z I1)</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) w tej samej sesji co I1.</p>
 <div class="codehilite"><pre><span></span><code>az<span class="w"> </span>containerapp<span class="w"> </span>revision<span class="w"> </span>set-mode<span class="w"> </span>-n<span class="w"> </span><span class="nv">$APP</span><span class="w"> </span>-g<span class="w"> </span><span class="nv">$RG</span><span class="w"> </span>--mode<span class="w"> </span>multiple<span class="w">                                   </span><span class="c1"># (1)</span>
@@ -797,7 +863,7 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <p>Usuwa cały zestaw z I1 i I2 (ACR, środowisko, Log Analytics, aplikację). Wykonaj dopiero po I3.</p>
-<h2 id="i3-liczba-replik-przez-sdk-i-generator-obciazenia-python-i-odpowiednik-c-net">I3. Liczba replik przez SDK i generator obciążenia: Python i odpowiednik C# (.NET)</h2>
+<h2 id="i3-liczba-replik-przez-sdk-i-generator-obciążenia-python-i-odpowiednik-c-net">I3. Liczba replik przez SDK i generator obciążenia: Python i odpowiednik C# (.NET)</h2>
 <p>(rozwinięcie sekcji A5, E6; wymaga aplikacji z I1 przed jej Sprzątaniem w I2)</p>
 <p><strong>Gdzie / Plik:</strong> <code>watch.py</code> (Python; generator <code>load.py</code> jest w I1) oraz <code>Program.cs</code> (C#); <code>az login</code>.</p>
 <div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>azure-mgmt-appcontainers<span class="o">==</span><span class="m">5</span>.1.0<span class="w"> </span>azure-identity<span class="o">==</span><span class="m">1</span>.27.0
@@ -892,66 +958,66 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 <p><strong>Sprawdź:</strong> (a) kolumna <code>replicas</code> rośnie w trakcie obciążenia i maleje po jego ustaniu (zejście do zera po cool-down); (b) wszystkie żądania kończą się niepowodzeniem: <code>failed</code> rośnie, <code>ok=0</code> (obsługa wyjątku w kodzie nie przerywa programu) [autor: niezweryfikowane]; (c) te same wartości co w Pythonie, z formatem <code>replicas=...</code>.</p>
 <p><strong>Sprzątanie:</strong> brak (skrypty tylko czytają metadane i generują ruch); po I3 wykonaj Sprzątanie z I2.</p>
 <hr />
-<h1 id="czesc-g-quiz-z-moduu-microsoftu-4-pytania-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (4 pytania) + wyjaśnienia</h1>
+<h1 id="część-g---quiz-z-modułu-microsoftu-4-pytania--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (4 pytania) + wyjaśnienia</h1>
 <p>Learn nie pokazuje poprawnych odpowiedzi w ocenie modułu, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
-<h2 id="g1-przetwarzanie-wiadomosci-z-kolejki-service-bus-i-skalowanie-do-zera">G1. Przetwarzanie wiadomości z kolejki Service Bus i skalowanie do zera</h2>
+<h2 id="g1-przetwarzanie-wiadomości-z-kolejki-service-bus-i-skalowanie-do-zera">G1. Przetwarzanie wiadomości z kolejki Service Bus i skalowanie do zera</h2>
 <p>-&gt; <em><code>--min-replicas 0</code> z regułą <code>azure-servicebus</code>.</em> Reguła HTTP nie widzi kolejki, a reguła CPU nie potrafi skalować do zera. <em>(odpowiedź wnioskowana: unit 3, sekcja "Configure Azure Service Bus scaling"; unit 2, sekcja "Configure CPU and memory scale rules")</em></p>
-<h2 id="g2-piec-replik-przed-szczytem-o-800-i-skalowanie-do-zera-noca">G2. Pięć replik przed szczytem o 8:00 i skalowanie do zera nocą</h2>
+<h2 id="g2-pięć-replik-przed-szczytem-o-800-i-skalowanie-do-zera-nocą">G2. Pięć replik przed szczytem o 8:00 i skalowanie do zera nocą</h2>
 <p>-&gt; <em>Reguła cron połączona z regułą HTTP.</em> Minimum pięciu replik wyklucza zero w nocy, a niski próg CPU nie gwarantuje pięciu replik o określonej godzinie i nie skaluje do zera. <em>(odpowiedź wnioskowana: unit 4, sekcja "Configure cron-based scaling")</em></p>
-<h2 id="g3-10-ruchu-na-nowa-wersje-przed-penym-wdrozeniem">G3. 10% ruchu na nową wersję przed pełnym wdrożeniem</h2>
+<h2 id="g3-10-ruchu-na-nową-wersję-przed-pełnym-wdrożeniem">G3. 10% ruchu na nową wersję przed pełnym wdrożeniem</h2>
 <p>-&gt; <em>Włączyć tryb Multiple i skonfigurować podział ruchu wagami rewizji.</em> Tryb Single zapewnia tylko wdrożenie bez przestoju, a reguła cron nie przesuwa ruchu między wersjami. <em>(odpowiedź wnioskowana: unit 6, sekcje "Configure multiple revision mode" i "Implement traffic splitting")</em></p>
-<h2 id="g4-zalecana-metoda-uwierzytelniania-regu-keda-na-produkcji">G4. Zalecana metoda uwierzytelniania reguł KEDA na produkcji</h2>
+<h2 id="g4-zalecana-metoda-uwierzytelniania-reguł-keda-na-produkcji">G4. Zalecana metoda uwierzytelniania reguł KEDA na produkcji</h2>
 <p>-&gt; <em>Tożsamość zarządzana (<code>--scale-rule-identity</code>).</em> Ciągi połączeń w sekretach działają, ale wymagają rotacji; dostęp anonimowy odpada. <em>(odpowiedź wnioskowana: unit 3, sekcja "Authenticate scale rules" i "Best practices")</em></p>
 <hr />
-<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
-<h2 id="h1-jakie-sa-domyslne-limity-skalowania-i-co-sie-stanie-bez-ingress-i-bez-regu">H1. Jakie są domyślne limity skalowania i co się stanie bez ingress i bez reguł?</h2>
+<h1 id="część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-jakie-są-domyślne-limity-skalowania-i-co-się-stanie-bez-ingress-i-bez-reguł">H1. Jakie są domyślne limity skalowania i co się stanie bez ingress i bez reguł?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Z włączonym ingress i bez własnych reguł: domyślna reguła HTTP, od 0 do 10 replik. Bez ingress, bez minimum i bez własnej reguły aplikacja skaluje się do zera i nie może się uruchomić ponownie.</p>
 </details>
-<h2 id="h2-ktory-typ-reguy-nie-potrafi-skalowac-do-zera-i-dlaczego">H2. Który typ reguły nie potrafi skalować do zera i dlaczego?</h2>
+<h2 id="h2-który-typ-reguły-nie-potrafi-skalować-do-zera-i-dlaczego">H2. Który typ reguły nie potrafi skalować do zera i dlaczego?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Reguły CPU i pamięci: potrzebują co najmniej jednej działającej repliki, żeby zmierzyć wykorzystanie. HTTP, TCP i zdarzeniowe skalują do zera.</p>
 </details>
-<h2 id="h3-podaj-wartosci-zachowania-skalowania">H3. Podaj wartości zachowania skalowania.</h2>
+<h2 id="h3-podaj-wartości-zachowania-skalowania">H3. Podaj wartości zachowania skalowania.</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Polling interval 30 s (nie dotyczy HTTP/TCP), cool-down 300 s (tylko przy schodzeniu z ostatniej repliki do zera), scale-up stabilization 0 s, scale-down stabilization 300 s, kroki w górę 1, 4, 8, 16, 32..., w dół 100% naraz.</p>
 </details>
-<h2 id="h4-ile-replik-zazada-scaler-service-bus-przy-50-wiadomosciach-i-messagecount-5-jaki-jest-ogolny-wzor">H4. Ile replik zażąda scaler Service Bus przy 50 wiadomościach i <code>messageCount</code> 5? Jaki jest ogólny wzór?</h2>
+<h2 id="h4-ile-replik-zażąda-scaler-service-bus-przy-50-wiadomościach-i-messagecount-5-jaki-jest-ogólny-wzór">H4. Ile replik zażąda scaler Service Bus przy 50 wiadomościach i <code>messageCount</code> 5? Jaki jest ogólny wzór?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>10 replik. Wzór z dokumentacji: <code>desiredReplicas = ceil(currentMetricValue / targetMetricValue)</code>.</p>
 </details>
-<h2 id="h5-dlaczego-maxreplicas-powyzej-liczby-partycji-event-hubs-nic-nie-daje">H5. Dlaczego <code>maxReplicas</code> powyżej liczby partycji Event Hubs nic nie daje?</h2>
+<h2 id="h5-dlaczego-maxreplicas-powyżej-liczby-partycji-event-hubs-nic-nie-daje">H5. Dlaczego <code>maxReplicas</code> powyżej liczby partycji Event Hubs nic nie daje?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>W grupie konsumentów jedną partycję czyta jeden konsument naraz, więc replik ponad liczbę partycji nie da się wykorzystać (to samo dotyczy Kafka).</p>
 </details>
-<h2 id="h6-jak-uwierzytelnic-regue-skalowania-bez-sekretow">H6. Jak uwierzytelnić regułę skalowania bez sekretów?</h2>
+<h2 id="h6-jak-uwierzytelnić-regułę-skalowania-bez-sekretów">H6. Jak uwierzytelnić regułę skalowania bez sekretów?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Tożsamością zarządzaną: <code>--user-assigned &lt;id&gt;</code> na aplikacji, rola na zasobie (np. Azure Service Bus Data Receiver) i <code>--scale-rule-identity &lt;id&gt;</code>. Nie jest to wspierane w portalu, tylko CLI/ARM.</p>
 </details>
-<h2 id="h7-jakie-parametry-cli-i-pary-cpupamiec-sa-poprawne-w-planie-consumption">H7. Jakie parametry CLI i pary CPU/pamięć są poprawne w planie Consumption?</h2>
+<h2 id="h7-jakie-parametry-cli-i-pary-cpupamięć-są-poprawne-w-planie-consumption">H7. Jakie parametry CLI i pary CPU/pamięć są poprawne w planie Consumption?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>--cpu</code> i <code>--memory</code>; dozwolone tylko ustalone kombinacje (pamięć = 2 x vCPU: 0.25/0.5Gi ... 4.0/8.0Gi), liczone dla sumy kontenerów repliki; domyślnie 0.25 / 0.5 GiB.</p>
 </details>
-<h2 id="h8-czym-roznia-sie-tryby-single-i-multiple-oraz-jaki-parametr-je-ustawia">H8. Czym różnią się tryby Single i Multiple oraz jaki parametr je ustawia?</h2>
+<h2 id="h8-czym-różnią-się-tryby-single-i-multiple-oraz-jaki-parametr-je-ustawia">H8. Czym różnią się tryby Single i Multiple oraz jaki parametr je ustawia?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Single (domyślny): jedna aktywna rewizja, wdrożenie bez przestoju, brak podziału ruchu. Multiple: wiele aktywnych rewizji, podział ruchu, canary i blue-green. Parametr: <code>--revisions-mode</code> (albo <code>az containerapp revision set-mode --mode</code>).</p>
 </details>
-<h2 id="h9-jak-dziaaja-etykiety-wzgledem-podziau-ruchu">H9. Jak działają etykiety względem podziału ruchu?</h2>
+<h2 id="h9-jak-działają-etykiety-względem-podziału-ruchu">H9. Jak działają etykiety względem podziału ruchu?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Etykieta daje osobny adres URL, który zawsze kieruje do swojej rewizji niezależnie od wag. Główny adres aplikacji podlega podziałowi ruchu. Etykieta wskazuje jedną rewizję naraz, a przeniesienie jest atomowe.</p>
 </details>
 <hr />
-<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
-<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<h1 id="część-j---co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
 <p><em>Źródło: [moduł kursu: dynamic-sessions-azure-container-apps]</em></p>
 <p>Dalej: moduł 07 (dynamic sessions: bezpieczne wykonywanie kodu generowanego przez AI). Wróć do części B i C, gdy uczysz się scalerów (Service Bus, Event Hubs, Kafka, cron), a do E przy zadaniach o canary i etykietach.</p>
 <p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30):</p>

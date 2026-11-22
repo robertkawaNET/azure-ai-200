@@ -8,6 +8,61 @@ Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 68 min wg katalogu, w tym ć
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - AKTUALIZACJA OBRAZÓW I REWIZJE](#część-a---aktualizacja-obrazów-i-rewizje)**
+  - [A1. Tagi i digesty: kiedy które](#a1-tagi-i-digesty-kiedy-które)
+  - [A2. Aktualizacja obrazu tworzy nową rewizję](#a2-aktualizacja-obrazu-tworzy-nową-rewizję)
+  - [A3. Tryby rewizji i znaczenie słowa "active"](#a3-tryby-rewizji-i-znaczenie-słowa-active)
+  - [A4. Lista, szczegóły, dezaktywacja i porządki](#a4-lista-szczegóły-dezaktywacja-i-porządki)
+  - [A5. Dobre praktyki bezpiecznego rolloutu i retencja](#a5-dobre-praktyki-bezpiecznego-rolloutu-i-retencja)
+- **[CZĘŚĆ B - CYKL ŻYCIA APLIKACJI](#część-b---cykl-życia-aplikacji)**
+  - [B1. Stop, restart czy skalowanie do zera](#b1-stop-restart-czy-skalowanie-do-zera)
+  - [B2. Start i stop aplikacji](#b2-start-i-stop-aplikacji)
+  - [B3. Restart aplikacji po złym stanie uruchomieniowym](#b3-restart-aplikacji-po-złym-stanie-uruchomieniowym)
+  - [B4. Powtarzalna lista kontrolna dla nieudanej rewizji](#b4-powtarzalna-lista-kontrolna-dla-nieudanej-rewizji)
+- **[CZĘŚĆ C - LOGI I ROZWIĄZYWANIE PROBLEMÓW](#część-c---logi-i-rozwiązywanie-problemów)**
+  - [C1. Strumieniowanie logów](#c1-strumieniowanie-logów)
+  - [C2. Logi, które pomagają przy AI](#c2-logi-które-pomagają-przy-ai)
+  - [C3. Procedura dla awarii związanej z jedną rewizją](#c3-procedura-dla-awarii-związanej-z-jedną-rewizją)
+  - [C4. Historia logów: Log Analytics i KQL](#c4-historia-logów-log-analytics-i-kql)
+- **[CZĘŚĆ D - SONDY ZDROWIA (HEALTH PROBES)](#część-d---sondy-zdrowia-health-probes)**
+  - [D1. Readiness kontra liveness (i startup)](#d1-readiness-kontra-liveness-i-startup)
+  - [D2. Typowe przyczyny porażek sond](#d2-typowe-przyczyny-porażek-sond)
+  - [D3. Konfiguracja sond w szablonie aplikacji](#d3-konfiguracja-sond-w-szablonie-aplikacji)
+  - [D4. Rozwiązywanie problemów z sondami podczas rolloutu](#d4-rozwiązywanie-problemów-z-sondami-podczas-rolloutu)
+  - [D5. Domyślne sondy i limity (z dokumentacji)](#d5-domyślne-sondy-i-limity-z-dokumentacji)
+- **[CZĘŚĆ E - OPTYMALIZACJA ZASOBÓW I SKALOWANIA](#część-e---optymalizacja-zasobów-i-skalowania)**
+  - [E1. Rozmiar repliki a całkowity koszt](#e1-rozmiar-repliki-a-całkowity-koszt)
+  - [E2. Zmiana CPU i pamięci](#e2-zmiana-cpu-i-pamięci)
+  - [E3. Skalowanie: synchroniczne API a worker w tle](#e3-skalowanie-synchroniczne-api-a-worker-w-tle)
+  - [E4. Dobre praktyki kosztu i wydajności](#e4-dobre-praktyki-kosztu-i-wydajności)
+- **[CZĘŚĆ F - ĆWICZENIA](#część-f---ćwiczenia)**
+  - [I1. Diagnoza brakującej zmiennej, złego portu i historii logów (lab modułu)](#i1-diagnoza-brakującej-zmiennej-złego-portu-i-historii-logów-lab-modułu)
+  - [I2. Sondy zdrowia w YAML i operacje cyklu życia](#i2-sondy-zdrowia-w-yaml-i-operacje-cyklu-życia)
+  - [I3. Rewizje i logi KQL przez SDK: Python i odpowiednik C# (.NET)](#i3-rewizje-i-logi-kql-przez-sdk-python-i-odpowiednik-c-net)
+- **[CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia](#część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia)**
+  - [G1. Najlepsza identyfikowalność nowego obrazu na produkcji](#g1-najlepsza-identyfikowalność-nowego-obrazu-na-produkcji)
+  - [G2. Zdjęcie rewizji z ruchu bez kasowania](#g2-zdjęcie-rewizji-z-ruchu-bez-kasowania)
+  - [G3. Rewizja oblewa readiness zaraz po wdrożeniu - najczęstsza przyczyna](#g3-rewizja-oblewa-readiness-zaraz-po-wdrożeniu---najczęstsza-przyczyna)
+  - [G4. Podejrzewasz wyjątek tylko w jednej rewizji - pierwszy krok](#g4-podejrzewasz-wyjątek-tylko-w-jednej-rewizji---pierwszy-krok)
+  - [G5. Wysokie opóźnienie i throttling CPU w szczycie](#g5-wysokie-opóźnienie-i-throttling-cpu-w-szczycie)
+- **[CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [H1. Czym różni się tag od digestu i którego użyć na produkcji?](#h1-czym-różni-się-tag-od-digestu-i-którego-użyć-na-produkcji)
+  - [H2. Czym różni się `revision deactivate` od `revision delete` i `containerapp stop`?](#h2-czym-różni-się-revision-deactivate-od-revision-delete-i-containerapp-stop)
+  - [H3. Ile nieaktywnych rewizji zachowuje się domyślnie i jak zmienić próg?](#h3-ile-nieaktywnych-rewizji-zachowuje-się-domyślnie-i-jak-zmienić-próg)
+  - [H4. Co robi platforma, gdy oblewa sonda readiness, a co przy liveness?](#h4-co-robi-platforma-gdy-oblewa-sonda-readiness-a-co-przy-liveness)
+  - [H5. Wymień pięć typowych wzorców awarii rewizji z modułu.](#h5-wymień-pięć-typowych-wzorców-awarii-rewizji-z-modułu)
+  - [H6. Które limity sond warto znać?](#h6-które-limity-sond-warto-znać)
+  - [H7. Jak sprawdzić historię logów konsoli aplikacji sprzed tygodnia?](#h7-jak-sprawdzić-historię-logów-konsoli-aplikacji-sprzed-tygodnia)
+  - [H8. Co zwiększysz przy throttlingu CPU, a co przy restartach z braku pamięci?](#h8-co-zwiększysz-przy-throttlingu-cpu-a-co-przy-restartach-z-braku-pamięci)
+- **[CZĘŚĆ J - CO DALEJ](#część-j---co-dalej)**
+  - [J1. Następny krok i pokrycie egzaminu](#j1-następny-krok-i-pokrycie-egzaminu)
+  - [J2. Uczciwie o egzaminie](#j2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - AKTUALIZACJA OBRAZÓW I REWIZJE
 
 ## A1. Tagi i digesty: kiedy które

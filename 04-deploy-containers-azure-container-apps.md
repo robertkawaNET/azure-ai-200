@@ -8,6 +8,59 @@ Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 72 min wg katalogu, w tym ć
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - CO TO JEST I JAK TO DZIAŁA](#część-a---co-to-jest-i-jak-to-działa)**
+  - [A1. Czym jest Azure Container Apps i środowisko (environment)](#a1-czym-jest-azure-container-apps-i-środowisko-environment)
+  - [A2. Tworzenie i sprawdzanie środowiska](#a2-tworzenie-i-sprawdzanie-środowiska)
+  - [A3. Sieć i ingress: external czy internal](#a3-sieć-i-ingress-external-czy-internal)
+  - [A4. Logi w środowisku i dobre praktyki projektowania środowisk](#a4-logi-w-środowisku-i-dobre-praktyki-projektowania-środowisk)
+- **[CZĘŚĆ B - WDRAŻANIE APLIKACJI](#część-b---wdrażanie-aplikacji)**
+  - [B1. Przygotowanie CLI i dostawców zasobów](#b1-przygotowanie-cli-i-dostawców-zasobów)
+  - [B2. Szybkie wdrożenie: `az containerapp up`](#b2-szybkie-wdrożenie-az-containerapp-up)
+  - [B3. Jawne wdrożenie: `az containerapp create`](#b3-jawne-wdrożenie-az-containerapp-create)
+  - [B4. Aktualizacja = nowa rewizja (revision)](#b4-aktualizacja--nowa-rewizja-revision)
+  - [B5. YAML: powtarzalne i recenzowalne wdrożenia](#b5-yaml-powtarzalne-i-recenzowalne-wdrożenia)
+  - [B6. Inne sposoby wdrażania](#b6-inne-sposoby-wdrażania)
+- **[CZĘŚĆ C - USTAWIENIA URUCHOMIENIOWE: ZMIENNE I SEKRETY](#część-c---ustawienia-uruchomieniowe-zmienne-i-sekrety)**
+  - [C1. Zmienne środowiskowe (niewrażliwe ustawienia)](#c1-zmienne-środowiskowe-niewrażliwe-ustawienia)
+  - [C2. Sekrety i odwołania `secretref:`](#c2-sekrety-i-odwołania-secretref)
+  - [C3. YAML dla ustawień runtime i dobre praktyki](#c3-yaml-dla-ustawień-runtime-i-dobre-praktyki)
+- **[CZĘŚĆ D - UWIERZYTELNIANIE DO PRYWATNEGO REJESTRU](#część-d---uwierzytelnianie-do-prywatnego-rejestru)**
+  - [D1. Opcje i kompromis](#d1-opcje-i-kompromis)
+  - [D2. Rejestr: nazwa użytkownika i hasło](#d2-rejestr-nazwa-użytkownika-i-hasło)
+  - [D3. Rejestr: tożsamość zarządzana i rola `AcrPull`](#d3-rejestr-tożsamość-zarządzana-i-rola-acrpull)
+  - [D4. Weryfikacja konfiguracji rejestru i dobre praktyki](#d4-weryfikacja-konfiguracji-rejestru-i-dobre-praktyki)
+- **[CZĘŚĆ E - WERYFIKACJA WDROŻENIA](#część-e---weryfikacja-wdrożenia)**
+  - [E1. Konfiguracja, ingress i logi](#e1-konfiguracja-ingress-i-logi)
+  - [E2. Rewizje i repliki](#e2-rewizje-i-repliki)
+  - [E3. Dobre praktyki weryfikacji](#e3-dobre-praktyki-weryfikacji)
+- **[CZĘŚĆ F - ĆWICZENIA](#część-f---ćwiczenia)**
+  - [I1. API w prywatnym ACR z tożsamością zarządzaną, sekretem i weryfikacją (lab modułu)](#i1-api-w-prywatnym-acr-z-tożsamością-zarządzaną-sekretem-i-weryfikacją-lab-modułu)
+  - [I2. Wdrożenie plikiem YAML, internal vs external i `up`](#i2-wdrożenie-plikiem-yaml-internal-vs-external-i-up)
+  - [I3. Rewizje i repliki przez SDK: Python i odpowiednik C# (.NET)](#i3-rewizje-i-repliki-przez-sdk-python-i-odpowiednik-c-net)
+- **[CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia](#część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia)**
+  - [G1. Który zasób daje wspólną granicę sieci i logów dla wielu aplikacji?](#g1-który-zasób-daje-wspólną-granicę-sieci-i-logów-dla-wielu-aplikacji)
+  - [G2. Spójne wdrożenie z kontrolą wersji i review konfiguracji](#g2-spójne-wdrożenie-z-kontrolą-wersji-i-review-konfiguracji)
+  - [G3. Klucz API dostawcy embeddingów bez trzymania go w YAML](#g3-klucz-api-dostawcy-embeddingów-bez-trzymania-go-w-yaml)
+  - [G4. Które polecenie pokazuje wersjonowaną zmianę po aktualizacji?](#g4-które-polecenie-pokazuje-wersjonowaną-zmianę-po-aktualizacji)
+  - [G5. Aplikacja nie startuje po zmianie obrazu - pierwszy krok diagnozy](#g5-aplikacja-nie-startuje-po-zmianie-obrazu---pierwszy-krok-diagnozy)
+- **[CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [H1. Co współdzielą aplikacje w jednym środowisku Container Apps?](#h1-co-współdzielą-aplikacje-w-jednym-środowisku-container-apps)
+  - [H2. Czym różni się `az containerapp up` od `az containerapp create`?](#h2-czym-różni-się-az-containerapp-up-od-az-containerapp-create)
+  - [H3. Które zmiany tworzą nową rewizję, a które nie?](#h3-które-zmiany-tworzą-nową-rewizję-a-które-nie)
+  - [H4. Jak przekazać sekret do kontenera jako zmienną środowiskową?](#h4-jak-przekazać-sekret-do-kontenera-jako-zmienną-środowiskową)
+  - [H5. Jaka rola i jaka flaga pozwalają ACA pobierać obrazy z ACR bez hasła?](#h5-jaka-rola-i-jaka-flaga-pozwalają-aca-pobierać-obrazy-z-acr-bez-hasła)
+  - [H6. Co robi `--set-env-vars`, a co `--replace-env-vars`?](#h6-co-robi---set-env-vars-a-co---replace-env-vars)
+  - [H7. Jakie są domyślne wartości `az containerapp logs show` i jak zobaczyć logi platformy?](#h7-jakie-są-domyślne-wartości-az-containerapp-logs-show-i-jak-zobaczyć-logi-platformy)
+  - [H8. Obraz `MyRegistry.azurecr.io/Ai-Api:v1` nie chce się pobrać. Co sprawdzisz najpierw?](#h8-obraz-myregistryazurecrioai-apiv1-nie-chce-się-pobrać-co-sprawdzisz-najpierw)
+- **[CZĘŚĆ J - CO DALEJ](#część-j---co-dalej)**
+  - [J1. Następny krok i pokrycie egzaminu](#j1-następny-krok-i-pokrycie-egzaminu)
+  - [J2. Uczciwie o egzaminie](#j2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - CO TO JEST I JAK TO DZIAŁA
 
 ## A1. Czym jest Azure Container Apps i środowisko (environment)

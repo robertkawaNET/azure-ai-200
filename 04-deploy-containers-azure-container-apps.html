@@ -202,14 +202,67 @@ a{text-decoration:none}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
 }
 </style></head>
-<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-04-wdrazanie-kontenerow-w-azure-container-apps-srodowisko-rewizje-sekrety-rejestr-prywatny-logi">Moduł 04: Wdrażanie kontenerów w Azure Container Apps (środowisko, rewizje, sekrety, rejestr prywatny, logi)</h1>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="moduł-04-wdrażanie-kontenerów-w-azure-container-apps-środowisko-rewizje-sekrety-rejestr-prywatny-logi">Moduł 04: Wdrażanie kontenerów w Azure Container Apps (środowisko, rewizje, sekrety, rejestr prywatny, logi)</h1>
 <p>Moduł Microsoft Learn: <strong>Deploy containers to Azure Container Apps</strong> - https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-container-apps/
 Cel: po tym module rozumiesz, czym jest środowisko Container Apps, umiesz wdrożyć kontener poleceniami <code>az containerapp</code> i plikiem YAML, ustawić zmienne środowiskowe i sekrety, skonfigurować pobieranie obrazu z prywatnego rejestru i sprawdzić wdrożenie w logach, rewizjach i replikach.
 Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 72 min wg katalogu, w tym ćwiczenie ok. 30 min; tutaj dochodzą 3 ćwiczenia z eksperymentami). Ćwiczenia robisz w terminalu z Azure CLI (Cloud Shell albo własny terminal), Python 3.12 do ćwiczenia z SDK. Koszt: ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze (rejestr ACR, środowisko Container Apps, Log Analytics) - szczegóły w polach <strong>Koszt</strong> przy ćwiczeniach.</p>
 <p>Źródła: <code>[unit N]</code> = jednostka modułu Learn, <code>[docs: URL]</code> = dokumentacja produktu, <code>[autor]</code> = dodane przez autora; pełna legenda: przewodnik stylu §3. "Moduł N" znaczy plik tutoriala <code>0N-*.md</code>.</p>
 <hr />
-<h1 id="czesc-a-co-to-jest-i-jak-to-dziaa">CZĘŚĆ A - CO TO JEST I JAK TO DZIAŁA</h1>
-<h2 id="a1-czym-jest-azure-container-apps-i-srodowisko-environment">A1. Czym jest Azure Container Apps i środowisko (environment)</h2>
+<!-- toc -->
+<p><strong>Spis treści</strong></p>
+<ul>
+<li><strong><a href="#część-a---co-to-jest-i-jak-to-działa">CZĘŚĆ A - CO TO JEST I JAK TO DZIAŁA</a></strong></li>
+<li><a href="#a1-czym-jest-azure-container-apps-i-środowisko-environment">A1. Czym jest Azure Container Apps i środowisko (environment)</a></li>
+<li><a href="#a2-tworzenie-i-sprawdzanie-środowiska">A2. Tworzenie i sprawdzanie środowiska</a></li>
+<li><a href="#a3-sieć-i-ingress-external-czy-internal">A3. Sieć i ingress: external czy internal</a></li>
+<li><a href="#a4-logi-w-środowisku-i-dobre-praktyki-projektowania-środowisk">A4. Logi w środowisku i dobre praktyki projektowania środowisk</a></li>
+<li><strong><a href="#część-b---wdrażanie-aplikacji">CZĘŚĆ B - WDRAŻANIE APLIKACJI</a></strong></li>
+<li><a href="#b1-przygotowanie-cli-i-dostawców-zasobów">B1. Przygotowanie CLI i dostawców zasobów</a></li>
+<li><a href="#b2-szybkie-wdrożenie-az-containerapp-up">B2. Szybkie wdrożenie: <code>az containerapp up</code></a></li>
+<li><a href="#b3-jawne-wdrożenie-az-containerapp-create">B3. Jawne wdrożenie: <code>az containerapp create</code></a></li>
+<li><a href="#b4-aktualizacja--nowa-rewizja-revision">B4. Aktualizacja = nowa rewizja (revision)</a></li>
+<li><a href="#b5-yaml-powtarzalne-i-recenzowalne-wdrożenia">B5. YAML: powtarzalne i recenzowalne wdrożenia</a></li>
+<li><a href="#b6-inne-sposoby-wdrażania">B6. Inne sposoby wdrażania</a></li>
+<li><strong><a href="#część-c---ustawienia-uruchomieniowe-zmienne-i-sekrety">CZĘŚĆ C - USTAWIENIA URUCHOMIENIOWE: ZMIENNE I SEKRETY</a></strong></li>
+<li><a href="#c1-zmienne-środowiskowe-niewrażliwe-ustawienia">C1. Zmienne środowiskowe (niewrażliwe ustawienia)</a></li>
+<li><a href="#c2-sekrety-i-odwołania-secretref">C2. Sekrety i odwołania <code>secretref:</code></a></li>
+<li><a href="#c3-yaml-dla-ustawień-runtime-i-dobre-praktyki">C3. YAML dla ustawień runtime i dobre praktyki</a></li>
+<li><strong><a href="#część-d---uwierzytelnianie-do-prywatnego-rejestru">CZĘŚĆ D - UWIERZYTELNIANIE DO PRYWATNEGO REJESTRU</a></strong></li>
+<li><a href="#d1-opcje-i-kompromis">D1. Opcje i kompromis</a></li>
+<li><a href="#d2-rejestr-nazwa-użytkownika-i-hasło">D2. Rejestr: nazwa użytkownika i hasło</a></li>
+<li><a href="#d3-rejestr-tożsamość-zarządzana-i-rola-acrpull">D3. Rejestr: tożsamość zarządzana i rola <code>AcrPull</code></a></li>
+<li><a href="#d4-weryfikacja-konfiguracji-rejestru-i-dobre-praktyki">D4. Weryfikacja konfiguracji rejestru i dobre praktyki</a></li>
+<li><strong><a href="#część-e---weryfikacja-wdrożenia">CZĘŚĆ E - WERYFIKACJA WDROŻENIA</a></strong></li>
+<li><a href="#e1-konfiguracja-ingress-i-logi">E1. Konfiguracja, ingress i logi</a></li>
+<li><a href="#e2-rewizje-i-repliki">E2. Rewizje i repliki</a></li>
+<li><a href="#e3-dobre-praktyki-weryfikacji">E3. Dobre praktyki weryfikacji</a></li>
+<li><strong><a href="#część-f---ćwiczenia">CZĘŚĆ F - ĆWICZENIA</a></strong></li>
+<li><a href="#i1-api-w-prywatnym-acr-z-tożsamością-zarządzaną-sekretem-i-weryfikacją-lab-modułu">I1. API w prywatnym ACR z tożsamością zarządzaną, sekretem i weryfikacją (lab modułu)</a></li>
+<li><a href="#i2-wdrożenie-plikiem-yaml-internal-vs-external-i-up">I2. Wdrożenie plikiem YAML, internal vs external i <code>up</code></a></li>
+<li><a href="#i3-rewizje-i-repliki-przez-sdk-python-i-odpowiednik-c-net">I3. Rewizje i repliki przez SDK: Python i odpowiednik C# (.NET)</a></li>
+<li><strong><a href="#część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</a></strong></li>
+<li><a href="#g1-który-zasób-daje-wspólną-granicę-sieci-i-logów-dla-wielu-aplikacji">G1. Który zasób daje wspólną granicę sieci i logów dla wielu aplikacji?</a></li>
+<li><a href="#g2-spójne-wdrożenie-z-kontrolą-wersji-i-review-konfiguracji">G2. Spójne wdrożenie z kontrolą wersji i review konfiguracji</a></li>
+<li><a href="#g3-klucz-api-dostawcy-embeddingów-bez-trzymania-go-w-yaml">G3. Klucz API dostawcy embeddingów bez trzymania go w YAML</a></li>
+<li><a href="#g4-które-polecenie-pokazuje-wersjonowaną-zmianę-po-aktualizacji">G4. Które polecenie pokazuje wersjonowaną zmianę po aktualizacji?</a></li>
+<li><a href="#g5-aplikacja-nie-startuje-po-zmianie-obrazu---pierwszy-krok-diagnozy">G5. Aplikacja nie startuje po zmianie obrazu - pierwszy krok diagnozy</a></li>
+<li><strong><a href="#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</a></strong></li>
+<li><a href="#h1-co-współdzielą-aplikacje-w-jednym-środowisku-container-apps">H1. Co współdzielą aplikacje w jednym środowisku Container Apps?</a></li>
+<li><a href="#h2-czym-różni-się-az-containerapp-up-od-az-containerapp-create">H2. Czym różni się <code>az containerapp up</code> od <code>az containerapp create</code>?</a></li>
+<li><a href="#h3-które-zmiany-tworzą-nową-rewizję-a-które-nie">H3. Które zmiany tworzą nową rewizję, a które nie?</a></li>
+<li><a href="#h4-jak-przekazać-sekret-do-kontenera-jako-zmienną-środowiskową">H4. Jak przekazać sekret do kontenera jako zmienną środowiskową?</a></li>
+<li><a href="#h5-jaka-rola-i-jaka-flaga-pozwalają-aca-pobierać-obrazy-z-acr-bez-hasła">H5. Jaka rola i jaka flaga pozwalają ACA pobierać obrazy z ACR bez hasła?</a></li>
+<li><a href="#h6-co-robi---set-env-vars-a-co---replace-env-vars">H6. Co robi <code>--set-env-vars</code>, a co <code>--replace-env-vars</code>?</a></li>
+<li><a href="#h7-jakie-są-domyślne-wartości-az-containerapp-logs-show-i-jak-zobaczyć-logi-platformy">H7. Jakie są domyślne wartości <code>az containerapp logs show</code> i jak zobaczyć logi platformy?</a></li>
+<li><a href="#h8-obraz-myregistryazurecrioai-apiv1-nie-chce-się-pobrać-co-sprawdzisz-najpierw">H8. Obraz <code>MyRegistry.azurecr.io/Ai-Api:v1</code> nie chce się pobrać. Co sprawdzisz najpierw?</a></li>
+<li><strong><a href="#część-j---co-dalej">CZĘŚĆ J - CO DALEJ</a></strong></li>
+<li><a href="#j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</a></li>
+<li><a href="#j2-uczciwie-o-egzaminie">J2. Uczciwie o egzaminie</a></li>
+</ul>
+<!-- /toc -->
+
+<h1 id="część-a---co-to-jest-i-jak-to-działa">CZĘŚĆ A - CO TO JEST I JAK TO DZIAŁA</h1>
+<h2 id="a1-czym-jest-azure-container-apps-i-środowisko-environment">A1. Czym jest Azure Container Apps i środowisko (environment)</h2>
 <p><em>Źródło: [unit 1] + [unit 2]</em></p>
 <p><strong>Azure Container Apps</strong> to usługa do uruchamiania kontenerów (paczek z aplikacją i jej zależnościami) bez zarządzania klastrem Kubernetes. Dostajesz "bezserwerowy" (serverless: nie obsługujesz serwerów sam) silnik kontenerów, wdrożenia oparte na rewizjach, wbudowany ruch przychodzący (ingress) i zarządzanie przez Azure.</p>
 <p>Aplikacje działają w <strong>środowisku Container Apps</strong> (Container Apps environment). Środowisko to granica: aplikacje z jednego środowiska współdzielą sieć i miejsce zapisu logów. To nie jest "folder na zasoby" - środowisko wpływa na to, jak ruch wewnętrzny przechodzi między aplikacjami, jak podłączasz logi i jak stosujesz zasady zarządzania. [unit 2]</p>
@@ -221,7 +274,7 @@ Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 72 min wg katalogu, w tym ć
 
 <p>Co mówi dokumentacja produktu: środowisko to "secure boundary around one or more container apps and jobs"; apps w jednym środowisku "share the same virtual network and write logs to the same logging destination". Nowe środowiska są domyślnie typu <strong>Workload profiles (v2)</strong>; typ <strong>Consumption-only (v1)</strong> jest dziedziczny (legacy). [docs: https://learn.microsoft.com/azure/container-apps/environment] [docs: https://learn.microsoft.com/azure/container-apps/structure]</p>
 <p>(egzamin je lubi: środowisko = granica sieci i logów; jedna aplikacja nie "należy" do dwóch środowisk)</p>
-<h2 id="a2-tworzenie-i-sprawdzanie-srodowiska">A2. Tworzenie i sprawdzanie środowiska</h2>
+<h2 id="a2-tworzenie-i-sprawdzanie-środowiska">A2. Tworzenie i sprawdzanie środowiska</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Rozszerzenie CLI <code>containerapp</code> bywa wymagane. Instalacja lub aktualizacja: <code>az extension add --name containerapp --upgrade</code>; funkcje w wersji zapoznawczej (preview) włączasz przez <code>--allow-preview true</code>.</p>
 <p>Środowisko możesz utworzyć jawnie albo pozwolić, by <code>az containerapp up</code> utworzyło je za Ciebie. Jawne utworzenie daje kontrolę nad nazwą i cyklem życia, co się przydaje, gdy kilka aplikacji dzieli jedno środowisko.</p>
@@ -238,7 +291,7 @@ az containerapp env show \
 </code></pre></div>
 
 <p>Objaśnienie: (1) grupa zasobów (resource group, logiczny kontener na zasoby, który usuwasz jednym poleceniem); (2) środowisko; (3) podgląd środowiska - pokazuje, którego środowiska używa aplikacja i pomaga przy problemach z regionem lub konfiguracją.</p>
-<h2 id="a3-siec-i-ingress-external-czy-internal">A3. Sieć i ingress: external czy internal</h2>
+<h2 id="a3-sieć-i-ingress-external-czy-internal">A3. Sieć i ingress: external czy internal</h2>
 <p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/azure/container-apps/ingress-overview]</em></p>
 <p><strong>Ingress</strong> to wbudowany sposób, w jaki ruch HTTP (lub TCP) trafia do aplikacji; nie tworzysz własnego load balancera ani publicznego IP. Dwa rodzaje:</p>
 <table>
@@ -263,7 +316,7 @@ az containerapp env show \
 </tbody>
 </table>
 <p>Dokumentacja dopowiada ważny szczegół: ustawienie ingress opisuje widoczność aplikacji <strong>względem środowiska</strong>, a nie internetu. Adres aplikacji z <code>internal</code> ma segment <code>.internal.</code>: <code>&lt;APP&gt;.internal.&lt;ENV_ID&gt;.&lt;REGION&gt;.azurecontainerapps.io</code>; żądania spoza środowiska dostają 404. Zmiana ustawień ingress dotyczy wszystkich rewizji naraz i <strong>nie tworzy nowej rewizji</strong>. Dla HTTP adres aplikacji jest zawsze wystawiony na porcie 443, a <code>targetPort</code> to port, na którym nasłuchuje Twój kontener. [docs: https://learn.microsoft.com/azure/container-apps/ingress-overview] [docs: https://learn.microsoft.com/azure/container-apps/ingress-how-to?pivots=azure-cli#use-additional-tcp-ports]</p>
-<h2 id="a4-logi-w-srodowisku-i-dobre-praktyki-projektowania-srodowisk">A4. Logi w środowisku i dobre praktyki projektowania środowisk</h2>
+<h2 id="a4-logi-w-środowisku-i-dobre-praktyki-projektowania-środowisk">A4. Logi w środowisku i dobre praktyki projektowania środowisk</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Środowisko zwykle integruje się z Azure Monitor (usługa zbierania logów i metryk), dzięki czemu logi kontenerów i logi systemowe znajdziesz w jednym miejscu. Zaplanuj logowanie od początku: pierwsze dochodzenie awarii to zwykle moment, w którym orientujesz się, że logów brakuje. Domyślnie wszystkie aplikacje środowiska wysyłają logi do wspólnego obszaru Log Analytics (obszar roboczy do zapytań o logi); nowe rekordy pojawiają się z opóźnieniem kilku minut, a do podglądu na żywo służy log streaming. [docs: https://learn.microsoft.com/azure/container-apps/environment] </p>
 <p>Dobre praktyki z modułu [unit 2]:</p>
@@ -274,8 +327,8 @@ az containerapp env show \
 <li><strong>Zaplanuj obserwowalność</strong> (gdzie trafiają logi i jak je odpytasz) zanim puścisz ruch produkcyjny.</li>
 </ul>
 <hr />
-<h1 id="czesc-b-wdrazanie-aplikacji">CZĘŚĆ B - WDRAŻANIE APLIKACJI</h1>
-<h2 id="b1-przygotowanie-cli-i-dostawcow-zasobow">B1. Przygotowanie CLI i dostawców zasobów</h2>
+<h1 id="część-b---wdrażanie-aplikacji">CZĘŚĆ B - WDRAŻANIE APLIKACJI</h1>
+<h2 id="b1-przygotowanie-cli-i-dostawców-zasobów">B1. Przygotowanie CLI i dostawców zasobów</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>Przed wdrożeniem potrzebujesz zalogowanego, aktualnego CLI i zarejestrowanych <strong>dostawców zasobów</strong> (resource providers: komponenty Azure, które tworzą dany typ zasobów). Bez rejestracji <code>Microsoft.App</code> i <code>Microsoft.OperationalInsights</code> tworzenie zasobów się nie uda.</p>
 <div class="codehilite"><pre><span></span><code>az login
@@ -289,7 +342,7 @@ az provider register --namespace Microsoft.OperationalInsights
 <blockquote>
 <p>Wersje sprawdzone 2026-11-22 (źródło: <code>az version</code> lokalnie, <code>az extension list-available</code>): Azure CLI 2.90.0; rozszerzenie <code>containerapp</code> w indeksie ma tylko wersję <strong>1.3.0b6</strong> (beta), więc <code>az extension add</code> zgłasza "No stable version" i instaluje wersję zapoznawczą. Moduł zakłada, że rozszerzenie działa; przed użyciem sprawdź <code>az extension list</code>. [docs: https://learn.microsoft.com/azure/container-apps/get-started]</p>
 </blockquote>
-<h2 id="b2-szybkie-wdrozenie-az-containerapp-up">B2. Szybkie wdrożenie: <code>az containerapp up</code></h2>
+<h2 id="b2-szybkie-wdrożenie-az-containerapp-up">B2. Szybkie wdrożenie: <code>az containerapp up</code></h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p><code>az containerapp up</code> to najszybszy sposób na pierwszą wersję: potrafi utworzyć środowisko i zasoby pomocnicze, więc zmniejsza liczbę decyzji. Dobre do prototypów.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp up \
@@ -306,7 +359,7 @@ az provider register --namespace Microsoft.OperationalInsights
 <p>Polecenie zwraca <strong>FQDN</strong> (fully qualified domain name, pełna nazwa domenowa aplikacji). Ścieżka obrazu musi być zapisana <strong>małymi literami</strong> (np. <code>mcr.microsoft.com/k8se/quickstart</code>); wielkie litery dają błędy pobierania obrazu, które wyglądają jak błędy uwierzytelniania. [unit 3]</p>
 <p>Dokumentacja: <code>up</code> tworzy środowisko, obszar Log Analytics i aplikację, a jeśli któryś z zasobów już istnieje, <strong>użyje go</strong> zamiast tworzyć nowy. [docs: https://learn.microsoft.com/azure/container-apps/get-started]</p>
 <p>(egzamin je lubi: <code>up</code> = szybko i z domyślnymi decyzjami; <code>create</code> = jawnie)</p>
-<h2 id="b3-jawne-wdrozenie-az-containerapp-create">B3. Jawne wdrożenie: <code>az containerapp create</code></h2>
+<h2 id="b3-jawne-wdrożenie-az-containerapp-create">B3. Jawne wdrożenie: <code>az containerapp create</code></h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>Gdy środowisko już istnieje, a aplikację trzeba dopasować do niego i do grupy zasobów, użyj <code>create</code>. Łatwiej wtedy wprowadzić spójne wartości domyślne w wielu środowiskach.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp create \
@@ -319,7 +372,7 @@ az provider register --namespace Microsoft.OperationalInsights
 </code></pre></div>
 
 <p>Nazwa aplikacji: małe litery, cyfry lub <code>-</code>, zaczyna się od litery, kończy literą lub cyfrą, bez <code>--</code>, krócej niż 32 znaki. [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest]</p>
-<h2 id="b4-aktualizacja-nowa-rewizja-revision">B4. Aktualizacja = nowa rewizja (revision)</h2>
+<h2 id="b4-aktualizacja--nowa-rewizja-revision">B4. Aktualizacja = nowa rewizja (revision)</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/azure/container-apps/revisions]</em></p>
 <p><strong>Rewizja</strong> (revision) to niezmienna migawka wersji konfiguracji aplikacji. Gdy zmieniasz np. obraz lub zmienne środowiskowe, powstaje nowa rewizja i możesz ją sprawdzić, zanim przesuniesz na nią cały ruch. [unit 3]</p>
 <div class="codehilite"><pre><span></span><code>az containerapp update \
@@ -357,7 +410,7 @@ az provider register --namespace Microsoft.OperationalInsights
 <blockquote>
 <p><strong>UWAGA - błąd w materiale Microsoftu</strong> (unit 7, lab): lab pisze, że "Container Apps creates a new revision whenever you change environment variables or secrets" -&gt; zmiana <strong>zmiennych środowiskowych</strong> tworzy rewizję, ale zmiana <strong>wartości sekretu</strong> jej nie tworzy (to zmiana application-scope; aby kontener zobaczył nową wartość, trzeba wdrożyć nową rewizję lub zrestartować istniejącą). Źródło: https://learn.microsoft.com/azure/container-apps/manage-secrets.</p>
 </blockquote>
-<h2 id="b5-yaml-powtarzalne-i-recenzowalne-wdrozenia">B5. YAML: powtarzalne i recenzowalne wdrożenia</h2>
+<h2 id="b5-yaml-powtarzalne-i-recenzowalne-wdrożenia">B5. YAML: powtarzalne i recenzowalne wdrożenia</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>Plik YAML (format konfiguracji oparty na wcięciach) trzymasz w repozytorium i zmieniasz przez review, więc maleje "dryf konfiguracji" (różnice między środowiskami). Szczególnie pomaga, gdy usługa AI ma wiele ustawień: flagi funkcji, adresy zależności, skalowanie. Gdy podasz <code>--yaml</code>, <strong>pozostałe flagi są ignorowane</strong>, a YAML staje się źródłem prawdy. [unit 3]</p>
 <div class="codehilite"><pre><span></span><code>az containerapp create --name ai-api --resource-group rg-aca-demo \
@@ -387,12 +440,12 @@ az containerapp update --name ai-api --resource-group rg-aca-demo \
 <span class="w">      </span><span class="nt">maxReplicas</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 </code></pre></div>
 
-<h2 id="b6-inne-sposoby-wdrazania">B6. Inne sposoby wdrażania</h2>
+<h2 id="b6-inne-sposoby-wdrażania">B6. Inne sposoby wdrażania</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p>W prawdziwych projektach przechodzisz od CLI do potoków: <strong>Bicep</strong> (język do infrastruktury jako kod), <strong>GitHub Actions</strong> (ciągłe wdrażanie) albo portal Azure do zmian niezaplanowanych. Wzorce CLI i YAML z tego modułu zostają przydatne: pokazują, które właściwości się zmieniają i gdzie szukać przy awarii.</p>
 <hr />
-<h1 id="czesc-c-ustawienia-uruchomieniowe-zmienne-i-sekrety">CZĘŚĆ C - USTAWIENIA URUCHOMIENIOWE: ZMIENNE I SEKRETY</h1>
-<h2 id="c1-zmienne-srodowiskowe-niewrazliwe-ustawienia">C1. Zmienne środowiskowe (niewrażliwe ustawienia)</h2>
+<h1 id="część-c---ustawienia-uruchomieniowe-zmienne-i-sekrety">CZĘŚĆ C - USTAWIENIA URUCHOMIENIOWE: ZMIENNE I SEKRETY</h1>
+<h2 id="c1-zmienne-środowiskowe-niewrażliwe-ustawienia">C1. Zmienne środowiskowe (niewrażliwe ustawienia)</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p><strong>Zmienne środowiskowe</strong> (environment variables) to dobre miejsce na poziomy logowania, flagi funkcji i adresy zależności. Dzięki nim ten sam obraz działa w wielu środowiskach z różnymi wartościami, a limity czasu czy rozmiary partii zmieniasz bez budowania obrazu od nowa.</p>
 <div class="codehilite"><pre><span></span><code>az containerapp create -n ai-api -g rg-aca-demo \
@@ -406,7 +459,7 @@ az containerapp update -n ai-api -g rg-aca-demo \
 </code></pre></div>
 
 <p><code>--env-vars</code> używasz przy tworzeniu. <code>--set-env-vars</code> przy aktualizacji <strong>dodaje lub zmienia</strong> wskazane zmienne i nie rusza pozostałych; <code>--replace-env-vars</code> zastępuje wszystkie (reszta znika). Gdy nazwa się powtórzy, obowiązuje ostatnia na liście. Zmiana zmiennych po utworzeniu aplikacji zawsze oznacza nową rewizję. [docs: https://learn.microsoft.com/azure/container-apps/environment-variables] [docs: https://learn.microsoft.com/cli/azure/containerapp?view=azure-cli-latest]</p>
-<h2 id="c2-sekrety-i-odwoania-secretref">C2. Sekrety i odwołania <code>secretref:</code></h2>
+<h2 id="c2-sekrety-i-odwołania-secretref">C2. Sekrety i odwołania <code>secretref:</code></h2>
 <p><em>Źródło: [unit 4] + [docs: https://learn.microsoft.com/azure/container-apps/manage-secrets]</em></p>
 <p>Wartości wrażliwe (klucze API dostawców modeli, hasła do baz, klucze podpisu) trzymasz jako <strong>sekrety</strong> Container Apps. Dzięki temu nie trafiają do obrazu ani do repozytorium, a rotację robisz bez przebudowy obrazu. [unit 4]</p>
 <div class="codehilite"><pre><span></span><code>az containerapp secret set -n ai-api -g rg-aca-demo \
@@ -425,7 +478,7 @@ az containerapp update -n ai-api -g rg-aca-demo \
 <li>Przed usunięciem sekretu wdróż rewizję, która już go nie używa, i dezaktywuj rewizje, które się do niego odwołują.</li>
 <li>Brak wbudowanej automatycznej rotacji, wygasania i wersjonowania sekretów w samych sekretach Container Apps (stąd Key Vault). [docs: https://learn.microsoft.com/azure/container-apps/manage-secrets]</li>
 </ul>
-<h2 id="c3-yaml-dla-ustawien-runtime-i-dobre-praktyki">C3. YAML dla ustawień runtime i dobre praktyki</h2>
+<h2 id="c3-yaml-dla-ustawień-runtime-i-dobre-praktyki">C3. YAML dla ustawień runtime i dobre praktyki</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Fragment YAML z jedną zmienną jawną i jednym odwołaniem do sekretu. W YAML przechowuj <strong>tylko nazwy</strong> sekretów, nigdy wartości.</p>
 <div class="codehilite"><pre><span></span><code><span class="c1"># Code fragment - focus on environment variables and secret references</span>
@@ -443,7 +496,7 @@ az containerapp update -n ai-api -g rg-aca-demo \
 <p>Po edycji stosujesz plik poleceniem <code>az containerapp update -n ai-api -g rg-aca-demo --yaml ./containerapp.yml</code>; to polecenie traktuje plik jako pełne źródło konfiguracji. Zwróć uwagę na pisownię: w CLI <code>secretref:</code> (małymi literami, w wartości zmiennej), w YAML <code>secretRef</code> (pole).</p>
 <p>Dobre praktyki [unit 4]: oddzielaj konfigurację od obrazów; preferuj odwołania <code>secretref:</code> (wartości nie trafiają do YAML ani historii powłoki); rotuj sekrety niezależnie od obrazów; trzymaj YAML w kontroli wersji.</p>
 <hr />
-<h1 id="czesc-d-uwierzytelnianie-do-prywatnego-rejestru">CZĘŚĆ D - UWIERZYTELNIANIE DO PRYWATNEGO REJESTRU</h1>
+<h1 id="część-d---uwierzytelnianie-do-prywatnego-rejestru">CZĘŚĆ D - UWIERZYTELNIANIE DO PRYWATNEGO REJESTRU</h1>
 <h2 id="d1-opcje-i-kompromis">D1. Opcje i kompromis</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Produkcyjne usługi AI zwykle biorą obrazy z <strong>prywatnego rejestru</strong> (np. Azure Container Registry, ACR), bo to ogranicza ryzyko łańcucha dostaw, pozwala skanować podatności i kontrolować, kto pobiera obrazy. Container Apps wspiera uwierzytelnianie nazwą użytkownika i hasłem oraz <strong>tożsamością zarządzaną</strong> (managed identity: tożsamość aplikacji w Entra ID, bez haseł w skryptach), gdy rejestr to ACR.</p>
@@ -469,7 +522,7 @@ az containerapp update -n ai-api -g rg-aca-demo \
 </tbody>
 </table>
 <p>Uwaga z modułu: konfiguracja rejestru jest osobna od konfiguracji aplikacji. Jeśli aplikacja nie startuje po zmianie rejestru, logi kontenera często pokazują błędy pobierania obrazu wyglądające jak błędy uwierzytelniania lub uprawnień. [unit 5]</p>
-<h2 id="d2-rejestr-nazwa-uzytkownika-i-haso">D2. Rejestr: nazwa użytkownika i hasło</h2>
+<h2 id="d2-rejestr-nazwa-użytkownika-i-hasło">D2. Rejestr: nazwa użytkownika i hasło</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <div class="codehilite"><pre><span></span><code>az containerapp registry set -n ai-api -g rg-aca-demo \
     --server myregistry.azurecr.io \
@@ -478,7 +531,7 @@ az containerapp update -n ai-api -g rg-aca-demo \
 </code></pre></div>
 
 <p>Polecenie wiąże rejestr z aplikacją, więc pobieranie obrazów działa dla kolejnych rewizji. Dla ACR CLI bywa w stanie samo wywnioskować poświadczenia, ale na produkcji wybierz jawny sposób uwierzytelniania, żeby zachowanie było przewidywalne. Poświadczenia rejestru to zmiana application-scope (bez nowej rewizji). [docs: https://learn.microsoft.com/azure/container-apps/revisions]</p>
-<h2 id="d3-rejestr-tozsamosc-zarzadzana-i-rola-acrpull">D3. Rejestr: tożsamość zarządzana i rola <code>AcrPull</code></h2>
+<h2 id="d3-rejestr-tożsamość-zarządzana-i-rola-acrpull">D3. Rejestr: tożsamość zarządzana i rola <code>AcrPull</code></h2>
 <p><em>Źródło: [unit 5] + [unit 7] + [docs: https://learn.microsoft.com/azure/container-apps/managed-identity-image-pull]</em></p>
 <div class="codehilite"><pre><span></span><code>az containerapp registry set -n ai-api -g rg-aca-demo \
     --server myregistry.azurecr.io \
@@ -497,7 +550,7 @@ az containerapp registry show -n ai-api -g rg-aca-demo \
 
 <p>Praktyki: preferuj tożsamość zarządzaną dla ACR (<code>--identity</code>); nadawaj najmniejsze uprawnienia (<code>AcrPull</code>); używaj w pełni kwalifikowanych nazw obrazów z nazwą hosta rejestru; po zmianie wdróż nową rewizję i sprawdź, czy startuje, zanim uznasz, że zmiana jest poprawna.</p>
 <hr />
-<h1 id="czesc-e-weryfikacja-wdrozenia">CZĘŚĆ E - WERYFIKACJA WDROŻENIA</h1>
+<h1 id="część-e---weryfikacja-wdrożenia">CZĘŚĆ E - WERYFIKACJA WDROŻENIA</h1>
 <h2 id="e1-konfiguracja-ingress-i-logi">E1. Konfiguracja, ingress i logi</h2>
 <p><em>Źródło: [unit 6]</em></p>
 <p>Weryfikacja domyka pętlę między zamiarem a tym, co naprawdę działa. W usługach AI błędy startu łatwo wziąć za problem z modelem, brakujący sekret lub błąd rejestru. Dwa rodzaje logów odpowiadają na różne pytania: <strong>logi konsoli</strong> (stdout/stderr Twojego kontenera) i <strong>logi systemowe</strong> platformy.</p>
@@ -527,12 +580,12 @@ az containerapp replica list -n ai-api -g rg-aca-demo --revision MyRevision
 <li><strong>Wyjścia przyjazne automatyzacji:</strong> <code>--query</code> wyciąga pola, które często sprawdzasz (FQDN, stan rewizji).</li>
 </ul>
 <hr />
-<h1 id="czesc-f-cwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
+<h1 id="część-f---ćwiczenia">CZĘŚĆ F - ĆWICZENIA</h1>
 <p>Przeczytaj wcześniej części A-E. Każde ćwiczenie ma ten sam układ pól (przewodnik stylu §5). Ćwiczenia I1 i I2 tworzą płatne zasoby w chmurze: rób je w osobnych grupach zasobów i zawsze wykonuj <strong>Sprzątanie</strong>. Kod aplikacji i SDK jest w Pythonie; odpowiedniki C# są w ćwiczeniach z kodem.</p>
 <blockquote>
 <p>Wersje sprawdzone 2026-11-22 (źródło: pypi.org, api.nuget.org, mcr.microsoft.com, <code>az version</code>): Python 3.12 (obraz <code>python:3.12-slim</code>, zgodny z wymaganiem modułu "Python 3.12 or greater" [unit 7]), Flask 3.1.3, gunicorn 27.0.1, azure-mgmt-appcontainers 5.1.0, azure-identity 1.27.0; C#: .NET SDK 10.0 (obrazy <code>mcr.microsoft.com/dotnet/sdk:10.0</code> i <code>aspnet:10.0</code> istnieją), Azure.ResourceManager.AppContainers 1.6.0, Azure.Identity 1.21.0; Azure CLI 2.90.0, rozszerzenie containerapp 1.3.0b6. Starter laboratorium Microsoftu pinuje starsze <code>flask==3.0.0</code> i <code>gunicorn==22.0.0</code>. Przed użyciem sprawdź PyPI i NuGet.</p>
 </blockquote>
-<h2 id="i1-api-w-prywatnym-acr-z-tozsamoscia-zarzadzana-sekretem-i-weryfikacja-lab-moduu">I1. API w prywatnym ACR z tożsamością zarządzaną, sekretem i weryfikacją (lab modułu)</h2>
+<h2 id="i1-api-w-prywatnym-acr-z-tożsamością-zarządzaną-sekretem-i-weryfikacją-lab-modułu">I1. API w prywatnym ACR z tożsamością zarządzaną, sekretem i weryfikacją (lab modułu)</h2>
 <p>(rozwinięcie jednostki 7; źródło scenariusza: [unit 7])</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash) w pustym katalogu; pliki <code>api/main.py</code>, <code>api/requirements.txt</code>, <code>api/Dockerfile</code>.</p>
 <p>Lab Microsoftu daje paczkę startową i skrypt <code>azdeploy.py</code>. Tutaj budujesz to samo ręcznie, żeby zobaczyć każdy krok. [unit 7]</p>
@@ -622,7 +675,7 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <p>Usuwana jest cała grupa (ACR, środowisko, Log Analytics, aplikacja). Uważaj, by nie użyć istniejącej grupy z innymi zasobami.</p>
-<h2 id="i2-wdrozenie-plikiem-yaml-internal-vs-external-i-up">I2. Wdrożenie plikiem YAML, internal vs external i <code>up</code></h2>
+<h2 id="i2-wdrożenie-plikiem-yaml-internal-vs-external-i-up">I2. Wdrożenie plikiem YAML, internal vs external i <code>up</code></h2>
 <p>(rozwinięcie sekcji B2, B5, A3)</p>
 <p><strong>Gdzie / Plik:</strong> terminal z Azure CLI (Bash); plik <code>containerapp.yml</code>.</p>
 <p>Wymaga środowiska. Ćwiczenie tworzy własne, osobne (publiczny obraz, bez rejestru):</p>
@@ -753,63 +806,63 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 <p><strong>Sprawdź:</strong> (a) te same rewizje, nazwy i stan aktywności; (b) błąd typu "nie znaleziono zasobu" (ResourceNotFound) z nazwą aplikacji; dokładny tekst zależy od wersji SDK [autor: niezweryfikowane]; (c) ten sam zestaw rewizji w formacie z <code>IsActive</code> i <code>TrafficWeight</code>.</p>
 <p><strong>Sprzątanie:</strong> brak (skrypty tylko czytają); po I3 wykonaj Sprzątanie I1.</p>
 <hr />
-<h1 id="czesc-g-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<h1 id="część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
 <p>Learn nie pokazuje poprawnych odpowiedzi w ocenie modułu, więc odpowiedzi są wnioskowane z treści jednostek; przy każdym pytaniu jest krótki znacznik.</p>
-<h2 id="g1-ktory-zasob-daje-wspolna-granice-sieci-i-logow-dla-wielu-aplikacji">G1. Który zasób daje wspólną granicę sieci i logów dla wielu aplikacji?</h2>
+<h2 id="g1-który-zasób-daje-wspólną-granicę-sieci-i-logów-dla-wielu-aplikacji">G1. Który zasób daje wspólną granicę sieci i logów dla wielu aplikacji?</h2>
 <p>-&gt; <em>Container Apps environment.</em> Rewizja to wersja konfiguracji jednej aplikacji, replika to działająca instancja - żadne z nich nie jest wspólną granicą. <em>(odpowiedź wnioskowana: unit 2, sekcja "What a Container Apps environment provides")</em></p>
-<h2 id="g2-spojne-wdrozenie-z-kontrola-wersji-i-review-konfiguracji">G2. Spójne wdrożenie z kontrolą wersji i review konfiguracji</h2>
+<h2 id="g2-spójne-wdrożenie-z-kontrolą-wersji-i-review-konfiguracji">G2. Spójne wdrożenie z kontrolą wersji i review konfiguracji</h2>
 <p>-&gt; <em><code>az containerapp create --yaml</code> i <code>az containerapp update --yaml</code> z plikiem YAML w repozytorium.</em> Same <code>--set-env-vars</code> bez pliku nie dają jednego recenzowalnego źródła prawdy; sama zmiana tagu obrazu nie przenosi konfiguracji środowiskowej. <em>(odpowiedź wnioskowana: unit 3, sekcja "Use YAML for consistent, reviewable deployments")</em></p>
-<h2 id="g3-klucz-api-dostawcy-embeddingow-bez-trzymania-go-w-yaml">G3. Klucz API dostawcy embeddingów bez trzymania go w YAML</h2>
+<h2 id="g3-klucz-api-dostawcy-embeddingów-bez-trzymania-go-w-yaml">G3. Klucz API dostawcy embeddingów bez trzymania go w YAML</h2>
 <p>-&gt; <em>Sekret Container Apps i odwołanie z zmiennej środowiskowej (<code>secretref:</code>).</em> Jawny tekst w <code>env:</code> i wypiekanie klucza w obrazie ujawniają wartość. <em>(odpowiedź wnioskowana: unit 4, sekcja "Store sensitive settings as Container Apps secrets")</em></p>
-<h2 id="g4-ktore-polecenie-pokazuje-wersjonowana-zmiane-po-aktualizacji">G4. Które polecenie pokazuje wersjonowaną zmianę po aktualizacji?</h2>
+<h2 id="g4-które-polecenie-pokazuje-wersjonowaną-zmianę-po-aktualizacji">G4. Które polecenie pokazuje wersjonowaną zmianę po aktualizacji?</h2>
 <p>-&gt; <em><code>az containerapp revision list</code>.</em> <code>registry list</code> pokazuje rejestry, <code>secret list</code> sekrety. <em>(odpowiedź wnioskowana: unit 6, sekcja "Check revisions to confirm which version is active")</em></p>
-<h2 id="g5-aplikacja-nie-startuje-po-zmianie-obrazu-pierwszy-krok-diagnozy">G5. Aplikacja nie startuje po zmianie obrazu - pierwszy krok diagnozy</h2>
+<h2 id="g5-aplikacja-nie-startuje-po-zmianie-obrazu---pierwszy-krok-diagnozy">G5. Aplikacja nie startuje po zmianie obrazu - pierwszy krok diagnozy</h2>
 <p>-&gt; <em><code>az containerapp logs show</code>.</em> Logi dają najszybszy wgląd w błąd startu; <code>revision list</code> i <code>replica list</code> pokazują stan, ale nie przyczynę. <em>(odpowiedź wnioskowana: unit 6, sekcja "Best practices for verification: Start with logs")</em></p>
 <hr />
-<h1 id="czesc-h-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
-<h2 id="h1-co-wspodziela-aplikacje-w-jednym-srodowisku-container-apps">H1. Co współdzielą aplikacje w jednym środowisku Container Apps?</h2>
+<h1 id="część-h---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="h1-co-współdzielą-aplikacje-w-jednym-środowisku-container-apps">H1. Co współdzielą aplikacje w jednym środowisku Container Apps?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Sieć wirtualną i miejsce zapisu logów (domyślnie wspólny obszar Log Analytics). Środowiska rozdziela się według cyklu życia (dev/test/prod).</p>
 </details>
-<h2 id="h2-czym-rozni-sie-az-containerapp-up-od-az-containerapp-create">H2. Czym różni się <code>az containerapp up</code> od <code>az containerapp create</code>?</h2>
+<h2 id="h2-czym-różni-się-az-containerapp-up-od-az-containerapp-create">H2. Czym różni się <code>az containerapp up</code> od <code>az containerapp create</code>?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>up</code> jest szybkie i potrafi utworzyć środowisko oraz zasoby pomocnicze (a istniejące zasoby wykorzysta); <code>create</code> jest jawne, gdy środowisko już istnieje i chcesz pełnej kontroli.</p>
 </details>
-<h2 id="h3-ktore-zmiany-tworza-nowa-rewizje-a-ktore-nie">H3. Które zmiany tworzą nową rewizję, a które nie?</h2>
+<h2 id="h3-które-zmiany-tworzą-nową-rewizję-a-które-nie">H3. Które zmiany tworzą nową rewizję, a które nie?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Nową rewizję tworzą zmiany revision-scope (sekcja <code>template</code>: obraz, zmienne, reguły skalowania, sufiks). Zmiany application-scope (sekcja <code>configuration</code>: wartości sekretów, ingress, tryb rewizji, poświadczenia rejestru, Dapr) nie tworzą rewizji.</p>
 </details>
-<h2 id="h4-jak-przekazac-sekret-do-kontenera-jako-zmienna-srodowiskowa">H4. Jak przekazać sekret do kontenera jako zmienną środowiskową?</h2>
+<h2 id="h4-jak-przekazać-sekret-do-kontenera-jako-zmienną-środowiskową">H4. Jak przekazać sekret do kontenera jako zmienną środowiskową?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Utwórz sekret (<code>az containerapp secret set --secrets nazwa=wartość</code>), potem ustaw zmienną <code>ZMIENNA=secretref:nazwa</code> (w YAML: pole <code>secretRef</code>). Po zmianie wartości sekretu trzeba wdrożyć nową rewizję lub zrestartować istniejącą.</p>
 </details>
-<h2 id="h5-jaka-rola-i-jaka-flaga-pozwalaja-aca-pobierac-obrazy-z-acr-bez-hasa">H5. Jaka rola i jaka flaga pozwalają ACA pobierać obrazy z ACR bez hasła?</h2>
+<h2 id="h5-jaka-rola-i-jaka-flaga-pozwalają-aca-pobierać-obrazy-z-acr-bez-hasła">H5. Jaka rola i jaka flaga pozwalają ACA pobierać obrazy z ACR bez hasła?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Rola <code>AcrPull</code> dla tożsamości aplikacji na rejestrze; flaga <code>--identity system</code> w <code>az containerapp registry set</code> (lub <code>--registry-identity system</code> z <code>--registry-server</code> przy <code>create</code>).</p>
 </details>
-<h2 id="h6-co-robi-set-env-vars-a-co-replace-env-vars">H6. Co robi <code>--set-env-vars</code>, a co <code>--replace-env-vars</code>?</h2>
+<h2 id="h6-co-robi---set-env-vars-a-co---replace-env-vars">H6. Co robi <code>--set-env-vars</code>, a co <code>--replace-env-vars</code>?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p><code>--set-env-vars</code> dodaje lub zmienia wskazane zmienne i nie rusza pozostałych; <code>--replace-env-vars</code> zastępuje cały zestaw (pozostałe zmienne znikają).</p>
 </details>
-<h2 id="h7-jakie-sa-domyslne-wartosci-az-containerapp-logs-show-i-jak-zobaczyc-logi-platformy">H7. Jakie są domyślne wartości <code>az containerapp logs show</code> i jak zobaczyć logi platformy?</h2>
+<h2 id="h7-jakie-są-domyślne-wartości-az-containerapp-logs-show-i-jak-zobaczyć-logi-platformy">H7. Jakie są domyślne wartości <code>az containerapp logs show</code> i jak zobaczyć logi platformy?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Domyślnie typ <code>console</code> i 20 linii (<code>--tail</code> przyjmuje 0-300). Logi platformy: <code>--type system</code>; strumień na żywo: <code>--follow</code>.</p>
 </details>
-<h2 id="h8-obraz-myregistryazurecrioai-apiv1-nie-chce-sie-pobrac-co-sprawdzisz-najpierw">H8. Obraz <code>MyRegistry.azurecr.io/Ai-Api:v1</code> nie chce się pobrać. Co sprawdzisz najpierw?</h2>
+<h2 id="h8-obraz-myregistryazurecrioai-apiv1-nie-chce-się-pobrać-co-sprawdzisz-najpierw">H8. Obraz <code>MyRegistry.azurecr.io/Ai-Api:v1</code> nie chce się pobrać. Co sprawdzisz najpierw?</h2>
 <details>
 <summary>Odpowiedź</summary>
 <p>Wielkie litery w ścieżce obrazu (ścieżka musi być małymi literami; błąd wygląda jak problem z uwierzytelnianiem), potem uwierzytelnianie do rejestru i rolę <code>AcrPull</code>.</p>
 </details>
 <hr />
-<h1 id="czesc-j-co-dalej">CZĘŚĆ J - CO DALEJ</h1>
-<h2 id="j1-nastepny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
+<h1 id="część-j---co-dalej">CZĘŚĆ J - CO DALEJ</h1>
+<h2 id="j1-następny-krok-i-pokrycie-egzaminu">J1. Następny krok i pokrycie egzaminu</h2>
 <p><em>Źródło: [moduł kursu: manage-containers-azure-container-apps] + [moduł kursu: scale-containers-azure-container-apps]</em></p>
 <p>Dalej: moduł 05 (zarządzanie: aktualizacje obrazów, rewizje, cykl życia, health probes, optymalizacja ustawień kontenera), moduł 06 (skalowanie, KEDA, tryby rewizji i ruch), moduł 07 (dynamic sessions). Wróć do części B i C, gdy będziesz rozwiązywać zadania o rewizjach i sekretach.</p>
 <p><strong>Pokrycie egzaminu</strong> (wiersze z <code>sources/_exam/skill-map.md</code>, stan study guide z 2026-10-30):</p>

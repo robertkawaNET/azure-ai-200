@@ -8,6 +8,72 @@ Czas: ok. 4-5 h, orientacyjnie (moduł Learn ma ok. 87 min wg katalogu, w tym ć
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - REGUŁY SKALOWANIA](#część-a---reguły-skalowania)**
+  - [A1. Definicja skalowania: limity, reguły, zachowanie](#a1-definicja-skalowania-limity-reguły-zachowanie)
+  - [A2. Reguła HTTP](#a2-reguła-http)
+  - [A3. Reguła TCP](#a3-reguła-tcp)
+  - [A4. Reguły CPU i pamięci](#a4-reguły-cpu-i-pamięci)
+  - [A5. Zachowanie skalowania: odstępy, okna i kroki](#a5-zachowanie-skalowania-odstępy-okna-i-kroki)
+  - [A6. Dobre praktyki](#a6-dobre-praktyki)
+- **[CZĘŚĆ B - SKALOWANIE ZDARZENIOWE (KEDA)](#część-b---skalowanie-zdarzeniowe-keda)**
+  - [B1. Integracja z KEDA i scalery Microsoftu](#b1-integracja-z-keda-i-scalery-microsoftu)
+  - [B2. Azure Service Bus](#b2-azure-service-bus)
+  - [B3. Azure Storage Queue](#b3-azure-storage-queue)
+  - [B4. Azure Event Hubs](#b4-azure-event-hubs)
+  - [B5. Uwierzytelnianie reguł skalowania](#b5-uwierzytelnianie-reguł-skalowania)
+  - [B6. Dobre praktyki](#b6-dobre-praktyki)
+- **[CZĘŚĆ C - SCALERY KEDA DLA NIESTANDARDOWYCH OBCIĄŻEŃ](#część-c---scalery-keda-dla-niestandardowych-obciążeń)**
+  - [C1. Dostępne scalery](#c1-dostępne-scalery)
+  - [C2. Apache Kafka](#c2-apache-kafka)
+  - [C3. Redis](#c3-redis)
+  - [C4. Skalowanie według harmonogramu (cron)](#c4-skalowanie-według-harmonogramu-cron)
+  - [C5. Prometheus](#c5-prometheus)
+  - [C6. Konwersja specyfikacji KEDA na reguły Container Apps](#c6-konwersja-specyfikacji-keda-na-reguły-container-apps)
+  - [C7. Dobre praktyki](#c7-dobre-praktyki)
+- **[CZĘŚĆ D - ZASOBY OBLICZENIOWE: WYDAJNOŚĆ I KOSZT](#część-d---zasoby-obliczeniowe-wydajność-i-koszt)**
+  - [D1. Alokacja CPU i pamięci](#d1-alokacja-cpu-i-pamięci)
+  - [D2. Konfiguracja kontenera i limity](#d2-konfiguracja-kontenera-i-limity)
+  - [D3. Profile obciążeń (workload profiles)](#d3-profile-obciążeń-workload-profiles)
+  - [D4. Optymalizacja kosztu](#d4-optymalizacja-kosztu)
+  - [D5. Optymalizacja wydajności](#d5-optymalizacja-wydajności)
+  - [D6. Balans limitów skalowania i zasobów](#d6-balans-limitów-skalowania-i-zasobów)
+  - [D7. Dobre praktyki](#d7-dobre-praktyki)
+- **[CZĘŚĆ E - TRYBY REWIZJI I PODZIAŁ RUCHU](#część-e---tryby-rewizji-i-podział-ruchu)**
+  - [E1. Rewizje a skalowanie](#e1-rewizje-a-skalowanie)
+  - [E2. Tryb Single (domyślny)](#e2-tryb-single-domyślny)
+  - [E3. Tryb Multiple](#e3-tryb-multiple)
+  - [E4. Podział ruchu (traffic splitting)](#e4-podział-ruchu-traffic-splitting)
+  - [E5. Etykiety rewizji (labels)](#e5-etykiety-rewizji-labels)
+  - [E6. Skalowanie przy wielu rewizjach](#e6-skalowanie-przy-wielu-rewizjach)
+  - [E7. Dobre praktyki](#e7-dobre-praktyki)
+- **[CZĘŚĆ F - ĆWICZENIA](#część-f---ćwiczenia)**
+  - [I1. Skalowanie HTTP pod obciążeniem i konfiguracja w YAML (lab modułu)](#i1-skalowanie-http-pod-obciążeniem-i-konfiguracja-w-yaml-lab-modułu)
+  - [I2. Tryb Multiple, podział ruchu 80/20 i etykiety](#i2-tryb-multiple-podział-ruchu-8020-i-etykiety)
+  - [I3. Liczba replik przez SDK i generator obciążenia: Python i odpowiednik C# (.NET)](#i3-liczba-replik-przez-sdk-i-generator-obciążenia-python-i-odpowiednik-c-net)
+- **[CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (4 pytania) + wyjaśnienia](#część-g---quiz-z-modułu-microsoftu-4-pytania--wyjaśnienia)**
+  - [G1. Przetwarzanie wiadomości z kolejki Service Bus i skalowanie do zera](#g1-przetwarzanie-wiadomości-z-kolejki-service-bus-i-skalowanie-do-zera)
+  - [G2. Pięć replik przed szczytem o 8:00 i skalowanie do zera nocą](#g2-pięć-replik-przed-szczytem-o-800-i-skalowanie-do-zera-nocą)
+  - [G3. 10% ruchu na nową wersję przed pełnym wdrożeniem](#g3-10-ruchu-na-nową-wersję-przed-pełnym-wdrożeniem)
+  - [G4. Zalecana metoda uwierzytelniania reguł KEDA na produkcji](#g4-zalecana-metoda-uwierzytelniania-reguł-keda-na-produkcji)
+- **[CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [H1. Jakie są domyślne limity skalowania i co się stanie bez ingress i bez reguł?](#h1-jakie-są-domyślne-limity-skalowania-i-co-się-stanie-bez-ingress-i-bez-reguł)
+  - [H2. Który typ reguły nie potrafi skalować do zera i dlaczego?](#h2-który-typ-reguły-nie-potrafi-skalować-do-zera-i-dlaczego)
+  - [H3. Podaj wartości zachowania skalowania.](#h3-podaj-wartości-zachowania-skalowania)
+  - [H4. Ile replik zażąda scaler Service Bus przy 50 wiadomościach i `messageCount` 5? Jaki jest ogólny wzór?](#h4-ile-replik-zażąda-scaler-service-bus-przy-50-wiadomościach-i-messagecount-5-jaki-jest-ogólny-wzór)
+  - [H5. Dlaczego `maxReplicas` powyżej liczby partycji Event Hubs nic nie daje?](#h5-dlaczego-maxreplicas-powyżej-liczby-partycji-event-hubs-nic-nie-daje)
+  - [H6. Jak uwierzytelnić regułę skalowania bez sekretów?](#h6-jak-uwierzytelnić-regułę-skalowania-bez-sekretów)
+  - [H7. Jakie parametry CLI i pary CPU/pamięć są poprawne w planie Consumption?](#h7-jakie-parametry-cli-i-pary-cpupamięć-są-poprawne-w-planie-consumption)
+  - [H8. Czym różnią się tryby Single i Multiple oraz jaki parametr je ustawia?](#h8-czym-różnią-się-tryby-single-i-multiple-oraz-jaki-parametr-je-ustawia)
+  - [H9. Jak działają etykiety względem podziału ruchu?](#h9-jak-działają-etykiety-względem-podziału-ruchu)
+- **[CZĘŚĆ J - CO DALEJ](#część-j---co-dalej)**
+  - [J1. Następny krok i pokrycie egzaminu](#j1-następny-krok-i-pokrycie-egzaminu)
+  - [J2. Uczciwie o egzaminie](#j2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - REGUŁY SKALOWANIA
 
 ## A1. Definicja skalowania: limity, reguły, zachowanie

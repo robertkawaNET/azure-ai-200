@@ -202,7 +202,7 @@ a{text-decoration:none}
 a[href^="http"]::after{content:" (" attr(href) ")";font-size:8pt;color:#444;word-break:break-all}
 }
 </style></head>
-<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="modu-03-sidecary-w-azure-app-service-kontener-gowny-i-pomocniczy-localhost-wspolny-home-diagnoza">Moduł 03: Sidecary w Azure App Service (kontener główny i pomocniczy, localhost, wspólny /home, diagnoza)</h1>
+<body><main><nav class="top"><a href="index.html">&larr; Spis tutoriali</a></nav><h1 id="moduł-03-sidecary-w-azure-app-service-kontener-główny-i-pomocniczy-localhost-wspólny-home-diagnoza">Moduł 03: Sidecary w Azure App Service (kontener główny i pomocniczy, localhost, wspólny /home, diagnoza)</h1>
 <p>Moduł Microsoft Learn: <strong>Run AI apps with sidecars on Azure App Service</strong> (slug <code>deploy-sidecar-azure-app-service</code>) - https://learn.microsoft.com/en-us/training/modules/deploy-sidecar-azure-app-service/
 Ścieżka: Implement container application hosting on Azure (moduł 3 z 3), kurs AI-200T00, egzamin <strong>AI-200</strong> (Azure AI Cloud Developer Associate), domena 1 "Develop containerized solutions on Azure".
 Cel: po tym module umiesz ocenić, kiedy sidecar pasuje do aplikacji AI, skonfigurować kontener główny i pomocniczy (role, porty, zmienne, pobieranie obrazów tożsamością zarządzaną), połączyć kontenery przez <code>localhost</code> i wspólny katalog <code>/home</code> oraz zdiagnozować awarie pobierania obrazu, startu, zasobów i łączności.
@@ -215,14 +215,68 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 - <code>[autor]</code> - dodane przez autora tutoriala; <code>[autor: test &lt;data&gt;]</code> - sprawdzone testem w danym dniu; <code>[autor: niezweryfikowane]</code> - jeszcze nie sprawdzone w Azure.</p>
 <p>W tekście "moduł N" znaczy plik tutoriala <code>0N-*.md</code> (moduł 01 = <code>01-store-manage-containers-azure-container-registry.md</code>, moduł 02 = <code>02-deploy-containers-azure-app-service.md</code>).</p>
 <hr />
-<h1 id="czesc-a-wzorzec-sidecar-co-to-jest-i-kiedy-go-uzyc">CZĘŚĆ A - WZORZEC SIDECAR: CO TO JEST I KIEDY GO UŻYĆ</h1>
+<!-- toc -->
+<p><strong>Spis treści</strong></p>
+<ul>
+<li><strong><a href="#część-a---wzorzec-sidecar-co-to-jest-i-kiedy-go-użyć">CZĘŚĆ A - WZORZEC SIDECAR: CO TO JEST I KIEDY GO UŻYĆ</a></strong></li>
+<li><a href="#a1-czym-jest-sidecar-w-app-service-i-scenariusz">A1. Czym jest sidecar w App Service i scenariusz</a></li>
+<li><a href="#a2-model-wykonania-jeden-kontener-główny-i-do-dziewięciu-sidecarów">A2. Model wykonania: jeden kontener główny i do dziewięciu sidecarów</a></li>
+<li><a href="#a3-sprzężenie-i-izolacja-kiedy-sidecar-a-kiedy-osobna-usługa">A3. Sprzężenie i izolacja: kiedy sidecar, a kiedy osobna usługa</a></li>
+<li><a href="#a4-dwa-modele-konfiguracji-sitecontainers-a-klasyczny-kontener-niestandardowy">A4. Dwa modele konfiguracji: sitecontainers a klasyczny kontener niestandardowy</a></li>
+<li><a href="#a5-planowanie-pojemności-i-granic-awarii">A5. Planowanie pojemności i granic awarii</a></li>
+<li><strong><a href="#część-b---konfiguracja-kontenera-głównego-i-sidecarów">CZĘŚĆ B - KONFIGURACJA KONTENERA GŁÓWNEGO I SIDECARÓW</a></strong></li>
+<li><a href="#b1-tworzenie-aplikacji-obsługującej-sidecary">B1. Tworzenie aplikacji obsługującej sidecary</a></li>
+<li><a href="#b2-role-kontenerów-i-porty">B2. Role kontenerów i porty</a></li>
+<li><a href="#b3-konfiguracja-wspólna-i-specyficzna-dla-kontenera">B3. Konfiguracja wspólna i specyficzna dla kontenera</a></li>
+<li><a href="#b4-uwierzytelnianie-pobierania-obrazów-tożsamością-zarządzaną">B4. Uwierzytelnianie pobierania obrazów tożsamością zarządzaną</a></li>
+<li><a href="#b5-weryfikacja-wdrożonych-definicji">B5. Weryfikacja wdrożonych definicji</a></li>
+<li><strong><a href="#część-c---komunikacja-między-kontenerami-i-współdzielone-pliki">CZĘŚĆ C - KOMUNIKACJA MIĘDZY KONTENERAMI I WSPÓŁDZIELONE PLIKI</a></strong></li>
+<li><a href="#c1-połączenie-przez-wspólną-przestrzeń-sieci">C1. Połączenie przez wspólną przestrzeń sieci</a></li>
+<li><a href="#c2-niezawodne-żądania-lokalne">C2. Niezawodne żądania lokalne</a></li>
+<li><a href="#c3-współdzielony-wolumen-home">C3. Współdzielony wolumen <code>/home</code></a></li>
+<li><a href="#c4-unikaj-niepotrzebnych-własnych-montowań">C4. Unikaj niepotrzebnych własnych montowań</a></li>
+<li><a href="#c5-wybór-granicy-magazynu">C5. Wybór granicy magazynu</a></li>
+<li><a href="#c6-walidacja-komunikacji-i-dostępu-do-plików">C6. Walidacja komunikacji i dostępu do plików</a></li>
+<li><strong><a href="#część-d---diagnoza-awarii-sidecara">CZĘŚĆ D - DIAGNOZA AWARII SIDECARA</a></strong></li>
+<li><a href="#d1-przepływ-od-objawu">D1. Przepływ "od objawu"</a></li>
+<li><a href="#d2-awarie-pobrania-obrazu-i-startu">D2. Awarie pobrania obrazu i startu</a></li>
+<li><a href="#d3-presja-zasobów">D3. Presja zasobów</a></li>
+<li><a href="#d4-diagnoza-łączności-lokalnej">D4. Diagnoza łączności lokalnej</a></li>
+<li><a href="#d5-awarie-współdzielonych-plików">D5. Awarie współdzielonych plików</a></li>
+<li><a href="#d6-diagnostyka-platformowa-i-zapis-incydentu">D6. Diagnostyka platformowa i zapis incydentu</a></li>
+<li><strong><a href="#część-e---ćwiczenia">CZĘŚĆ E - ĆWICZENIA</a></strong></li>
+<li><a href="#i1-aplikacja-z-kontenerem-głównym-i-sidecarem-modelu-pobieranie-obrazów-tożsamością-zarządzaną---python-i-c">I1. Aplikacja z kontenerem głównym i sidecarem modelu, pobieranie obrazów tożsamością zarządzaną - Python i C#</a></li>
+<li><a href="#i2-komunikacja-przez-localhost-i-współdzielony-home-kontrola-i-awarie">I2. Komunikacja przez <code>localhost</code> i współdzielony <code>/home</code>: kontrola i awarie</a></li>
+<li><a href="#i3-diagnoza-nieistniejący-tag-obrazu-sidecara-status-i-logi">I3. Diagnoza: nieistniejący tag obrazu sidecara, status i logi</a></li>
+<li><strong><a href="#część-f---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</a></strong></li>
+<li><a href="#f1-kompaktowy-model-dla-każdej-instancji-api-który-ma-startować-i-skalować-się-razem-z-api">F1. Kompaktowy model dla każdej instancji API, który ma startować i skalować się razem z API</a></li>
+<li><a href="#f2-ruch-zewnętrzny-ma-trafiać-tylko-do-api-a-api-wywołuje-serwer-modelu-lokalnie">F2. Ruch zewnętrzny ma trafiać tylko do API, a API wywołuje serwer modelu lokalnie</a></li>
+<li><a href="#f3-prywatne-obrazy-z-acr-rbac-registry-permissions-bez-haseł-w-konfiguracji">F3. Prywatne obrazy z ACR (RBAC Registry Permissions) bez haseł w konfiguracji</a></li>
+<li><a href="#f4-artefakty-sidecara-mają-przetrwać-niezależnie-od-cyklu-życia-aplikacji-i-służyć-innym-aplikacjom-jako-system-rekordów">F4. Artefakty sidecara mają przetrwać niezależnie od cyklu życia aplikacji i służyć innym aplikacjom jako system rekordów</a></li>
+<li><a href="#f5-błąd-odmowy-połączenia-przy-wywołaniu-httplocalhost11434-z-api">F5. Błąd odmowy połączenia przy wywołaniu <code>http://localhost:11434</code> z API</a></li>
+<li><strong><a href="#część-g---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</a></strong></li>
+<li><a href="#g1-ile-kontenerów-może-mieć-aplikacja-z-sidecarami-i-który-dostaje-ruch-zewnętrzny">G1. Ile kontenerów może mieć aplikacja z sidecarami i który dostaje ruch zewnętrzny?</a></li>
+<li><a href="#g2-na-jakim-porcie-musi-nasłuchiwać-kontener-główny-i-jak-łączą-się-kontenery-między-sobą">G2. Na jakim porcie musi nasłuchiwać kontener główny i jak łączą się kontenery między sobą?</a></li>
+<li><a href="#g3-czym-jest-port-docelowy-target-port-w-definicji-site-container">G3. Czym jest port docelowy (target port) w definicji site container?</a></li>
+<li><a href="#g4-jak-działają-zmienne-środowiskowe-w-definicji-site-container">G4. Jak działają zmienne środowiskowe w definicji site container?</a></li>
+<li><a href="#g5-co-jest-potrzebne-żeby-aplikacja-pobierała-prywatne-obrazy-z-acr-tożsamością-zarządzaną">G5. Co jest potrzebne, żeby aplikacja pobierała prywatne obrazy z ACR tożsamością zarządzaną?</a></li>
+<li><a href="#g6-czy-sidecary-mają-osobny-wolumen-na-pliki-i-jakie-są-ograniczenia">G6. Czy sidecary mają osobny wolumen na pliki i jakie są ograniczenia?</a></li>
+<li><a href="#g7-kiedy-wybrać-osobną-usługę-zamiast-sidecara">G7. Kiedy wybrać osobną usługę zamiast sidecara?</a></li>
+<li><a href="#g8-jak-odróżnić-odmowę-połączenia-timeout-i-błąd-http-przy-wywołaniu-sidecara">G8. Jak odróżnić odmowę połączenia, timeout i błąd HTTP przy wywołaniu sidecara?</a></li>
+<li><strong><a href="#część-h---co-dalej">CZĘŚĆ H - CO DALEJ</a></strong></li>
+<li><a href="#h1-podsumowanie-następny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</a></li>
+<li><a href="#h2-uczciwie-o-egzaminie">H2. Uczciwie o egzaminie</a></li>
+</ul>
+<!-- /toc -->
+
+<h1 id="część-a---wzorzec-sidecar-co-to-jest-i-kiedy-go-użyć">CZĘŚĆ A - WZORZEC SIDECAR: CO TO JEST I KIEDY GO UŻYĆ</h1>
 <h2 id="a1-czym-jest-sidecar-w-app-service-i-scenariusz">A1. Czym jest sidecar w App Service i scenariusz</h2>
 <p><em>Źródło: [unit 1] + [unit 2] + [docs: https://learn.microsoft.com/en-us/azure/app-service/overview-sidecar]</em></p>
 <p><strong>Sidecar</strong> (dosłownie "przyczepka" motocykla) to pomocniczy kontener działający w tym samym środowisku co <strong>główny kontener</strong> aplikacji Linux. Sidecary dodają możliwości, np. lokalne wnioskowanie modelu AI (inference = uruchamianie modelu na zapytaniu), zbieranie telemetrii czy cache, bez upychania ich w obrazie głównym. Wspólne środowisko tworzy użyteczne sprzężenie operacyjne, ale wzorzec <strong>nie zastępuje</strong> niezależnie hostowanej usługi. [unit 2]</p>
 <p>Scenariusz z modułu: backend konwersacyjnej AI dla wewnętrznego portalu wsparcia. API w Pythonie waliduje żądania, stosuje reguły biznesowe i formatuje odpowiedzi; prompty wysyła do lokalnego serwera modelu przez <code>localhost</code> (bez osobnego punktu końcowego dla danych regulowanych). Zespół chce aktualizować obraz serwera modelu <strong>bez przebudowy obrazu API</strong>; API i serwer modelu mają skalować się razem (każda instancja API potrzebuje lokalnego modelu); ruch zewnętrzny dostaje tylko API; oba kontenery potrzebują wspólnego katalogu na tymczasowe artefakty modelu (bez trwałości); obrazy mają być pobierane z Azure Container Registry bez przechowywania haseł. [unit 1]</p>
 <p>Cele modułu: wyjaśnić, kiedy sidecar pasuje do ściśle powiązanego komponentu AI; skonfigurować kontenery główny i pomocnicze, porty docelowe, zmienne środowiskowe i uwierzytelnianie do prywatnego rejestru; zaimplementować komunikację przez <code>localhost</code> i wymianę plików przez współdzielony <code>/home</code>; zdiagnozować awarie pobierania obrazu, startu, zasobów i łączności. [unit 1]</p>
 <p>Dostępność sidecarów może się różnić dla App Service Environment (ASE = izolowane, dedykowane środowisko App Service) i chmur narodowych; sprawdź aktualne ograniczenia przed wyborem wzorca. [unit 2] [docs: sidecar-overview]</p>
-<h2 id="a2-model-wykonania-jeden-kontener-gowny-i-do-dziewieciu-sidecarow">A2. Model wykonania: jeden kontener główny i do dziewięciu sidecarów</h2>
+<h2 id="a2-model-wykonania-jeden-kontener-główny-i-do-dziewięciu-sidecarów">A2. Model wykonania: jeden kontener główny i do dziewięciu sidecarów</h2>
 <p><em>Źródło: [unit 2] + [docs: https://learn.microsoft.com/en-us/azure/app-service/overview-sidecar]</em></p>
 <p>Aplikacja z sidecarami ma <strong>jeden kontener główny</strong> i <strong>do dziewięciu sidecarów</strong> (egzamin je lubi). App Service zarządza wszystkimi jako jedną aplikacją, ale każdy proces zachowuje własny obraz, polecenie startowe i konfigurację. Role kontenerów decydują o routingu zewnętrznym, a nie o ważności procesu:</p>
 <ul>
@@ -237,7 +291,7 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 <li>wdrożenie konfiguracji może zaktualizować obraz sidecara niezależnie od obrazu głównego, ale nowa konfiguracja nadal należy do tej samej aplikacji.</li>
 </ul>
 <p>Dla scenariusza AI to zaleta: każda instancja API dostaje lokalny serwer modelu, więc API nie musi wyszukiwać zdalnego punktu końcowego ani radzić sobie z różną liczbą replik serwera modelu. [unit 2]</p>
-<h2 id="a3-sprzezenie-i-izolacja-kiedy-sidecar-a-kiedy-osobna-usuga">A3. Sprzężenie i izolacja: kiedy sidecar, a kiedy osobna usługa</h2>
+<h2 id="a3-sprzężenie-i-izolacja-kiedy-sidecar-a-kiedy-osobna-usługa">A3. Sprzężenie i izolacja: kiedy sidecar, a kiedy osobna usługa</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Sidecary współdzielą z aplikacją główną <strong>przestrzeń sieci i środowisko</strong>. Kontener może łączyć się z portami innych kontenerów przez <code>localhost</code>, więc uruchamiaj tylko <strong>zaufane obrazy</strong> (wspólna granica zaufania). Wszystkie kontenery instancji zużywają zasoby tego samego <strong>planu App Service</strong>: plan nie skaluje serwera modelu niezależnie od API, a model zużywający większość pamięci może pogorszyć responsywność API.</p>
 <p>Sidecar pasuje, gdy:</p>
@@ -267,7 +321,7 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 </code></pre></div>
 
 <p>Dokładnie jeden kontener ma <code>isMain: true</code>; pozostałe <code>false</code>.</p>
-<h2 id="a5-planowanie-pojemnosci-i-granic-awarii">A5. Planowanie pojemności i granic awarii</h2>
+<h2 id="a5-planowanie-pojemności-i-granic-awarii">A5. Planowanie pojemności i granic awarii</h2>
 <p><em>Źródło: [unit 2]</em></p>
 <p>Pojemność planujesz dla <strong>całej instancji</strong>: API, serwer modelu i inne sidecary razem. Szczyt współbieżności i inicjalizacja modelu podnoszą zużycie ponad pomiary stanu ustalonego. Procedura:</p>
 <ol>
@@ -279,8 +333,8 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 </ol>
 <p>Jeśli pomiar pokazuje, że serwowanie modelu dominuje pojemność lub wymaga innej reguły skalowania, oddziel serwer modelu od aplikacji webowej. Dodatkowa granica usługi kosztuje pracą sieciową i operacyjną, ale zapobiega rywalizacji o zasoby z API. SKU, pojemność i ceny planów zmieniają się; sprawdź https://azure.microsoft.com/pricing/details/app-service/linux/. [unit 2]</p>
 <hr />
-<h1 id="czesc-b-konfiguracja-kontenera-gownego-i-sidecarow">CZĘŚĆ B - KONFIGURACJA KONTENERA GŁÓWNEGO I SIDECARÓW</h1>
-<h2 id="b1-tworzenie-aplikacji-obsugujacej-sidecary">B1. Tworzenie aplikacji obsługującej sidecary</h2>
+<h1 id="część-b---konfiguracja-kontenera-głównego-i-sidecarów">CZĘŚĆ B - KONFIGURACJA KONTENERA GŁÓWNEGO I SIDECARÓW</h1>
+<h2 id="b1-tworzenie-aplikacji-obsługującej-sidecary">B1. Tworzenie aplikacji obsługującej sidecary</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/cli/azure/webapp/sitecontainers]</em></p>
 <p>Przy tworzeniu aplikacji Linux włącz obsługę sidecarów opcją <code>--sitecontainers-app</code>; definicje kontenerów tworzysz osobno.</p>
 <div class="codehilite"><pre><span></span><code>az webapp create \
@@ -298,7 +352,7 @@ Czas: ok. 5-7 h (czytanie + trzy ćwiczenia). Ćwiczenia robisz w Azure Cloud Sh
 </code></pre></div>
 
 <p>Przed konwersją zrób inwentaryzację obrazu, portu, rejestru, polecenia startowego i zmiennych, bo <code>DOCKER_REGISTRY_SERVER_*</code> i <code>WEBSITES_PORT</code> nie konfigurują site containers. Zweryfikuj wynik w środowisku nieprodukcyjnym, zanim skierujesz ruch produkcyjny. Polecenia grupy <code>az webapp sitecontainers</code> zmieniają się z wersjami Azure CLI; sprawdź aktualną dokumentację (https://learn.microsoft.com/en-us/cli/azure/webapp/sitecontainers). [unit 1]</p>
-<h2 id="b2-role-kontenerow-i-porty">B2. Role kontenerów i porty</h2>
+<h2 id="b2-role-kontenerów-i-porty">B2. Role kontenerów i porty</h2>
 <p><em>Źródło: [unit 3] + [docs: https://learn.microsoft.com/en-us/azure/app-service/overview-sidecar]</em></p>
 <p>Każdy kontener ma unikalną nazwę i pełne odwołanie do obrazu. Kontener przyjmujący połączenia powinien zadeklarować <strong>port docelowy (target port)</strong>, a każdy nasłuchujący proces musi użyć <strong>unikalnego portu</strong>. Dokładnie jeden kontener ma <code>isMain: true</code>, a jego proces musi nasłuchiwać na porcie <strong>80 lub 8080</strong>, bo App Service obsługuje tylko te porty dla zewnętrznego ruchu HTTP (egzamin je lubi). Do komunikacji wewnętrznej sidecary mogą używać dowolnego innego wolnego, unikalnego portu.</p>
 <div class="codehilite"><pre><span></span><code>az webapp sitecontainers create \
@@ -318,7 +372,7 @@ az webapp sitecontainers create \
 </code></pre></div>
 
 <p>Pominięcie <code>--is-main</code> zostawia <code>isMain</code> jako false. Kontenery dzielą przestrzeń sieci, więc <strong>dwa procesy nie mogą zająć tego samego portu</strong>. <strong>Port docelowy to tylko metadane</strong> i nie steruje routingiem App Service: obraz nadal musi uruchomić proces nasłuchujący na zadeklarowanym porcie. Zmiana samych metadanych nie przekonfiguruje procesu w obrazie, a sidecar, który nie przyjmuje połączeń sieciowych, może pominąć tę właściwość.</p>
-<h2 id="b3-konfiguracja-wspolna-i-specyficzna-dla-kontenera">B3. Konfiguracja wspólna i specyficzna dla kontenera</h2>
+<h2 id="b3-konfiguracja-wspólna-i-specyficzna-dla-kontenera">B3. Konfiguracja wspólna i specyficzna dla kontenera</h2>
 <p><em>Źródło: [unit 3]</em></p>
 <p><strong>Ustawienia aplikacji (app settings) są dostępne dla wszystkich kontenerów.</strong> <strong>Zmienne środowiskowe specyficzne dla kontenera</strong> należą do jednej definicji site container. Dzięki temu unikasz duplikowania wartości wspólnych, a szczegóły implementacji zostają przy procesie, który je posiada.</p>
 <p>Dla scenariusza AI główne API dostaje zmienną <code>MODEL_ENDPOINT</code> o wartości <code>http://localhost:11434</code> (taka sama na każdej instancji), a serwer modelu zmienną wybierającą model lub sterującą startem. W zasobie site container pole <code>environmentVariables[].value</code> <strong>wskazuje nazwę ustawienia aplikacji</strong>, a nie literalną wartość. Najpierw utwórz ustawienia źródłowe:</p>
@@ -364,7 +418,7 @@ az webapp sitecontainers create \
 </code></pre></div>
 
 <p>Przy użyciu <code>--sitecontainers-spec-file</code> polecenie ignoruje pozostałe argumenty site container. <strong>Nie umieszczaj poświadczeń w pliku specyfikacji</strong>; używaj ustawień App Service, tożsamości zarządzanych lub odwołań do sekretów (moduł 02, C5).</p>
-<h2 id="b4-uwierzytelnianie-pobierania-obrazow-tozsamoscia-zarzadzana">B4. Uwierzytelnianie pobierania obrazów tożsamością zarządzaną</h2>
+<h2 id="b4-uwierzytelnianie-pobierania-obrazów-tożsamością-zarządzaną">B4. Uwierzytelnianie pobierania obrazów tożsamością zarządzaną</h2>
 <p><em>Źródło: [unit 3] + [unit 5] + [docs: https://learn.microsoft.com/en-us/azure/app-service/overview-sidecar] + [moduł kursu: deploy-containers-azure-app-service]</em></p>
 <p>ACR może przechowywać obrazy głównego kontenera i sidecarów. <strong>Tożsamość zarządzana</strong> pozwala App Service uwierzytelnić się w rejestrze bez hasła w konfiguracji; tożsamość potrzebuje uprawnienia do pobierania obrazów. Możesz użyć tożsamości <strong>system-assigned</strong> lub <strong>user-assigned</strong>; user-assigned przydaje się, gdy wiele aplikacji współdzieli kontrolowaną tożsamość pobierania albo gdy tożsamość ma istnieć niezależnie od aplikacji. Definicja kontenera używa wtedy <code>authType: UserAssigned</code> i identyfikuje tożsamość przez <strong>client ID</strong>:</p>
 <div class="codehilite"><pre><span></span><code><span class="p">{</span>
@@ -391,7 +445,7 @@ az webapp sitecontainers create \
 <blockquote>
 <p>Uwaga o labie (unit 6-lab): laboratorium używa jednej tożsamości user-assigned dla obu kontenerów (z rolą AcrPull) i sprawdza przed buildem, czy polityka <code>authentication-as-arm</code> rejestru jest włączona. Tekst jednostki 3 dopuszcza także tożsamość system-assigned.</p>
 </blockquote>
-<h2 id="b5-weryfikacja-wdrozonych-definicji">B5. Weryfikacja wdrożonych definicji</h2>
+<h2 id="b5-weryfikacja-wdrożonych-definicji">B5. Weryfikacja wdrożonych definicji</h2>
 <p><em>Źródło: [unit 3] + [unit 5]</em></p>
 <p>Zanim przetestujesz zachowanie aplikacji, sprawdź, że definicje dotarły do App Service (to oddziela pomyłki wdrożeniowe od awarii runtime):</p>
 <div class="codehilite"><pre><span></span><code>az webapp sitecontainers list \
@@ -407,8 +461,8 @@ az webapp sitecontainers show \
 
 <p>Potwierdź, że <strong>jedna</strong> definicja jest kontenerem głównym, a każdy port jest unikalny. Porównaj tagi obrazów z zamierzonym wydaniem i sprawdź typ uwierzytelniania, zanim zaczniesz szukać w logach aplikacji.</p>
 <hr />
-<h1 id="czesc-c-komunikacja-miedzy-kontenerami-i-wspodzielone-pliki">CZĘŚĆ C - KOMUNIKACJA MIĘDZY KONTENERAMI I WSPÓŁDZIELONE PLIKI</h1>
-<h2 id="c1-poaczenie-przez-wspolna-przestrzen-sieci">C1. Połączenie przez wspólną przestrzeń sieci</h2>
+<h1 id="część-c---komunikacja-między-kontenerami-i-współdzielone-pliki">CZĘŚĆ C - KOMUNIKACJA MIĘDZY KONTENERAMI I WSPÓŁDZIELONE PLIKI</h1>
+<h2 id="c1-połączenie-przez-wspólną-przestrzeń-sieci">C1. Połączenie przez wspólną przestrzeń sieci</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Wszystkie kontenery aplikacji współdzielą jedną przestrzeń nazw sieci. Kontener łączy się z innym przez <strong><code>localhost:&lt;port&gt;</code></strong>, a nie przez nazwę kontenera ani usługi (egzamin je lubi). W scenariuszu AI główne API wywołuje serwer modelu pod <code>http://localhost:11434</code>. Adres jest lokalny dla instancji: po skalowaniu w poziomie każdy kontener główny wywołuje sidecar na <strong>własnej</strong> instancji.</p>
 <p>Fragment Pythona z ograniczonym klientem HTTP (bez limitów czasu zawieszony serwer modelu mógłby trzymać żądanie API w nieskończoność):</p>
@@ -431,7 +485,7 @@ az webapp sitecontainers show \
 </code></pre></div>
 
 <p>Objaśnienie: (1) krótki limit połączenia (2 s) wykrywa proces, który nie nasłuchuje; ogólny limit HTTPX (10 s) ogranicza bezczynność przy odczycie, zapisie i puli połączeń; (2) <code>asyncio.timeout</code> (Python 3.11+) ustawia 30-sekundowy termin dla całego żądania. Wartości dobierz do zmierzonego startu i wnioskowania, a nie arbitralnie. App Service kieruje ruch zewnętrzny <strong>tylko do kontenera głównego</strong>; port docelowy sidecara nie publikuje go jako osobnego publicznego punktu końcowego. Główna aplikacja pozostaje odpowiedzialna za uwierzytelnianie zewnętrzne, autoryzację, walidację żądań i filtrowanie odpowiedzi.</p>
-<h2 id="c2-niezawodne-zadania-lokalne">C2. Niezawodne żądania lokalne</h2>
+<h2 id="c2-niezawodne-żądania-lokalne">C2. Niezawodne żądania lokalne</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Komunikacja lokalna usuwa routing zewnętrzny, ale nie usuwa awarii procesów rozproszonych: proces modelu może się zrestartować, wyczerpać pamięć, odrzucić żądanie lub przekroczyć budżet czasu API. Traktuj wywołanie lokalne jak zależność podatną na błąd. Rozsądna polityka:</p>
 <ul>
@@ -443,7 +497,7 @@ az webapp sitecontainers show \
 <li>identyfikatory korelacji w logach obu kontenerów.</li>
 </ul>
 <p>Nie ponawiaj każdego błędu: drugie żądanie może zdublować pracę, gdy serwer modelu wykonał pierwsze, a odpowiedź zginęła; retry zwiększa też presję na zasoby podczas awarii sidecara. Ważna jest też <strong>gotowość (readiness)</strong>: kontener główny może wystartować, zanim model się załaduje. API może zwracać tymczasową niedostępność, dopóki lekkie żądanie zdrowia sidecara nie zakończy się sukcesem.</p>
-<h2 id="c3-wspodzielony-wolumen-home">C3. Współdzielony wolumen <code>/home</code></h2>
+<h2 id="c3-współdzielony-wolumen-home">C3. Współdzielony wolumen <code>/home</code></h2>
 <p><em>Źródło: [unit 4] + [unit 6-lab]</em></p>
 <p>Domyślnie App Service montuje <strong>ten sam wolumen <code>/home</code></strong> w kontenerze głównym i w każdym sidecarze. Kontenery mogą wymieniać pliki przez dedykowany katalog, np. <code>/home/models</code>, bez tablicy <code>volumeMounts</code> w definicjach. To najprostsza opcja, gdy wszystkie kontenery mogą używać tej samej ścieżki. Wbudowane montowanie działa, <strong>chyba że</strong> aplikacja ma <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE=false</code>; to ustawienie decyduje też o tym, czy dane w <code>/home</code> dla niestandardowych kontenerów Linux przeżywają restarty i są dzielone między instancjami (moduł 02, B3). Do tymczasowej koordynacji w obrębie jednej instancji traktuj pliki jako odtwarzalne, nawet jeśli magazyn App Service jest włączony.</p>
 <p>W scenariuszu <code>MANIFEST_PATH</code> serwera modelu i <code>MODEL_INFO_PATH</code> głównego API wskazują <code>/home/models/manifest.json</code>. Serwer modelu zapisuje gotowy artefakt tak, żeby API nie przeczytało pliku zapisanego w połowie:</p>
@@ -459,13 +513,13 @@ az webapp sitecontainers show \
 </code></pre></div>
 
 <p>Objaśnienie: (1) zapis do nazwy tymczasowej; (2) operacja zmiany nazwy kończy zapis, więc czytelnik widzi tylko kompletny plik. Główne API czyta <code>/home/models/manifest.json</code>.</p>
-<h2 id="c4-unikaj-niepotrzebnych-wasnych-montowan">C4. Unikaj niepotrzebnych własnych montowań</h2>
+<h2 id="c4-unikaj-niepotrzebnych-własnych-montowań">C4. Unikaj niepotrzebnych własnych montowań</h2>
 <p><em>Źródło: [unit 4] + [unit 5]</em></p>
 <p>Domyślny wolumen <code>/home</code> spełnia potrzebę wymiany plików, więc <strong>nie dodawaj wpisów <code>volumeMounts</code></strong> do definicji głównej i sidecarów. Jawne montowania zmieniają widok systemu plików kontenera i mogą uniemożliwić start aplikacji lub endpointu SCM, gdy konfiguracja montowania koliduje ze środowiskiem. Jeśli istniejące wdrożenie przestaje działać po dodaniu własnych montowań, usuń <code>volumeMounts</code> i przywróć ostatnią działającą definicję kontenerów, zanim zaczniesz szukać innych przyczyn. (Dokumentacja produktu dopuszcza własne montowania wolumenów dla każdego kontenera [docs: sidecar-overview]; moduł zaleca prostotę tam, gdzie wystarcza domyślny <code>/home</code>.)</p>
-<h2 id="c5-wybor-granicy-magazynu">C5. Wybór granicy magazynu</h2>
+<h2 id="c5-wybór-granicy-magazynu">C5. Wybór granicy magazynu</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Współdzielony <code>/home</code> nadaje się do plików z operacyjnego przepływu aplikacji: <strong>plików tymczasowych</strong> tworzonych i zużywanych na tej samej instancji, <strong>wygenerowanej konfiguracji</strong> odświeżanej przez sidecar i czytanej przez aplikację, <strong>metadanych modelu możliwych do odtworzenia</strong> z trwałego źródła i <strong>krótkotrwałych artefaktów pośrednich</strong>. Nie traktuj go jako rejestru modeli, magazynu audytowego ani niezależnego trwałego systemu rekordów. Gdy dane potrzebują jawnej, trwałej granicy poza aplikacją, użyj <strong>Azure Blob Storage</strong> lub <strong>Azure Files</strong>; gdy wiele aplikacji potrzebuje skoordynowanego dostępu, spójności lub niezależnego skalowania, użyj zarządzanej usługi danych. Wymiana plików wymaga też protokołu własności: zapis przez nazwę tymczasową i zmianę nazwy albo publikacja małego manifestu dopiero po przygotowaniu wszystkich artefaktów (patrz C3).</p>
-<h2 id="c6-walidacja-komunikacji-i-dostepu-do-plikow">C6. Walidacja komunikacji i dostępu do plików</h2>
+<h2 id="c6-walidacja-komunikacji-i-dostępu-do-plików">C6. Walidacja komunikacji i dostępu do plików</h2>
 <p><em>Źródło: [unit 4]</em></p>
 <p>Testuj te same ścieżki i porty, których używa kod aplikacji. Poprawna odpowiedź zewnętrzna z kontenera głównego <strong>nie dowodzi</strong>, że sidecar jest gotowy; testuj zależność lokalną przez operację zdrowia aplikacji lub endpoint diagnostyczny, który nie ujawnia wrażliwych szczegółów modelu. Kolejność weryfikacji:</p>
 <ol>
@@ -479,8 +533,8 @@ az webapp sitecontainers show \
 </ol>
 <p>Nie wystawiaj ogólnego proxy do sidecara; wąska operacja zdrowia lub wnioskowania zachowuje API jako zewnętrzną granicę bezpieczeństwa.</p>
 <hr />
-<h1 id="czesc-d-diagnoza-awarii-sidecara">CZĘŚĆ D - DIAGNOZA AWARII SIDECARA</h1>
-<h2 id="d1-przepyw-od-objawu">D1. Przepływ "od objawu"</h2>
+<h1 id="część-d---diagnoza-awarii-sidecara">CZĘŚĆ D - DIAGNOZA AWARII SIDECARA</h1>
+<h2 id="d1-przepływ-od-objawu">D1. Przepływ "od objawu"</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Awaria sidecara często wygląda jak błąd aplikacji głównej, bo kontenery działają jako jedna aplikacja. Rozdziel granice: wdrożenie, pobranie obrazu, start procesu, presja zasobów, komunikacja lokalna. Zaczynaj od objawu widocznego z zewnątrz i śledź żądanie w stronę sidecara; <strong>nie zmieniaj kilku ustawień naraz</strong>, bo utrudnia to wskazanie przyczyny. Zapisuj czas awarii, instancję, identyfikator korelacji i nazwę kontenera. Kolejność:</p>
 <ol>
@@ -519,10 +573,10 @@ az webapp sitecontainers show \
 </code></pre></div>
 
 <p>Gdy obraz się pobiera, ale sidecar nie pozostaje dostępny, sprawdź: punkt wejścia obrazu i polecenie startowe; czy główny proces pozostaje na pierwszym planie (nie kończy się po uruchomieniu procesu potomnego); wymagane zmienne i ścieżki plików; architekturę procesora i zgodność obrazu bazowego; skonfigurowany port docelowy kontra port, na którym proces faktycznie nasłuchuje; dostępność i uprawnienia plików modelu przy inicjalizacji. Kod wyjścia lub ślad stosu zwykle wskazuje obraz lub konfigurację; powtarzane starty bez błędu aplikacji mogą oznaczać presję pamięci przy ładowaniu modelu.</p>
-<h2 id="d3-presja-zasobow">D3. Presja zasobów</h2>
+<h2 id="d3-presja-zasobów">D3. Presja zasobów</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Kontener główny i sidecary dzielą zasoby planu na instancji. Duże zużycie pamięci przez model może powodować restarty lub spowolnienie któregokolwiek procesu. Skalowanie API w poziomie tworzy nowy sidecar na każdej nowej instancji, więc inicjalizacja zwiększa łączne zapotrzebowanie planu. Przejrzyj CPU, pamięć, czas odpowiedzi, kolejkę HTTP i sygnały restartów w czasie awarii i porównaj z logami sidecara (ładowanie modelu, zrywy żądań); pojedyncza metryka rzadko dowodzi przyczyny, ale zgodne znaczniki czasu odróżniają presję pojemności od złego portu lub niepoprawnego żądania. Zmierz: pamięć przed i po załadowaniu modelu, szczyt przy współbieżnych żądaniach, CPU i czas odpowiedzi przy docelowej współbieżności, czas startu przy wdrożeniu i skalowaniu oraz zachowanie przy przekroczeniu współbieżności serwera modelu. Jeśli zapotrzebowanie przekracza bezpieczną pojemność planu: zmniejsz współbieżność, wybierz mniejszy model, przeskaluj plan albo hostuj wnioskowanie osobno. <strong>Nie używaj skalowania, żeby ukryć awarię procesu, brakujące ustawienie lub zły tag obrazu.</strong></p>
-<h2 id="d4-diagnoza-acznosci-lokalnej">D4. Diagnoza łączności lokalnej</h2>
+<h2 id="d4-diagnoza-łączności-lokalnej">D4. Diagnoza łączności lokalnej</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Interpretacja objawów (egzamin je lubi): <strong>odmowa połączenia (connection refused)</strong> oznacza, że w tej chwili żaden proces nie przyjął połączenia na żądanym porcie lokalnym; <strong>timeout</strong> może oznaczać wolny start, presję zasobów, zablokowaną pracę aplikacji lub żądanie przekraczające budżet przetwarzania; <strong>odpowiedź błędu HTTP</strong> oznacza, że połączenie sieciowe się udało i badać trzeba format żądania, autoryzację lub zachowanie serwera modelu. Kolejność sprawdzania:</p>
 <ol>
@@ -550,7 +604,7 @@ az webapp sitecontainers show \
 </code></pre></div>
 
 <p><code>ConnectError</code> oznacza, że HTTPX nie nawiązał połączenia (przyczyną może być odmowa połączenia, problem z rozpoznaniem nazwy lub inny błąd sieci). Nie zwracaj szczegółowych błędów wewnętrznych w publicznym endpoincie zdrowia: zapisz kategorię diagnostyczną z identyfikatorem korelacji w logu, a zewnętrznym wywołującym zwróć ograniczony wynik gotowości.</p>
-<h2 id="d5-awarie-wspodzielonych-plikow">D5. Awarie współdzielonych plików</h2>
+<h2 id="d5-awarie-współdzielonych-plików">D5. Awarie współdzielonych plików</h2>
 <p><em>Źródło: [unit 5]</em></p>
 <p>Problemy z plikami wynikają zwykle z różnych ścieżek aplikacji, uprawnień, jawnej konfiguracji montowań lub błędnego założenia trwałości. Obie aplikacje powinny rozwiązywać plik współdzielony do tej samej ścieżki w <code>/home</code>. Sprawdź:</p>
 <ul>
@@ -567,12 +621,12 @@ az webapp sitecontainers show \
 <p><em>Źródło: [unit 5]</em></p>
 <p>Logi kontenerów dają dowody na poziomie procesu, a Azure Monitor i doświadczenie <strong>Diagnose and solve problems</strong> w App Service dają kontekst platformy. Użyj obu źródeł, gdy awaria obejmuje wdrożenie, restarty, limity zasobów lub przerywaną dostępność; Log Analytics ułatwia korelację zdarzeń w dłuższym oknie, jeśli skonfigurowano diagnostykę (moduł 02, D4). Pełny zapis incydentu obejmuje: aplikację, slot, instancję i nazwę kontenera; wdrożony tag lub digest obrazu; pierwszy i ostatni znacznik czasu awarii; istotne komunikaty logów i informacje o zakończeniu procesu; zachowanie CPU i pamięci wokół zdarzenia; kategorię błędu klienta i identyfikator korelacji; zmianę konfiguracji lub wydanie poprzedzające awarię. Po poprawce powtórz oryginalne żądanie pod reprezentatywnym obciążeniem, żeby udowodnić, że naprawiono granicę, która zawiodła.</p>
 <hr />
-<h1 id="czesc-e-cwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
+<h1 id="część-e---ćwiczenia">CZĘŚĆ E - ĆWICZENIA</h1>
 <p>Przed ćwiczeniami przeczytaj części A-D. Układ ćwiczeń: Gdzie / Plik, kod lub kroki, Koszt, Zadania, Sprawdź, Sprzątanie. I1 odpowiada laboratorium z modułu (unit 6), ale zamiast modelu Phi-3 (ok. 2,7 GB, plan P2v3 w laboratorium [unit 6-starter]) używa małego serwera-atrapy modelu i podanych w całości aplikacji; I2 i I3 są autorskie i korzystają z zasobów z I1 (zmienne <code>RG</code>, <code>ACR_NAME</code>, <code>APP_NAME</code>, <code>CLIENT_ID</code>). Wszystkie ćwiczenia tworzą płatne zasoby; wykonaj Sprzątanie z ostatniego ćwiczenia, które robisz.</p>
 <blockquote>
 <p>Niesprawdzone: dokładne ceny rejestru ACR Basic i planu App Service B1 (Linux) za dzień - zweryfikuj w https://azure.microsoft.com/pricing/details/container-registry/ i https://azure.microsoft.com/pricing/details/app-service/linux/. Czy plan B1 obsługuje sidecary w Twoim regionie - [autor: niezweryfikowane]; laboratorium Microsoftu używa P2v3.</p>
 </blockquote>
-<h2 id="i1-aplikacja-z-kontenerem-gownym-i-sidecarem-modelu-pobieranie-obrazow-tozsamoscia-zarzadzana-python-i-c">I1. Aplikacja z kontenerem głównym i sidecarem modelu, pobieranie obrazów tożsamością zarządzaną - Python i C</h2>
+<h2 id="i1-aplikacja-z-kontenerem-głównym-i-sidecarem-modelu-pobieranie-obrazów-tożsamością-zarządzaną---python-i-c">I1. Aplikacja z kontenerem głównym i sidecarem modelu, pobieranie obrazów tożsamością zarządzaną - Python i C</h2>
 <p><em>Źródło: [unit 3] + [unit 6] + [unit 6-lab] + [unit 6-starter] + [autor: niezweryfikowane]</em>
 (rozwinięte w <code>03-deploy-sidecar-azure-app-service.md</code> §B1-§B5, §C1, §C3)</p>
 <p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash), katalog <code>sidecar-lab</code> z podkatalogami <code>model-server/</code> i <code>api/</code>. Pliki: <code>sidecar-lab/model-server/model_server.py</code>, <code>sidecar-lab/model-server/Dockerfile</code>, <code>sidecar-lab/api/app.py</code>, <code>sidecar-lab/api/requirements.txt</code>, <code>sidecar-lab/api/Dockerfile</code> oraz <code>sidecar-lab/sitecontainers-spec.json</code> (tworzony poleceniem w kroku 3). Wymaga subskrypcji płatnej.</p>
@@ -878,7 +932,7 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <p>Usunięcie grupy usuwa rejestr, plan, aplikację i tożsamość. Zasoby z I1 są używane w I2 i I3, więc wykonaj sprzątanie po ostatnim ćwiczeniu, które robisz. Ostrzeżenie: usunięcie grupy usuwa <strong>wszystkie</strong> zasoby w niej; nie używaj grupy z innymi zasobami. [unit 6-lab]</p>
-<h2 id="i2-komunikacja-przez-localhost-i-wspodzielony-home-kontrola-i-awarie">I2. Komunikacja przez <code>localhost</code> i współdzielony <code>/home</code>: kontrola i awarie</h2>
+<h2 id="i2-komunikacja-przez-localhost-i-współdzielony-home-kontrola-i-awarie">I2. Komunikacja przez <code>localhost</code> i współdzielony <code>/home</code>: kontrola i awarie</h2>
 <p><em>Źródło: [unit 4] + [unit 5] + [autor: niezweryfikowane]</em></p>
 <p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash); zasoby z I1 (<code>RG</code>, <code>APP_NAME</code>); w aplikacji działają kontenery z obrazami <code>chat-api:v1</code> (Python) i <code>model-server:v1</code>.</p>
 <div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-sidecar-i1
@@ -914,7 +968,7 @@ sleep<span class="w"> </span><span class="m">90</span><span class="p">;</span><s
 <p><strong>Zadania:</strong> (a) zrestartuj aplikację i potwierdź, że <code>/model-info</code> znów działa; (b) ustaw zły port w <code>MODEL_ENDPOINT_VALUE</code> i zapisz kod odpowiedzi i treść <code>/health/ready</code>; (c) napraw port; (d) wyłącz <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> i sprawdź <code>/model-info</code>; (e) przywróć ustawienie.</p>
 <p><strong>Sprawdź:</strong> (a) <code>{"model":"stub-model","state":"ready"}</code>; (b) HTTP 503 z <code>{"reason":"connect-error","status":"unavailable"}</code> (port 11435 nikt nie nasłuchuje; ustawienia aplikacji restartują aplikację, więc odczekaj); (c) <code>{"status":"ready"}</code>; (d) bez współdzielonego <code>/home</code> kontenery nie widzą wspólnego manifestu, więc odpowiedź to 404 <code>manifest not found</code> (lub błąd aplikacji, jeśli sidecar nie może zapisać manifestu) - dokładny objaw zależy od wersji platformy, [autor: niezweryfikowane]; (e) po przywróceniu <code>/model-info</code> znów zwraca manifest.</p>
 <p><strong>Sprzątanie:</strong> przywróć poprawne ustawienia (<code>MODEL_ENDPOINT_VALUE=http://localhost:11434</code>, brak <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code>). Jeśli to ostatnie ćwiczenie: <code>az group delete --name rg-sidecar-i1 --yes --no-wait</code>, potem <code>az group exists --name rg-sidecar-i1</code> (po kilku minutach: <code>false</code>).</p>
-<h2 id="i3-diagnoza-nieistniejacy-tag-obrazu-sidecara-status-i-logi">I3. Diagnoza: nieistniejący tag obrazu sidecara, status i logi</h2>
+<h2 id="i3-diagnoza-nieistniejący-tag-obrazu-sidecara-status-i-logi">I3. Diagnoza: nieistniejący tag obrazu sidecara, status i logi</h2>
 <p><em>Źródło: [unit 5] + [docs: https://learn.microsoft.com/en-us/cli/azure/webapp/sitecontainers] + [autor: niezweryfikowane]</em></p>
 <p><strong>Gdzie / Plik:</strong> Cloud Shell (Bash); zasoby z I1 i I2 (obrazy <code>model-server:v1</code> i <code>chat-api:v1</code>).</p>
 <div class="codehilite"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">RG</span><span class="o">=</span>rg-sidecar-i1
@@ -945,76 +999,68 @@ az<span class="w"> </span>group<span class="w"> </span>exists<span class="w"> </
 </code></pre></div>
 
 <hr />
-<h1 id="czesc-f-quiz-z-moduu-microsoftu-5-pytan-wyjasnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
+<h1 id="część-f---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia">CZĘŚĆ F - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia</h1>
 <p>Learn pokazuje pytania, ale nie pokazuje poprawnych odpowiedzi, więc każda odpowiedź poniżej jest <strong>wnioskowana</strong> z treści jednostek.</p>
-<h2 id="f1-kompaktowy-model-dla-kazdej-instancji-api-ktory-ma-startowac-i-skalowac-sie-razem-z-api">F1. Kompaktowy model dla każdej instancji API, który ma startować i skalować się razem z API</h2>
+<h2 id="f1-kompaktowy-model-dla-każdej-instancji-api-który-ma-startować-i-skalować-się-razem-z-api">F1. Kompaktowy model dla każdej instancji API, który ma startować i skalować się razem z API</h2>
 <p>-&gt; <em>Uruchom model w sidecarze App Service obok kontenera głównego API.</em> (A2, A3). Pułapki: osobna współdzielona usługa ma własne skalowanie i nie startuje razem z API; dodanie procesu do obrazu głównego odbiera niezależną aktualizację obrazów, której chce zespół.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 2, sekcje "Understand the sidecar execution model" i "Evaluate coupling and isolation")</em></p>
-<h2 id="f2-ruch-zewnetrzny-ma-trafiac-tylko-do-api-a-api-wywouje-serwer-modelu-lokalnie">F2. Ruch zewnętrzny ma trafiać tylko do API, a API wywołuje serwer modelu lokalnie</h2>
+<h2 id="f2-ruch-zewnętrzny-ma-trafiać-tylko-do-api-a-api-wywołuje-serwer-modelu-lokalnie">F2. Ruch zewnętrzny ma trafiać tylko do API, a API wywołuje serwer modelu lokalnie</h2>
 <p>-&gt; <em><code>isMain: true</code> na API i <code>isMain: false</code> na serwerze modelu.</em> (A2, B2). Pułapki: dwa kontenery główne są niedozwolone (dokładnie jeden <code>isMain: true</code>); <code>WEBSITES_PORT</code> nie konfiguruje kontenerów w modelu sitecontainers.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 2, sekcja "Understand the sidecar execution model" i unit 3, sekcja "Define container roles and ports")</em></p>
-<h2 id="f3-prywatne-obrazy-z-acr-rbac-registry-permissions-bez-hase-w-konfiguracji">F3. Prywatne obrazy z ACR (RBAC Registry Permissions) bez haseł w konfiguracji</h2>
+<h2 id="f3-prywatne-obrazy-z-acr-rbac-registry-permissions-bez-haseł-w-konfiguracji">F3. Prywatne obrazy z ACR (RBAC Registry Permissions) bez haseł w konfiguracji</h2>
 <p>-&gt; <em>Przypisz aplikacji tożsamość zarządzaną, nadaj jej <code>AcrPull</code> i odwołaj się do tożsamości w każdej prywatnej definicji site container.</em> (B4). Pułapki: konto admin z <code>DOCKER_REGISTRY_SERVER_*</code> przechowuje hasła i nie konfiguruje site containers; publiczne repozytoria nie spełniają wymogu prywatności.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 3, sekcja "Authenticate private image pulls")</em></p>
-<h2 id="f4-artefakty-sidecara-maja-przetrwac-niezaleznie-od-cyklu-zycia-aplikacji-i-suzyc-innym-aplikacjom-jako-system-rekordow">F4. Artefakty sidecara mają przetrwać niezależnie od cyklu życia aplikacji i służyć innym aplikacjom jako system rekordów</h2>
+<h2 id="f4-artefakty-sidecara-mają-przetrwać-niezależnie-od-cyklu-życia-aplikacji-i-służyć-innym-aplikacjom-jako-system-rekordów">F4. Artefakty sidecara mają przetrwać niezależnie od cyklu życia aplikacji i służyć innym aplikacjom jako system rekordów</h2>
 <p>-&gt; <em>Azure Blob Storage lub Azure Files jako trwała granica magazynu.</em> (C5). Pułapki: współdzielony <code>/home</code> nie jest niezależnym systemem rekordów; warstwa zapisu obrazu kontenera jest ulotna.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 4, sekcje "Choose the correct storage boundary")</em></p>
-<h2 id="f5-bad-odmowy-poaczenia-przy-wywoaniu-httplocalhost11434-z-api">F5. Błąd odmowy połączenia przy wywołaniu <code>http://localhost:11434</code> z API</h2>
+<h2 id="f5-błąd-odmowy-połączenia-przy-wywołaniu-httplocalhost11434-z-api">F5. Błąd odmowy połączenia przy wywołaniu <code>http://localhost:11434</code> z API</h2>
 <p>-&gt; <em>Porównaj port wywołania w API z portem docelowym sidecara i sprawdź, czy proces sidecara nasłuchuje na tym porcie.</em> (D4). Pułapki: skalowanie planu przed inspekcją konfiguracji nie wskaże przyczyny; zamiana <code>localhost</code> na nazwę kontenera jest błędna, bo kontenery komunikują się przez <code>localhost:&lt;port&gt;</code>.
 <em>(odpowiedź wnioskowana - Learn nie pokazuje odpowiedzi; uzasadnienie: unit 5, sekcja "Diagnose local connectivity")</em></p>
 <hr />
-<h1 id="czesc-g-pytania-kontrolne-odpowiedz-bez-zagladania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
-<h2 id="g1-ile-kontenerow-moze-miec-aplikacja-z-sidecarami-i-ktory-dostaje-ruch-zewnetrzny">G1. Ile kontenerów może mieć aplikacja z sidecarami i który dostaje ruch zewnętrzny?</h2>
-<details><summary>Odpowiedź</summary>
-
-Jeden kontener główny (`isMain: true`) i do dziewięciu sidecarów (`isMain: false`). Ruch zewnętrzny HTTP trafia tylko do kontenera głównego.
+<h1 id="część-g---pytania-kontrolne-odpowiedz-bez-zaglądania">CZĘŚĆ G - PYTANIA KONTROLNE (odpowiedz bez zaglądania)</h1>
+<h2 id="g1-ile-kontenerów-może-mieć-aplikacja-z-sidecarami-i-który-dostaje-ruch-zewnętrzny">G1. Ile kontenerów może mieć aplikacja z sidecarami i który dostaje ruch zewnętrzny?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Jeden kontener główny (<code>isMain: true</code>) i do dziewięciu sidecarów (<code>isMain: false</code>). Ruch zewnętrzny HTTP trafia tylko do kontenera głównego.</p>
 </details>
-
-<h2 id="g2-na-jakim-porcie-musi-nasuchiwac-kontener-gowny-i-jak-acza-sie-kontenery-miedzy-soba">G2. Na jakim porcie musi nasłuchiwać kontener główny i jak łączą się kontenery między sobą?</h2>
-<details><summary>Odpowiedź</summary>
-
-Na porcie 80 lub 8080 (tylko te porty są obsługiwane dla zewnętrznego ruchu HTTP). Kontenery łączą się przez `localhost:<port>` we wspólnej przestrzeni sieci, a każdy proces musi użyć unikalnego portu.
+<h2 id="g2-na-jakim-porcie-musi-nasłuchiwać-kontener-główny-i-jak-łączą-się-kontenery-między-sobą">G2. Na jakim porcie musi nasłuchiwać kontener główny i jak łączą się kontenery między sobą?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Na porcie 80 lub 8080 (tylko te porty są obsługiwane dla zewnętrznego ruchu HTTP). Kontenery łączą się przez <code>localhost:&lt;port&gt;</code> we wspólnej przestrzeni sieci, a każdy proces musi użyć unikalnego portu.</p>
 </details>
-
 <h2 id="g3-czym-jest-port-docelowy-target-port-w-definicji-site-container">G3. Czym jest port docelowy (target port) w definicji site container?</h2>
-<details><summary>Odpowiedź</summary>
-
-Tylko metadanymi: nie steruje routingiem App Service ani nie zmienia portu procesu w obrazie. Proces w obrazie nadal musi nasłuchiwać na zadeklarowanym porcie; sidecar, który nie przyjmuje połączeń, może pominąć tę właściwość.
+<details>
+<summary>Odpowiedź</summary>
+<p>Tylko metadanymi: nie steruje routingiem App Service ani nie zmienia portu procesu w obrazie. Proces w obrazie nadal musi nasłuchiwać na zadeklarowanym porcie; sidecar, który nie przyjmuje połączeń, może pominąć tę właściwość.</p>
 </details>
-
-<h2 id="g4-jak-dziaaja-zmienne-srodowiskowe-w-definicji-site-container">G4. Jak działają zmienne środowiskowe w definicji site container?</h2>
-<details><summary>Odpowiedź</summary>
-
-Ustawienia aplikacji są dostępne dla wszystkich kontenerów; zmienna kontenera (`environmentVariables`) jest specyficzna dla jednej definicji, a jej pole `value` wskazuje nazwę ustawienia aplikacji, a nie literalną wartość. Poświadczeń nie umieszcza się w pliku specyfikacji.
+<h2 id="g4-jak-działają-zmienne-środowiskowe-w-definicji-site-container">G4. Jak działają zmienne środowiskowe w definicji site container?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Ustawienia aplikacji są dostępne dla wszystkich kontenerów; zmienna kontenera (<code>environmentVariables</code>) jest specyficzna dla jednej definicji, a jej pole <code>value</code> wskazuje nazwę ustawienia aplikacji, a nie literalną wartość. Poświadczeń nie umieszcza się w pliku specyfikacji.</p>
 </details>
-
-<h2 id="g5-co-jest-potrzebne-zeby-aplikacja-pobieraa-prywatne-obrazy-z-acr-tozsamoscia-zarzadzana">G5. Co jest potrzebne, żeby aplikacja pobierała prywatne obrazy z ACR tożsamością zarządzaną?</h2>
-<details><summary>Odpowiedź</summary>
-
-Tożsamość przypisana do aplikacji, rola pobierania w rejestrze (`AcrPull` przy RBAC Registry Permissions; `Container Registry Repository Reader` przy RBAC Registry + ABAC Repository Permissions), `authType` i client ID w definicji kontenera (przy user-assigned) oraz rejestr akceptujący tokeny z odbiorcą ARM (`az acr config authentication-as-arm`). Rola potrzebuje czasu na propagację.
+<h2 id="g5-co-jest-potrzebne-żeby-aplikacja-pobierała-prywatne-obrazy-z-acr-tożsamością-zarządzaną">G5. Co jest potrzebne, żeby aplikacja pobierała prywatne obrazy z ACR tożsamością zarządzaną?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Tożsamość przypisana do aplikacji, rola pobierania w rejestrze (<code>AcrPull</code> przy RBAC Registry Permissions; <code>Container Registry Repository Reader</code> przy RBAC Registry + ABAC Repository Permissions), <code>authType</code> i client ID w definicji kontenera (przy user-assigned) oraz rejestr akceptujący tokeny z odbiorcą ARM (<code>az acr config authentication-as-arm</code>). Rola potrzebuje czasu na propagację.</p>
 </details>
-
-<h2 id="g6-czy-sidecary-maja-osobny-wolumen-na-pliki-i-jakie-sa-ograniczenia">G6. Czy sidecary mają osobny wolumen na pliki i jakie są ograniczenia?</h2>
-<details><summary>Odpowiedź</summary>
-
-Domyślnie wszystkie kontenery współdzielą ten sam wolumen `/home` (o ile `WEBSITES_ENABLE_APP_SERVICE_STORAGE` nie jest `false`), więc `volumeMounts` nie są potrzebne. Pliki są tymczasowe/odtwarzalne w sensie modułu; dane trwałe i wspólne dla wielu aplikacji trzymaj w Azure Blob Storage, Azure Files lub usłudze danych. Zapis przez nazwę tymczasową i zmianę nazwy chroni przed odczytem niepełnego pliku.
+<h2 id="g6-czy-sidecary-mają-osobny-wolumen-na-pliki-i-jakie-są-ograniczenia">G6. Czy sidecary mają osobny wolumen na pliki i jakie są ograniczenia?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Domyślnie wszystkie kontenery współdzielą ten sam wolumen <code>/home</code> (o ile <code>WEBSITES_ENABLE_APP_SERVICE_STORAGE</code> nie jest <code>false</code>), więc <code>volumeMounts</code> nie są potrzebne. Pliki są tymczasowe/odtwarzalne w sensie modułu; dane trwałe i wspólne dla wielu aplikacji trzymaj w Azure Blob Storage, Azure Files lub usłudze danych. Zapis przez nazwę tymczasową i zmianę nazwy chroni przed odczytem niepełnego pliku.</p>
 </details>
-
-<h2 id="g7-kiedy-wybrac-osobna-usuge-zamiast-sidecara">G7. Kiedy wybrać osobną usługę zamiast sidecara?</h2>
-<details><summary>Odpowiedź</summary>
-
-Gdy wiele aplikacji współdzieli model lub cache, model wymaga GPU lub innego skalowania niż API, potrzebna jest osobna granica sieci lub bezpieczeństwa, komponent ma działać także przy restarcie aplikacji lub skalowaniu do zera, albo jego awarie nie mogą zużywać zasobów aplikacji głównej.
+<h2 id="g7-kiedy-wybrać-osobną-usługę-zamiast-sidecara">G7. Kiedy wybrać osobną usługę zamiast sidecara?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Gdy wiele aplikacji współdzieli model lub cache, model wymaga GPU lub innego skalowania niż API, potrzebna jest osobna granica sieci lub bezpieczeństwa, komponent ma działać także przy restarcie aplikacji lub skalowaniu do zera, albo jego awarie nie mogą zużywać zasobów aplikacji głównej.</p>
 </details>
-
-<h2 id="g8-jak-odroznic-odmowe-poaczenia-timeout-i-bad-http-przy-wywoaniu-sidecara">G8. Jak odróżnić odmowę połączenia, timeout i błąd HTTP przy wywołaniu sidecara?</h2>
-<details><summary>Odpowiedź</summary>
-
-Odmowa połączenia: żaden proces nie nasłuchuje na porcie. Timeout: wolny start, presja zasobów, zablokowana praca lub przekroczony budżet czasu. Błąd HTTP: połączenie się udało, więc badaj format żądania, autoryzację lub serwer modelu. Retry tylko dla idempotentnych operacji i błędów uznanych za przejściowe.
+<h2 id="g8-jak-odróżnić-odmowę-połączenia-timeout-i-błąd-http-przy-wywołaniu-sidecara">G8. Jak odróżnić odmowę połączenia, timeout i błąd HTTP przy wywołaniu sidecara?</h2>
+<details>
+<summary>Odpowiedź</summary>
+<p>Odmowa połączenia: żaden proces nie nasłuchuje na porcie. Timeout: wolny start, presja zasobów, zablokowana praca lub przekroczony budżet czasu. Błąd HTTP: połączenie się udało, więc badaj format żądania, autoryzację lub serwer modelu. Retry tylko dla idempotentnych operacji i błędów uznanych za przejściowe.</p>
 </details>
-
 <hr />
-<h1 id="czesc-h-co-dalej">CZĘŚĆ H - CO DALEJ</h1>
-<h2 id="h1-podsumowanie-nastepny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</h2>
+<h1 id="część-h---co-dalej">CZĘŚĆ H - CO DALEJ</h1>
+<h2 id="h1-podsumowanie-następny-krok-i-pokrycie-egzaminu">H1. Podsumowanie, następny krok i pokrycie egzaminu</h2>
 <p><em>Źródło: [unit 8] + [docs: https://learn.microsoft.com/en-us/credentials/certifications/resources/study-guides/ai-200]</em></p>
 <p><strong>Podsumowanie modułu.</strong> Sidecary w App Service dodają wspierające możliwości AI bez łączenia wszystkich procesów w jednym obrazie. Oceniłeś cykl życia, skalowanie, pojemność i zaufanie przed wyborem wzorca; skonfigurowałeś role kontenerów, unikalne porty docelowe, zmienne środowiskowe i pobieranie obrazów z ACR tożsamością zarządzaną; połączyłeś kontenery przez <code>localhost</code> i wymieniałeś pliki przez domyślny wolumen <code>/home</code>; użyłeś logów konkretnego kontenera, metryk App Service, inspekcji konfiguracji i testów endpointów do diagnozy pobrania obrazu, startu, zasobów, łączności i plików. [unit 8]</p>
 <p><strong>Co dalej:</strong> to ostatni moduł ścieżki "Implement container application hosting on Azure". Następna ścieżka kursu to "Deploy and manage apps on Azure Container Apps" (moduł <code>deploy-containers-azure-container-apps</code>, https://learn.microsoft.com/en-us/training/modules/deploy-containers-azure-container-apps/). Wróć do B4 (tożsamość i ARM audience), gdy konfigurujesz pobieranie obrazów z prywatnego rejestru, oraz do D4-D5 przy diagnozie wieloetapowych awarii.</p>

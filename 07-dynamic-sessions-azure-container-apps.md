@@ -10,6 +10,61 @@ Czas: ok. 3-4 h, orientacyjnie (moduł Learn ma ok. 84 min wg katalogu, w tym ć
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - GRANICA WYKONANIA I WYBÓR PULI](#część-a---granica-wykonania-i-wybór-puli)**
+  - [A1. Po co granica wykonania i jak działa pula sesji](#a1-po-co-granica-wykonania-i-jak-działa-pula-sesji)
+  - [A2. Wbudowany interpreter kodu (code interpreter)](#a2-wbudowany-interpreter-kodu-code-interpreter)
+  - [A3. Integracja: REST bezpośrednio czy adapter frameworka](#a3-integracja-rest-bezpośrednio-czy-adapter-frameworka)
+  - [A4. Pula z własnym kontenerem (custom container)](#a4-pula-z-własnym-kontenerem-custom-container)
+  - [A5. Dopasowanie puli do zadania](#a5-dopasowanie-puli-do-zadania)
+- **[CZĘŚĆ B - BEZPIECZNA KONFIGURACJA PULI](#część-b---bezpieczna-konfiguracja-puli)**
+  - [B1. Pojemność puli i gotowe instancje](#b1-pojemność-puli-i-gotowe-instancje)
+  - [B2. Cooldown (okres bezczynności) i cykl życia](#b2-cooldown-okres-bezczynności-i-cykl-życia)
+  - [B3. Ruch wychodzący (egress) i tworzenie puli](#b3-ruch-wychodzący-egress-i-tworzenie-puli)
+  - [B4. Tożsamości i dane w sesji](#b4-tożsamości-i-dane-w-sesji)
+  - [B5. Praktyki dla produkcyjnych pul](#b5-praktyki-dla-produkcyjnych-pul)
+- **[CZĘŚĆ C - WYKONYWANIE KODU I WYMIANA PLIKÓW](#część-c---wykonywanie-kodu-i-wymiana-plików)**
+  - [C1. Uwierzytelnianie backendu](#c1-uwierzytelnianie-backendu)
+  - [C2. Bezpieczne identyfikatory sesji](#c2-bezpieczne-identyfikatory-sesji)
+  - [C3. Wysłanie kodu do wykonania](#c3-wysłanie-kodu-do-wykonania)
+  - [C4. Wymiana plików z sesją](#c4-wymiana-plików-z-sesją)
+  - [C5. Ponowne użycie sesji w wielu operacjach](#c5-ponowne-użycie-sesji-w-wielu-operacjach)
+  - [C6. Integracja z agentem LangChain](#c6-integracja-z-agentem-langchain)
+- **[CZĘŚĆ D - CYKL ŻYCIA I BŁĘDY WYKONANIA](#część-d---cykl-życia-i-błędy-wykonania)**
+  - [D1. Efemeryczny stan sesji](#d1-efemeryczny-stan-sesji)
+  - [D2. Kategorie błędów](#d2-kategorie-błędów)
+  - [D3. Terminy wykonania (deadlines)](#d3-terminy-wykonania-deadlines)
+  - [D4. Bezpieczne ponawianie (retry)](#d4-bezpieczne-ponawianie-retry)
+  - [D5. Zwalnianie zakończonych sesji](#d5-zwalnianie-zakończonych-sesji)
+  - [D6. Niezawodne operowanie przepływami sesji](#d6-niezawodne-operowanie-przepływami-sesji)
+- **[CZĘŚĆ E - ĆWICZENIA](#część-e---ćwiczenia)**
+  - [I1. Pula interpretera, rola Session Executor i klient REST w Pythonie (lab modułu)](#i1-pula-interpretera-rola-session-executor-i-klient-rest-w-pythonie-lab-modułu)
+  - [I2. Egress i cooldown: eksperymenty z konfiguracją puli](#i2-egress-i-cooldown-eksperymenty-z-konfiguracją-puli)
+  - [I3. Odczyt konfiguracji pul przez SDK zarządzania: Python i odpowiednik C# (.NET)](#i3-odczyt-konfiguracji-pul-przez-sdk-zarządzania-python-i-odpowiednik-c-net)
+- **[CZĘŚĆ G - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia](#część-g---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia)**
+  - [G1. Zastrzeżony konwerter z natywnymi binariami - jaka pula?](#g1-zastrzeżony-konwerter-z-natywnymi-binariami---jaka-pula)
+  - [G2. Niezaufany Python na wgranych plikach - jak ograniczyć ryzyko wycieku danych?](#g2-niezaufany-python-na-wgranych-plikach---jak-ograniczyć-ryzyko-wycieku-danych)
+  - [G3. Wielodostępny backend - jak zarządzać identyfikatorami sesji?](#g3-wielodostępny-backend---jak-zarządzać-identyfikatorami-sesji)
+  - [G4. API zwraca sukces HTTP, ale Python zgłosił wyjątek - jak sklasyfikować?](#g4-api-zwraca-sukces-http-ale-python-zgłosił-wyjątek---jak-sklasyfikować)
+  - [G5. Timeout po stronie backendu, nie wiadomo, czy kod miał skutki uboczne - najbezpieczniejsza polityka](#g5-timeout-po-stronie-backendu-nie-wiadomo-czy-kod-miał-skutki-uboczne---najbezpieczniejsza-polityka)
+- **[CZĘŚĆ H - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-h---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [H1. Co daje pula sesji i jaka jest granica izolacji?](#h1-co-daje-pula-sesji-i-jaka-jest-granica-izolacji)
+  - [H2. Kiedy wbudowany interpreter, a kiedy własny kontener?](#h2-kiedy-wbudowany-interpreter-a-kiedy-własny-kontener)
+  - [H3. Wymień limity i wartości puli, które warto znać.](#h3-wymień-limity-i-wartości-puli-które-warto-znać)
+  - [H4. Jakiej roli i jakiego odbiorcy tokenu wymaga wywołanie API zarządzania puli?](#h4-jakiej-roli-i-jakiego-odbiorcy-tokenu-wymaga-wywołanie-api-zarządzania-puli)
+  - [H5. Jak bezpiecznie obsługiwać identyfikatory sesji?](#h5-jak-bezpiecznie-obsługiwać-identyfikatory-sesji)
+  - [H6. Gdzie lądują wgrane pliki i jak wygląda ścieżka pobrania?](#h6-gdzie-lądują-wgrane-pliki-i-jak-wygląda-ścieżka-pobrania)
+  - [H7. Jak odróżnić transport failure od execution failure?](#h7-jak-odróżnić-transport-failure-od-execution-failure)
+  - [H8. Kiedy wolno ponawiać żądanie wykonania kodu?](#h8-kiedy-wolno-ponawiać-żądanie-wykonania-kodu)
+  - [H9. Co zwróci udane usunięcie sesji i po co je robić?](#h9-co-zwróci-udane-usunięcie-sesji-i-po-co-je-robić)
+- **[CZĘŚĆ J - CO DALEJ](#część-j---co-dalej)**
+  - [J1. Następny krok i pokrycie egzaminu](#j1-następny-krok-i-pokrycie-egzaminu)
+  - [J2. Uczciwie o egzaminie](#j2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - GRANICA WYKONANIA I WYBÓR PULI
 
 ## A1. Po co granica wykonania i jak działa pula sesji

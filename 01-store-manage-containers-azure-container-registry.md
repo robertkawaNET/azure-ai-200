@@ -17,6 +17,58 @@ W tekście "moduł N" znaczy plik tutoriala `0N-*.md` (np. moduł 02 = `02-deplo
 
 ---
 
+<!-- toc -->
+**Spis treści**
+
+- **[CZĘŚĆ A - REJESTR: CO TO JEST I JAK ORGANIZUJE OBRAZY](#część-a---rejestr-co-to-jest-i-jak-organizuje-obrazy)**
+  - [A1. Czym jest Azure Container Registry i jakie ma poziomy](#a1-czym-jest-azure-container-registry-i-jakie-ma-poziomy)
+  - [A2. Hierarchia: rejestr, repozytorium, artefakt](#a2-hierarchia-rejestr-repozytorium-artefakt)
+  - [A3. Tagi, warstwy i manifesty](#a3-tagi-warstwy-i-manifesty)
+  - [A4. Adresowanie obrazu: po tagu i po digeście](#a4-adresowanie-obrazu-po-tagu-i-po-digeście)
+  - [A5. Dobre praktyki organizacji rejestru](#a5-dobre-praktyki-organizacji-rejestru)
+- **[CZĘŚĆ B - ACR TASKS: BUDOWANIE I URUCHAMIANIE OBRAZÓW W CHMURZE](#część-b---acr-tasks-budowanie-i-uruchamianie-obrazów-w-chmurze)**
+  - [B1. Czym jest ACR Tasks](#b1-czym-jest-acr-tasks)
+  - [B2. Quick tasks: build na żądanie](#b2-quick-tasks-build-na-żądanie)
+  - [B3. Zadania wyzwalane automatycznie (triggery)](#b3-zadania-wyzwalane-automatycznie-triggery)
+  - [B4. Zadania wieloetapowe (multi-step)](#b4-zadania-wieloetapowe-multi-step)
+  - [B5. Uruchamianie obrazu: `az acr run`](#b5-uruchamianie-obrazu-az-acr-run)
+  - [B6. Dobre praktyki ACR Tasks](#b6-dobre-praktyki-acr-tasks)
+- **[CZĘŚĆ C - TAGOWANIE, WERSJONOWANIE, BLOKADY I SPRZĄTANIE](#część-c---tagowanie-wersjonowanie-blokady-i-sprzątanie)**
+  - [C1. Stabilne i unikalne tagi](#c1-stabilne-i-unikalne-tagi)
+  - [C2. Wersjonowanie semantyczne](#c2-wersjonowanie-semantyczne)
+  - [C3. Wzorce unikalnych tagów](#c3-wzorce-unikalnych-tagów)
+  - [C4. Tag `latest`](#c4-tag-latest)
+  - [C5. Blokowanie wdrożonych obrazów](#c5-blokowanie-wdrożonych-obrazów)
+  - [C6. Sprzątanie: untagged images, `acr purge`, retention policy](#c6-sprzątanie-untagged-images-acr-purge-retention-policy)
+  - [C7. Dobre praktyki tagowania i wersjonowania](#c7-dobre-praktyki-tagowania-i-wersjonowania)
+  - [C8. Zarządzanie obrazami z kodu: SDK dla Pythona i .NET](#c8-zarządzanie-obrazami-z-kodu-sdk-dla-pythona-i-net)
+- **[CZĘŚĆ D - ĆWICZENIA](#część-d---ćwiczenia)**
+  - [I1. Build, weryfikacja, uruchomienie i blokada obrazu przez ACR Tasks (laboratorium modułu)](#i1-build-weryfikacja-uruchomienie-i-blokada-obrazu-przez-acr-tasks-laboratorium-modułu)
+  - [I2. Unikalne tagi, tagi stabilne i pobranie po digeście - Python i C#](#i2-unikalne-tagi-tagi-stabilne-i-pobranie-po-digeście---python-i-c)
+  - [I3. Zadanie wieloetapowe i bezpieczny `acr purge` z `--dry-run`](#i3-zadanie-wieloetapowe-i-bezpieczny-acr-purge-z---dry-run)
+  - [I4. Rejestr z kodu: lista obrazów i blokada przez SDK - Python i C#](#i4-rejestr-z-kodu-lista-obrazów-i-blokada-przez-sdk---python-i-c)
+- **[CZĘŚĆ E - QUIZ Z MODUŁU MICROSOFTU (5 pytań) + wyjaśnienia](#część-e---quiz-z-modułu-microsoftu-5-pytań--wyjaśnienia)**
+  - [E1. Spójne buildy (zespół buduje obrazy na laptopach)](#e1-spójne-buildy-zespół-buduje-obrazy-na-laptopach)
+  - [E2. Ten sam obraz na każdym węźle, nawet po wypchnięciu nowego z tym samym tagiem](#e2-ten-sam-obraz-na-każdym-węźle-nawet-po-wypchnięciu-nowego-z-tym-samym-tagiem)
+  - [E3. Automatyczny rebuild po łatce w obrazie bazowym PyTorch](#e3-automatyczny-rebuild-po-łatce-w-obrazie-bazowym-pytorch)
+  - [E4. Tagowanie produkcyjne ze śledzeniem do commitu i rollbackiem](#e4-tagowanie-produkcyjne-ze-śledzeniem-do-commitu-i-rollbackiem)
+  - [E5. Ochrona obrazu produkcyjnego przed przypadkowym usunięciem](#e5-ochrona-obrazu-produkcyjnego-przed-przypadkowym-usunięciem)
+- **[CZĘŚĆ F - PYTANIA KONTROLNE (odpowiedz bez zaglądania)](#część-f---pytania-kontrolne-odpowiedz-bez-zaglądania)**
+  - [F1. Wymień trzy poziomy hierarchii w ACR i podaj format login servera.](#f1-wymień-trzy-poziomy-hierarchii-w-acr-i-podaj-format-login-servera)
+  - [F2. Czym różni się tag od digestu i kiedy używać którego?](#f2-czym-różni-się-tag-od-digestu-i-kiedy-używać-którego)
+  - [F3. Jakie są trzy rodzaje triggerów ACR Tasks i co uruchamia każdy?](#f3-jakie-są-trzy-rodzaje-triggerów-acr-tasks-i-co-uruchamia-każdy)
+  - [F4. Do czego służy `az acr build`, a do czego `az acr run`?](#f4-do-czego-służy-az-acr-build-a-do-czego-az-acr-run)
+  - [F5. Czym różnią się tagi stabilne i unikalne i które stosować na produkcji?](#f5-czym-różnią-się-tagi-stabilne-i-unikalne-i-które-stosować-na-produkcji)
+  - [F6. Jak zablokować obraz w ACR i co to blokuje?](#f6-jak-zablokować-obraz-w-acr-i-co-to-blokuje)
+  - [F7. Co robi `acr purge --filter 'repo:.*' --untagged --ago 30d`? (pułapka)](#f7-co-robi-acr-purge---filter-repo---untagged---ago-30d-pułapka)
+  - [F8. Na jakim poziomie ACR działa retention policy dla untagged manifests i jakie ma ograniczenia?](#f8-na-jakim-poziomie-acr-działa-retention-policy-dla-untagged-manifests-i-jakie-ma-ograniczenia)
+  - [F9. Które poziomy ACR obsługują geo-replikację i private endpoints?](#f9-które-poziomy-acr-obsługują-geo-replikację-i-private-endpoints)
+- **[CZĘŚĆ G - CO DALEJ](#część-g---co-dalej)**
+  - [G1. Podsumowanie, następny krok i pokrycie egzaminu](#g1-podsumowanie-następny-krok-i-pokrycie-egzaminu)
+  - [G2. Uczciwie o egzaminie](#g2-uczciwie-o-egzaminie)
+
+<!-- /toc -->
+
 # CZĘŚĆ A - REJESTR: CO TO JEST I JAK ORGANIZUJE OBRAZY
 
 ## A1. Czym jest Azure Container Registry i jakie ma poziomy
